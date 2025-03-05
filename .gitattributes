@@ -1,0 +1,2 @@
+*.dll filter=lfs diff=lfs merge=lfs -text
+thirdparty/wxWidgets-3.2.6/lib/*.dll filter=lfs diff=lfs merge=lfs -text
