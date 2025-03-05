@@ -1,0 +1,3 @@
+[submodule "thirdparty/wxlua"]
+	path = thirdparty/wxlua
+	url = https://github.com/pkulchenko/wxlua.git
