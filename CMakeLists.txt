@@ -1,11 +1,4 @@
 cmake_minimum_required(VERSION 3.10)
-project(WxVulkanEngine)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-
-
 
 #-------------------------------------------------#
 #                   wxWidgets
@@ -36,25 +29,25 @@ if(WIN32)
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         # Copier le répertoire des DLL dans le répertoire de sortie
         file(COPY "${wxWidgets_LIB_DIR}/"
-            DESTINATION ${PROJECT_BINARY_DIR}
+            DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
             FILES_MATCHING PATTERN "*32u_*.dll")
-    else()
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
         # Copier le répertoire des DLL dans le répertoire de sortie
         file(COPY "${wxWidgets_LIB_DIR}/"
-        DESTINATION ${PROJECT_BINARY_DIR}
+        DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
         FILES_MATCHING PATTERN "*32u*.dll")
     endif()
 else()
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    # Copier le répertoire des DLL dans le répertoire de sortie
-    file(COPY "${wxWidgets_LIB_DIR}/"
-        DESTINATION ${PROJECT_BINARY_DIR}
-        FILES_MATCHING PATTERN "*32u_*.a")
-    else()
-    # Copier le répertoire des DLL dans le répertoire de sortie
-    file(COPY "${wxWidgets_LIB_DIR}/"
-    DESTINATION ${PROJECT_BINARY_DIR}
-    FILES_MATCHING PATTERN "*32ud_*.a")
+        # Copier le répertoire des DLL dans le répertoire de sortie
+        file(COPY "${wxWidgets_LIB_DIR}/"
+            DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
+            FILES_MATCHING PATTERN "*32u_*.a")
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        # Copier le répertoire des DLL dans le répertoire de sortie
+        file(COPY "${wxWidgets_LIB_DIR}/"
+            DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
+            FILES_MATCHING PATTERN "*32u_*.a")
     endif()
 endif()
 
@@ -80,56 +73,49 @@ message(STATUS "wxLua_ROOT_DIR=${wxLua_ROOT_DIR}")
 message(STATUS "wxLua_DIR=${wxLua_DIR}")
 message(STATUS "modules=${wxLua_ROOT_DIR}/modules/")
 message(STATUS "wxLua_LUA_INCLUDE_DIR=${wxLua_ROOT_DIR}/modules/lua-5.1/src")
-message(STATUS "wxLuaBind_ALL_LIBS=${wxLuaBind_ALL_LIBS}")
 message(STATUS "=================================================================")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     # Copier le répertoire des DLL dans le répertoire de sortie
     file(COPY "${wxLua_ROOT_DIR}/bin/Release/"
-        DESTINATION ${PROJECT_BINARY_DIR}
+        DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
         FILES_MATCHING PATTERN "*.dll")
-        file(COPY "${wxLua_ROOT_DIR}/bin-shared/Release/"
-        DESTINATION ${PROJECT_BINARY_DIR}
+    file(COPY "${wxLua_ROOT_DIR}/bin-shared/Release/"
+        DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
         FILES_MATCHING PATTERN "*.dll")
-else()
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     # Copier le répertoire des DLL dans le répertoire de sortie
     file(COPY "${wxLua_ROOT_DIR}/bin/Debug/"
-    DESTINATION ${PROJECT_BINARY_DIR}
-    FILES_MATCHING PATTERN "*.dll")
+        DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
+        FILES_MATCHING PATTERN "*.dll")
     file(COPY "${wxLua_ROOT_DIR}/bin-shared/Debug/"
-    DESTINATION ${PROJECT_BINARY_DIR}
-    FILES_MATCHING PATTERN "*.dll")
+        DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
+        FILES_MATCHING PATTERN "*.dll")
 endif()
+
+set(wxLua_LIBRARIES LuaLib wxLuaLib wxLuaDebugLib wxLuaDebuggerLib wxLuaBindLib)
 
 #-------------------------------------------------#
 #                    Vulkan
 #-------------------------------------------------#
 
-
 find_package(Vulkan REQUIRED)
-include_directories(${Vulkan_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
-link_directories(${Vulkan_LIBRARY_DIRS} ${wxWidgets_LIBRARY_DIRS})
-
 
 #-------------------------------------------------#
 #                     Project
 #-------------------------------------------------#
 
+#--Project-Source--#
+add_subdirectory(src)
 
-# Ajouter votre exécutable
-add_executable(${PROJECT_NAME} src/main.cpp)
+#--Scripts--#
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    file(COPY "${CMAKE_SOURCE_DIR}/scripts"
+        DESTINATION "${CMAKE_BINARY_DIR}/bin/Release/scripts")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    file(COPY "${CMAKE_SOURCE_DIR}/scripts"
+        DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug/scripts")
+endif()
 
-file(COPY "${CMAKE_SOURCE_DIR}/scripts"
-     DESTINATION "${CMAKE_BINARY_DIR}/scripts")
 
 
-
-set(MINGW_EXTRA_LIBS)
-if(MINGW)
-	set(MINGW_EXTRA_LIBS "-lversion;-lshlwapi;-luxtheme;-loleacc;-lws2_32;-limm32")
-	message("MINGW_EXTRA_LIBS is " ${MINGW_EXTRA_LIBS})
-endif(MINGW)
-
-# Spécifier le répertoire des bibliothèques
-target_link_directories(${PROJECT_NAME} PRIVATE ${wxWidgets_LIB_DIR})
-target_link_libraries(${PROJECT_NAME} ${wxWidgets_LIBRARIES} LuaLib wxLuaLib wxLuaDebugLib wxLuaDebuggerLib wxLuaBindLib ${MINGW_EXTRA_LIBS} ${Vulkan_LIBRARIES})
