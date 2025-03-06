@@ -53,6 +53,8 @@ MyFrame::MyFrame(const wxString& title)
     // Initialise wxLua
     if (m_wxlState.Ok())
     {
+        
+        m_wxlState.RunString(wxT("print(\"Test\")"), wxT("=(command line)"));
         m_wxlState.RunFile("scripts/script.lua");
     }
     else
