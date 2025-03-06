@@ -1,80 +1,72 @@
-#include <wx/wxprec.h>
+#include <wx/wx.h>
+#include <wxlua/wxlua.h>
 
-
-#ifndef WX_PRECOMP
-    #include <wx/wx.h>
-#endif
- 
 class MyApp : public wxApp
 {
 public:
     virtual bool OnInit();
 };
- 
+
 class MyFrame : public wxFrame
 {
 public:
-    MyFrame();
- 
-private:
-    void OnHello(wxCommandEvent& event);
-    void OnExit(wxCommandEvent& event);
+    MyFrame(const wxString& title);
+
+    void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
+
+private:
+    wxLuaState m_wxlState;
 };
- 
-enum
-{
-    ID_Hello = 1
-};
- 
+
 wxIMPLEMENT_APP(MyApp);
- 
+
 bool MyApp::OnInit()
 {
+    if (!wxApp::OnInit())
+        return false;
 
-    MyFrame *frame = new MyFrame();
+    MyFrame *frame = new MyFrame("wxLua Example");
     frame->Show(true);
+
     return true;
 }
- 
-MyFrame::MyFrame()
-    : wxFrame(NULL, wxID_ANY, "Hello World")
+
+MyFrame::MyFrame(const wxString& title)
+    : wxFrame(NULL, wxID_ANY, title), m_wxlState(true)
 {
-    wxMenu *menuFile = new wxMenu;
-    menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
-                     "Help string shown in status bar for this menu item");
-    menuFile->AppendSeparator();
-    menuFile->Append(wxID_EXIT);
- 
-    wxMenu *menuHelp = new wxMenu;
-    menuHelp->Append(wxID_ABOUT);
- 
-    wxMenuBar *menuBar = new wxMenuBar;
-    menuBar->Append(menuFile, "&File");
-    menuBar->Append(menuHelp, "&Help");
- 
-    SetMenuBar( menuBar );
- 
-    CreateStatusBar();
-    SetStatusText("Welcome to wxWidgets!");
- 
-    Bind(wxEVT_MENU, &MyFrame::OnHello, this, ID_Hello);
+    wxMenu *fileMenu = new wxMenu;
+    fileMenu->Append(wxID_EXIT, "&Quit\tCtrl+Q", "Quit the application");
+
+    wxMenu *helpMenu = new wxMenu;
+    helpMenu->Append(wxID_ABOUT, "&About\tF1", "Show about dialog");
+
+    wxMenuBar *menuBar = new wxMenuBar();
+    menuBar->Append(fileMenu, "&File");
+    menuBar->Append(helpMenu, "&Help");
+
+    SetMenuBar(menuBar);
+
+    Bind(wxEVT_MENU, &MyFrame::OnQuit, this, wxID_EXIT);
     Bind(wxEVT_MENU, &MyFrame::OnAbout, this, wxID_ABOUT);
-    Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
+
+    // Initialise wxLua
+    if (m_wxlState.Ok())
+    {
+        m_wxlState.RunFile("scripts/script.lua");
+    }
+    else
+    {
+        wxMessageBox("Failed to initialise wxLua", "Error", wxOK | wxICON_ERROR, this);
+    }
 }
- 
-void MyFrame::OnExit(wxCommandEvent& event)
+
+void MyFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
     Close(true);
 }
- 
-void MyFrame::OnAbout(wxCommandEvent& event)
+
+void MyFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
-    wxMessageBox("This is a wxWidgets Hello World example",
-                 "About Hello World", wxOK | wxICON_INFORMATION);
-}
- 
-void MyFrame::OnHello(wxCommandEvent& event)
-{
-    wxLogMessage("Hello world from wxWidgets!");
+    wxMessageBox("This is a wxLua example", "About wxLua", wxOK | wxICON_INFORMATION, this);
 }
