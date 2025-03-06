@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #                   wxWidgets
 #-------------------------------------------------#
 set(CMAKE_BUILD_TYPE Debug) # Force le mode Debug
-set(wxWidgets_USE_DEBUG TRUE)
+set(wxWidgets_USE_DEBUG ON)
 
 # Trouver wxWidgets
 find_package(wxWidgets REQUIRED COMPONENTS core base)
@@ -42,7 +42,7 @@ if(WIN32)
         # Copier le répertoire des DLL dans le répertoire de sortie
         file(COPY "${wxWidgets_LIB_DIR}/"
         DESTINATION ${PROJECT_BINARY_DIR}
-        FILES_MATCHING PATTERN "*32ud_*.dll")
+        FILES_MATCHING PATTERN "*32u*.dll")
     endif()
 else()
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
@@ -88,9 +88,15 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     file(COPY "${wxLua_ROOT_DIR}/bin/Release/"
         DESTINATION ${PROJECT_BINARY_DIR}
         FILES_MATCHING PATTERN "*.dll")
+        file(COPY "${wxLua_ROOT_DIR}/bin-shared/Release/"
+        DESTINATION ${PROJECT_BINARY_DIR}
+        FILES_MATCHING PATTERN "*.dll")
 else()
     # Copier le répertoire des DLL dans le répertoire de sortie
     file(COPY "${wxLua_ROOT_DIR}/bin/Debug/"
+    DESTINATION ${PROJECT_BINARY_DIR}
+    FILES_MATCHING PATTERN "*.dll")
+    file(COPY "${wxLua_ROOT_DIR}/bin-shared/Debug/"
     DESTINATION ${PROJECT_BINARY_DIR}
     FILES_MATCHING PATTERN "*.dll")
 endif()
@@ -111,7 +117,7 @@ link_directories(${Vulkan_LIBRARY_DIRS} ${wxWidgets_LIBRARY_DIRS})
 
 
 # Ajouter votre exécutable
-add_executable(${PROJECT_NAME} WIN32 src/main.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp)
 
 file(COPY "${CMAKE_SOURCE_DIR}/scripts"
      DESTINATION "${CMAKE_BINARY_DIR}/scripts")
