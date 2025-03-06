@@ -14,3 +14,4 @@ CMakeUserPresets.json
 #Custom
 build
 .vscode
+thirdparty/wxlua
