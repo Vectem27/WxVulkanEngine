@@ -1,10 +1,12 @@
-project(WxVulkanEngine)
+project(CompilationTest)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GLOBAL_RUNTIME_OUTPUT_DIR}/${PROJECT_NAME})
+COPY_wxDependancies(ON)
+COPY_LuaScripts()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_executable(${PROJECT_NAME} main.cpp)
 
 set(MINGW_EXTRA_LIBS)
@@ -12,6 +14,8 @@ if(MINGW)
 	set(MINGW_EXTRA_LIBS "-lversion;-lshlwapi;-luxtheme;-loleacc;-lws2_32;-limm32")
 	message("MINGW_EXTRA_LIBS is " ${MINGW_EXTRA_LIBS})
 endif(MINGW)
+
+#set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME})
 
 # Spécifier le répertoire des bibliothèques
 target_include_directories(${PROJECT_NAME} PRIVATE ${Vulkan_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})

@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.10)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 #-------------------------------------------------#
 #                   wxWidgets
 #-------------------------------------------------#
 set(CMAKE_BUILD_TYPE Debug) # Force le mode Debug
 set(wxWidgets_USE_DEBUG ON)
+
+
 
 # Trouver wxWidgets
 find_package(wxWidgets REQUIRED COMPONENTS core base)
@@ -23,33 +27,6 @@ message(STATUS "wxWidgets_USE_FILE=${wxWidgets_USE_FILE}")
 message(STATUS "=================================================================")
 
 
-
-
-if(WIN32)
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        # Copier le répertoire des DLL dans le répertoire de sortie
-        file(COPY "${wxWidgets_LIB_DIR}/"
-            DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
-            FILES_MATCHING PATTERN "*32u_*.dll")
-    elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        # Copier le répertoire des DLL dans le répertoire de sortie
-        file(COPY "${wxWidgets_LIB_DIR}/"
-        DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
-        FILES_MATCHING PATTERN "*32u*.dll")
-    endif()
-else()
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        # Copier le répertoire des DLL dans le répertoire de sortie
-        file(COPY "${wxWidgets_LIB_DIR}/"
-            DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
-            FILES_MATCHING PATTERN "*32u_*.a")
-    elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        # Copier le répertoire des DLL dans le répertoire de sortie
-        file(COPY "${wxWidgets_LIB_DIR}/"
-            DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
-            FILES_MATCHING PATTERN "*32u_*.a")
-    endif()
-endif()
 
 
 #-------------------------------------------------#
@@ -75,23 +52,7 @@ message(STATUS "modules=${wxLua_ROOT_DIR}/modules/")
 message(STATUS "wxLua_LUA_INCLUDE_DIR=${wxLua_ROOT_DIR}/modules/lua-5.1/src")
 message(STATUS "=================================================================")
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    # Copier le répertoire des DLL dans le répertoire de sortie
-    file(COPY "${wxLua_ROOT_DIR}/bin/Release/"
-        DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
-        FILES_MATCHING PATTERN "*.dll")
-    file(COPY "${wxLua_ROOT_DIR}/bin-shared/Release/"
-        DESTINATION ${PROJECT_BINARY_DIR}/bin/Release
-        FILES_MATCHING PATTERN "*.dll")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    # Copier le répertoire des DLL dans le répertoire de sortie
-    file(COPY "${wxLua_ROOT_DIR}/bin/Debug/"
-        DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
-        FILES_MATCHING PATTERN "*.dll")
-    file(COPY "${wxLua_ROOT_DIR}/bin-shared/Debug/"
-        DESTINATION ${PROJECT_BINARY_DIR}/bin/Debug
-        FILES_MATCHING PATTERN "*.dll")
-endif()
+
 
 set(wxLua_LIBRARIES LuaLib wxLuaLib wxLuaDebugLib wxLuaDebuggerLib wxLuaBindLib)
 
@@ -105,17 +66,79 @@ find_package(Vulkan REQUIRED)
 #                     Project
 #-------------------------------------------------#
 
+
+
+
+
+
+
+
+
+
 #--Project-Source--#
-add_subdirectory(src)
+
+
+macro(COPY_wxDependancies copyWxLua)
+if(WIN32)
+    # wxWidgets dlls copy
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        set(wxDllsMatchingPattern "*ud_*.dll")
+    else()
+        set(wxDllsMatchingPattern "*u_*.dll")
+    endif()
+
+    file(COPY "${wxWidgets_LIB_DIR}/"
+        DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        FILES_MATCHING PATTERN ${wxDllsMatchingPattern})
+
+            
+    # wxLua dlls copy
+    if(${copyWxLua})
+        file(COPY "${wxLua_ROOT_DIR}/bin/${CMAKE_BUILD_TYPE}/"
+            DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            FILES_MATCHING PATTERN "*.dll")
+    endif()
+endif()
+endmacro()
 
 #--Scripts--#
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    file(COPY "${CMAKE_SOURCE_DIR}/scripts"
-        DESTINATION "${CMAKE_BINARY_DIR}/bin/Release/scripts")
-elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    file(COPY "${CMAKE_SOURCE_DIR}/scripts"
-        DESTINATION "${CMAKE_BINARY_DIR}/bin/Debug/scripts")
-endif()
+macro(COPY_LuaScripts)
+file(COPY "${CMAKE_SOURCE_DIR}/scripts/lua"
+    DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/scripts/lua")
+endmacro()
+
+set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/shaders)
+
+#--Shaders--#
+find_program(GLSLANG_VALIDATOR glslangValidator REQUIRED)
+
+macro(COPY_Shaders SHADER_SOURCE_FILES SHADER_OUTPUT_DIR)
+    file(MAKE_DIRECTORY ${SHADER_OUTPUT_DIR})
+
+    set(SHADER_OUTPUT_FILES)
+    foreach(SHADER ${SHADER_SOURCE_FILES})
+        get_filename_component(FILENAME ${SHADER} NAME)
+        set(SPV_FILE ${SHADER_OUTPUT_DIR}/${FILENAME})
+        list(APPEND SHADER_OUTPUT_FILES ${SPV_FILE})
+
+        add_custom_command(
+            OUTPUT ${SPV_FILE}
+            COMMAND ${GLSLANG_VALIDATOR} -V ${SHADER} -o ${SPV_FILE}
+            DEPENDS ${SHADER}
+            COMMENT "Compiling shader: ${SHADER}"
+            VERBATIM
+        )
+    endforeach()
+
+    add_custom_target(Shaders ALL DEPENDS ${SHADER_OUTPUT_FILES})
+endmacro()
+
+set(GLOBAL_RUNTIME_OUTPUT_DIR ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GLOBAL_RUNTIME_OUTPUT_DIR})
+
+add_subdirectory(src)
+
+
 
 
 

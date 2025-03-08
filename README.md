@@ -5,12 +5,10 @@ Build :
 cmake -S . -B ./build -G "MinGW Makefiles"
 
 Compilation : 
-cmake --build ./build -j8
 
-cmake -S . -B ./build -G "MinGW Makefiles" 
-cmake --build ./build -j8 
-./build/WxVulkanEngine.exe
-
+cmake -S . -B ./build -G "MinGW Makefiles" -DBUILD_App=ON -DBUILD_CompilationTest=ON
+cmake --build ./build -j8 --config Debug  
+./bin/Debug/WxVulkanEngine/WxVulkanEngine.exe
 
 
 wxWidget Build :

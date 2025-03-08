@@ -44,7 +44,7 @@ bool MyApp::OnInit()
 
     try 
     {
-        if (int rc = luaState.RunFile(wxT("scripts/script.lua"))) {
+        if (int rc = luaState.RunFile(wxT("scripts/lua/script.lua"))) {
             wxMessageBox(wxlua_LUA_ERR_msg(rc), "Erreur", wxOK | wxICON_ERROR);
             return false;
         }
