@@ -5,29 +5,23 @@ wxBEGIN_EVENT_TABLE(wxVulkanFrame, wxFrame)
 wxEND_EVENT_TABLE()
 
 wxVulkanFrame::wxVulkanFrame(const wxString &title)
-    : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(800, 630)),
+    : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(720, 480)),
       rendererInitialized(false)
 {
     wxPanel* mainPanel = new wxPanel(this);
     
     // Création d'un panneau pour le rendu
     renderPanel = new wxPanel(mainPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize); // Ajuster la position et la taille
-    renderPanel->SetBackgroundStyle(wxBG_STYLE_PAINT);
-
-    // On associe l'événement de peinture au panel
-    renderPanel->Bind(wxEVT_PAINT, &wxVulkanFrame::OnPaint, this);
+    renderPanel->SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     renderPanel->Bind(wxEVT_SIZE, &wxVulkanFrame::OnSize, this);
-
-    // Création du bouton en haut à droite (enfant de la fenêtre principale)
-    wxButton *button = new wxButton(mainPanel, wxID_ANY, "Test", wxPoint(10, 10));
+    
+    wxButton *button = new wxButton(mainPanel, wxID_ANY, "Test", wxPoint(10, 10), wxSize(90, 30));
     button->Bind(wxEVT_BUTTON, &wxVulkanFrame::OnButtonClick, this);
-
+    button->Raise();
+    
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(renderPanel, 1, wxEXPAND);
     mainPanel->SetSizer(sizer);
-
-    button->Raise();
-
 
     renderer = new VulkanRenderer();
 
@@ -41,7 +35,6 @@ wxVulkanFrame::wxVulkanFrame(const wxString &title)
         renderer->init(nullptr, ViewportData({800, 600}));
 #endif
         rendererInitialized = true;
-        renderer->render();
     }
 }
 
@@ -69,13 +62,6 @@ void wxVulkanFrame::Render()
 void wxVulkanFrame::OnSize(wxSizeEvent &evt)
 {
     renderer->ViewportSize({(unsigned int)renderPanel->GetSize().GetWidth(), (unsigned int)evt.GetSize().GetHeight()});
-    evt.Skip();
-}
-
-void wxVulkanFrame::OnPaint(wxPaintEvent &evt)
-{
-    wxPaintDC dc(renderPanel);
-
     evt.Skip();
 }
 

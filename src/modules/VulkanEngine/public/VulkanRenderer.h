@@ -58,17 +58,20 @@ private:
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
+    VkSurfaceKHR surface;
+
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
+    VkRenderPass renderPass;
+
     // Rendering
-    VkSurfaceKHR surface;
+    VkFormat swapChainImageFormat;
+
     VkSwapchainKHR swapChain;
     std::vector<VkImage> swapChainImages;
-    VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
-    VkRenderPass renderPass;
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
     VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};

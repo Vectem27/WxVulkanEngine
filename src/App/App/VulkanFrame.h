@@ -16,7 +16,6 @@ private:
     wxPanel *renderPanel;
     bool rendererInitialized;
 
-    void OnPaint(wxPaintEvent &evt);
     void OnSize(wxSizeEvent &evt);
 
     void OnButtonClick(wxCommandEvent &evt); // Ajoutez cette ligne

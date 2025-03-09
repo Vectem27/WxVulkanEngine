@@ -7,17 +7,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #-------------------------------------------------#
 set(CMAKE_BUILD_TYPE Debug) # Force le mode Debug
 set(wxWidgets_USE_DEBUG ON)
-
-
+set(wxWidgetwxBUILD_SHARED ON)
 
 # Trouver wxWidgets
-find_package(wxWidgets REQUIRED COMPONENTS core base)
+#set(ENV{WX_CONFIG} "C:/wxWidgets-3.2.6/wx-config")
+find_package(wxWidgets 3.2.6 REQUIRED COMPONENTS core base)
 
-if(wxWidgets_FOUND)
-    include(${wxWidgets_USE_FILE})
-else()
-    message(FATAL_ERROR "wxWidgets not found!")
-endif()
 
 message(STATUS "=================================================================")
 message(STATUS "wxWidgets_ROOT_DIR=${wxWidgets_ROOT_DIR}")
@@ -27,6 +22,11 @@ message(STATUS "wxWidgets_USE_FILE=${wxWidgets_USE_FILE}")
 message(STATUS "=================================================================")
 
 
+if(wxWidgets_FOUND)
+    include(${wxWidgets_USE_FILE})
+else()
+    message(FATAL_ERROR "wxWidgets not found!")
+endif()
 
 
 #-------------------------------------------------#
@@ -61,6 +61,7 @@ set(wxLua_LIBRARIES LuaLib wxLuaLib wxLuaDebugLib wxLuaDebuggerLib wxLuaBindLib)
 #-------------------------------------------------#
 
 find_package(Vulkan REQUIRED)
+
 
 #-------------------------------------------------#
 #                     Project
@@ -104,7 +105,8 @@ endmacro()
 #--Scripts--#
 macro(COPY_LuaScripts)
 file(COPY "${CMAKE_SOURCE_DIR}/scripts/lua"
-    DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/scripts/lua")
+    DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/scripts/lua"
+    FILES_MATCHING PATTERN "*.dll")
 endmacro()
 
 set(SHADER_SOURCE_DIR ${CMAKE_SOURCE_DIR}/shaders)

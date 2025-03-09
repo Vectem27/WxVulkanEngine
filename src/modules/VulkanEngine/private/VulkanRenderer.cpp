@@ -8,6 +8,8 @@
 bool VulkanRenderer::init(void *windowHandle, ViewportData viewportSize)
 {
     viewportData = viewportSize;
+    swapChainImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
+
     // 1 Create Instance
     createInstance();
 
@@ -20,6 +22,8 @@ bool VulkanRenderer::init(void *windowHandle, ViewportData viewportSize)
     // 4 Create logical device & Queue
     createLogicalDevice();
 
+    createRenderPass();
+
     // 5 Create Swapchain
     createSwapChain();
 
@@ -27,7 +31,6 @@ bool VulkanRenderer::init(void *windowHandle, ViewportData viewportSize)
     createImageViews();
 
     // 7 Create render pass
-    createRenderPass();
 
     // 9 Create Framebuffers
     createFramebuffers();
@@ -100,9 +103,12 @@ void VulkanRenderer::render()
     presentInfo.pImageIndices = &imageIndex;
 
     VkResult res = vkQueuePresentKHR(graphicsQueue, &presentInfo);
-    if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) {
+    if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) 
+    {
         recreateSwapChain();
-    } else if (res != VK_SUCCESS) {
+    } 
+    else if (res != VK_SUCCESS) 
+    {
         throw std::runtime_error("failed to present swap chain image!");
     }
 }
@@ -427,7 +433,6 @@ void VulkanRenderer::createSwapChain()
 
     }
     swapChainExtent = extent;
-    swapChainImageFormat = VK_FORMAT_B8G8R8A8_SRGB;
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
