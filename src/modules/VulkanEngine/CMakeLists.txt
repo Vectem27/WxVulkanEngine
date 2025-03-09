@@ -1,4 +1,4 @@
-add_library(VulkanEngine STATIC public/VulkanRenderer.h private/VulkanRenderer.cpp)
+add_library(VulkanEngine STATIC private/VulkanRenderer.cpp private/Material.cpp)
 target_include_directories(VulkanEngine 
     PUBLIC public
     PRIVATE private

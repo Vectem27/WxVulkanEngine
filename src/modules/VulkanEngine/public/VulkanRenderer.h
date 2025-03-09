@@ -10,10 +10,14 @@
 #include <stdexcept>
 #include <iostream>
 
-struct Vertex 
+#include "Material.h"
+#include "Vertex.h"
+#include "UniformBufferObject.h"
+
+struct ViewportData
 {
-    float pos[2]; // Position en 2D
-    float color[3]; // Couleur
+    unsigned int width{800};
+    unsigned int height{600};
 };
 
 class VulkanRenderer 
@@ -30,7 +34,7 @@ public:
     }
 
     // Initialise Vulkan en utilisant le handle de la fenêtre native.
-    bool init(void* windowHandle);
+    bool init(void* windowHandle, ViewportData viewportSize);
 
     // Lance le rendu : ici, on se contente d’un clear en noir.
     void render();
@@ -42,6 +46,14 @@ public:
 
     float* getClearColor();
 
+    void ViewportSize(ViewportData viewportData);
+    ViewportData GetViewportSize() const { return viewportData; }
+
+    VkDevice GetDevice() const { return device; }
+    VkRenderPass GetRenderPass() const { return renderPass; }
+    VkDescriptorPool GetDescriptorPool() const { return descriptorPool; }
+
+
 private:
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
@@ -49,7 +61,7 @@ private:
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
-
+    // Rendering
     VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
     std::vector<VkImage> swapChainImages;
@@ -58,22 +70,29 @@ private:
     std::vector<VkImageView> swapChainImageViews;
     VkRenderPass renderPass;
     std::vector<VkFramebuffer> swapChainFramebuffers;
+
+    VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+
+    ViewportData viewportData;
+
+    // Command
     VkCommandPool commandPool;
     std::vector<VkCommandBuffer> commandBuffers;
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
     VkFence inFlightFence;
-
+    
     uint32_t graphicsQueueFamilyIndex;
 
-    VkPipeline graphicsPipeline;
-    VkPipelineLayout pipelineLayout;
+    // Material
+    VkDescriptorPool descriptorPool;
+    Material material;
+public:
+    UniformBuffer ubo;
+private:
 
-    VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-
-
 
     // Création de l'instance Vulkan.
     void createInstance();
@@ -100,7 +119,7 @@ private:
     // Création d'une render pass avec une unique attache couleur.
     void createRenderPass();
 
-    void createGraphicsPipeline();
+    void InitMaterials();
 
     // Création des framebuffers pour chaque image vue.
     void createFramebuffers();
@@ -114,18 +133,10 @@ private:
     // Création de deux sémaphores pour synchroniser l'acquisition et la présentation.
     void createSemaphores();
 
+    void createDescriptorPool();
 
-    void initShaderModule(VkShaderModule *shaderModule, const std::vector<char>& code) {
-        VkShaderModuleCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-        createInfo.codeSize = code.size();
-        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-    
-        if (vkCreateShaderModule(device, &createInfo, nullptr, shaderModule) != VK_SUCCESS) 
-        {
-            throw std::runtime_error("Échec de la création du module shader !");
-        }
-    }
+    void recreateSwapChain();
+    void cleanupSwapChain();
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
         VkBufferCreateInfo bufferCreateInfo = {};
@@ -152,7 +163,7 @@ private:
     
         vkBindBufferMemory(device, buffer, bufferMemory, 0);
     }
-    
+
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -166,7 +177,7 @@ private:
     
         throw std::runtime_error("failed to find suitable memory type!");
     }
-    
+
     
 };
 
