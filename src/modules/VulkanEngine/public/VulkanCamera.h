@@ -2,6 +2,7 @@
 #define VULKANCAMERA_H
 
 #include "ICamera.h"
+#include "VulkanRenderer.h"
 
 class VulkanCamera : public ICamera
 {
