@@ -3,21 +3,46 @@
 #include <algorithm>
 
 SwapchainRenderer::SwapchainRenderer(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, 
-    VkFormat swapChainImageFormat, uint32_t graphicsQueueFamilyIndex)
-    : device(device), physicalDevice(physicalDevice), surface(surface), 
+    VkRenderPass renderPass, VkFormat swapChainImageFormat, uint32_t graphicsQueueFamilyIndex)
+    : device(device), physicalDevice(physicalDevice), surface(surface), renderPass(renderPass),
     swapChainImageFormat(swapChainImageFormat), graphicsQueueFamilyIndex(graphicsQueueFamilyIndex)
 {
     CreateSwapChain();
     CreateImageViews();
     CreateFramebuffers();
+    CreateCommandPool();
+    CreateCommandBuffers();
+    CreateSync();
 }
 
 SwapchainRenderer::~SwapchainRenderer()
 {
     CleanupSwapchain();
+
+    
+    // Détruire les sémaphores et la fence
+    if (imageAvailableSemaphore != VK_NULL_HANDLE) {
+        vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
+        imageAvailableSemaphore = VK_NULL_HANDLE;
+    }
+    if (renderFinishedSemaphore != VK_NULL_HANDLE) {
+        vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
+        renderFinishedSemaphore = VK_NULL_HANDLE;
+    }
+    if (inFlightFence != VK_NULL_HANDLE) {
+        vkDestroyFence(device, inFlightFence, nullptr);
+        inFlightFence = VK_NULL_HANDLE;
+    }
+
+    // Détruire le command pool
+    if (commandPool != VK_NULL_HANDLE) {
+        vkDestroyCommandPool(device, commandPool, nullptr);
+        commandPool = VK_NULL_HANDLE;
+    }
+
 }
 
-VkCommandBuffer SwapchainRenderer::BeginRendeCommands()
+VkCommandBuffer SwapchainRenderer::BeginRenderCommands(VkClearValue *clearColor)
 {
     vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(device, 1, &inFlightFence);
@@ -26,7 +51,7 @@ VkCommandBuffer SwapchainRenderer::BeginRendeCommands()
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
         RecreateSwapChain();
-        return VkCommandBuffer();
+        return VK_NULL_HANDLE;
     } else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("vkAcquireNextImageKHR failed!");
     }
@@ -37,11 +62,43 @@ VkCommandBuffer SwapchainRenderer::BeginRendeCommands()
         throw std::runtime_error("failed to reset command buffer!");
     }
 
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin command buffer!");
+    }
+   
+    // Débute le render pass
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;                         // Variable de classe
+    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex]; // Variable de classe
+    renderPassInfo.renderArea.offset = {0, 0};
+    renderPassInfo.renderArea.extent = {width, height}; // Taille de la fenêtre
+
+    // Couleur de fond (noir)
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = clearColor;
+
+    vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
     return commandBuffers[imageIndex];
 }
 
 void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue graphicsQueue)
 {
+
+    // Termine le render pass
+    vkCmdEndRenderPass(commandBuffers[imageIndex]);
+
+    // Termine l'enregistrement du command buffer
+    if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to end command buffer!");
+    }
+
+
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
@@ -249,11 +306,6 @@ void SwapchainRenderer::CleanupSwapchain()
     }
     swapChainFramebuffers.clear(); // Vider la liste après destruction
 
-    // Détruire le render pass
-    if (renderPass != VK_NULL_HANDLE) {
-        vkDestroyRenderPass(device, renderPass, nullptr);
-        renderPass = VK_NULL_HANDLE;
-    }
 
     // Détruire les image views
     for (auto imageView : swapChainImageViews) {

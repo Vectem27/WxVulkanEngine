@@ -13,7 +13,6 @@ wxVulkanFrame::wxVulkanFrame(const wxString &title)
     // Création d'un panneau pour le rendu
     renderPanel = new wxPanel(mainPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize); // Ajuster la position et la taille
     renderPanel->SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-    renderPanel->Bind(wxEVT_SIZE, &wxVulkanFrame::OnSize, this);
     
     wxButton *button = new wxButton(mainPanel, wxID_ANY, "Test", wxPoint(10, 10), wxSize(90, 30));
     button->Bind(wxEVT_BUTTON, &wxVulkanFrame::OnButtonClick, this);
@@ -29,10 +28,16 @@ wxVulkanFrame::wxVulkanFrame(const wxString &title)
     {
 #ifdef __WXMSW__
         // Pour Windows, récupération du handle natif.
-        renderer->init(reinterpret_cast<void *>(renderPanel->GetHWND()), ViewportData({800, 600}));
+        renderer->init(reinterpret_cast<void *>(renderPanel->GetHWND()));
+#elif defined(__WXGTK__)  // Pour Linux (GTK)
+        // Pour Linux, récupération du handle natif pour un panel GTK.
+        renderer->init(reinterpret_cast<void *>(renderPanel->GetHandle()));
+#elif defined(__WXMAC__)  // Pour macOS
+        // Pour macOS, récupération du handle natif.
+        renderer->init(reinterpret_cast<void *>(renderPanel->GetHandle()));
 #else
         // Pour d'autres plateformes, il faudra récupérer le handle natif approprié.
-        renderer->init(nullptr, ViewportData({800, 600}));
+        renderer->init(nullptr);
 #endif
         rendererInitialized = true;
     }
@@ -57,12 +62,6 @@ void wxVulkanFrame::Render()
     {
         wxMessageBox(e.what(), "Erreur", wxICON_ERROR);
     }
-}
-
-void wxVulkanFrame::OnSize(wxSizeEvent &evt)
-{
-    renderer->ViewportSize({(unsigned int)renderPanel->GetSize().GetWidth(), (unsigned int)evt.GetSize().GetHeight()});
-    evt.Skip();
 }
 
 void wxVulkanFrame::OnButtonClick(wxCommandEvent &evt)

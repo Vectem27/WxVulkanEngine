@@ -14,27 +14,23 @@
 #include "Vertex.h"
 #include "UniformBufferObject.h"
 
-struct ViewportData
-{
-    unsigned int width{800};
-    unsigned int height{600};
-};
+#include "SwapchainRenderer.h"
 
 class VulkanRenderer 
 {
 public:
     VulkanRenderer() : instance(VK_NULL_HANDLE), physicalDevice(VK_NULL_HANDLE), device(VK_NULL_HANDLE),
-                       graphicsQueue(VK_NULL_HANDLE), surface(VK_NULL_HANDLE), swapChain(VK_NULL_HANDLE),
-                       renderPass(VK_NULL_HANDLE), commandPool(VK_NULL_HANDLE),
-                       imageAvailableSemaphore(VK_NULL_HANDLE), renderFinishedSemaphore(VK_NULL_HANDLE),
+                       graphicsQueue(VK_NULL_HANDLE), surface(VK_NULL_HANDLE),
+                       renderPass(VK_NULL_HANDLE),
                        graphicsQueueFamilyIndex(0) { }
 
-    ~VulkanRenderer() {
+    ~VulkanRenderer() 
+    {
         cleanup();
     }
 
     // Initialise Vulkan en utilisant le handle de la fenêtre native.
-    bool init(void* windowHandle, ViewportData viewportSize);
+    bool init(void* windowHandle);
 
     // Lance le rendu : ici, on se contente d’un clear en noir.
     void render();
@@ -46,14 +42,9 @@ public:
 
     float* getClearColor();
 
-    void ViewportSize(ViewportData viewportData);
-    ViewportData GetViewportSize() const { return viewportData; }
-
     VkDevice GetDevice() const { return device; }
     VkRenderPass GetRenderPass() const { return renderPass; }
     VkDescriptorPool GetDescriptorPool() const { return descriptorPool; }
-
-
 private:
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
@@ -67,24 +58,10 @@ private:
 
     // Rendering
     VkFormat swapChainImageFormat;
-
-    VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    VkExtent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
-    std::vector<VkFramebuffer> swapChainFramebuffers;
+    SwapchainRenderer* swapchainRenderer;
 
     VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 
-    ViewportData viewportData;
-
-    // Command
-    VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers;
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
-    VkFence inFlightFence;
-    
     uint32_t graphicsQueueFamilyIndex;
 
     // Material
@@ -93,10 +70,6 @@ private:
 public:
     UniformBuffer ubo;
 private:
-
-
-    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-
     // Création de l'instance Vulkan.
     void createInstance();
 
@@ -113,33 +86,11 @@ private:
     // Création du device logique et récupération de la file graphique.
     void createLogicalDevice();
 
-    // Création d'un swapchain avec des réglages de base.
-    void createSwapChain();
-
-    // Création des vues d'image pour chaque image du swapchain.
-    void createImageViews();
-
-    // Création d'une render pass avec une unique attache couleur.
     void createRenderPass();
 
     void InitMaterials();
 
-    // Création des framebuffers pour chaque image vue.
-    void createFramebuffers();
-
-    // Création d'une command pool pour allouer les command buffers.
-    void createCommandPool();
-
-    // Allocation et enregistrement des command buffers qui se contenteront de lancer un clear.
-    void createCommandBuffers();
-
-    // Création de deux sémaphores pour synchroniser l'acquisition et la présentation.
-    void createSemaphores();
-
     void createDescriptorPool();
-
-    void recreateSwapChain();
-    void cleanupSwapChain();
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
         VkBufferCreateInfo bufferCreateInfo = {};
@@ -180,8 +131,6 @@ private:
     
         throw std::runtime_error("failed to find suitable memory type!");
     }
-
-    
 };
 
 #endif // VULKAN_RENDERER_H

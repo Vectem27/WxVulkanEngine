@@ -24,10 +24,11 @@ private:
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;
-
+public:
     uint32_t width { 720 };
     uint32_t height { 480 };
 
+private:
     // Sync
     VkSemaphore imageAvailableSemaphore; // Wait the image is unused befor render in it
     VkSemaphore renderFinishedSemaphore; // Wait for render finished before present
@@ -38,10 +39,10 @@ private:
 
 public:
     SwapchainRenderer(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, 
-        VkFormat swapChainImageFormat, uint32_t graphicsQueueFamilyIndex);
+        VkRenderPass renderPass, VkFormat swapChainImageFormat, uint32_t graphicsQueueFamilyIndex);
     ~SwapchainRenderer();
 
-    VkCommandBuffer BeginRendeCommands();
+    VkCommandBuffer BeginRenderCommands(VkClearValue *clearColor);
     void EndRenderCommandsAndPresent(VkQueue graphicsQueue);
     void Present();
 
