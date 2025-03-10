@@ -1,6 +1,8 @@
 #ifndef VULKAN_RENDERER_H
 #define VULKAN_RENDERER_H
 
+#include "IRenderEngine.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -16,7 +18,7 @@
 
 #include "SwapchainRenderer.h"
 
-class VulkanRenderer 
+class VulkanRenderer : public IRenderEngine
 {
 public:
     VulkanRenderer() : instance(VK_NULL_HANDLE), physicalDevice(VK_NULL_HANDLE), device(VK_NULL_HANDLE),
@@ -26,17 +28,17 @@ public:
 
     ~VulkanRenderer() 
     {
-        cleanup();
+        Shutdown();
     }
 
     // Initialise Vulkan en utilisant le handle de la fenêtre native.
-    bool init(void* windowHandle);
+    virtual bool Init(void* windowHandle) override;
 
     // Lance le rendu : ici, on se contente d’un clear en noir.
     void render();
 
     // Nettoyage de toutes les ressources Vulkan.
-    void cleanup();
+    virtual void Shutdown() override;
 
     void setClearColor(float r, float g, float b, float a);
 
@@ -99,7 +101,8 @@ private:
         bufferCreateInfo.usage = usage;
         bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     
-        if (vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer) != VK_SUCCESS) {
+        if (vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer) != VK_SUCCESS) 
+        {
             throw std::runtime_error("failed to create buffer!");
         }
     

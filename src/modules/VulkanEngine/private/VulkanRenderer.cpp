@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 
-bool VulkanRenderer::init(void *windowHandle)
+bool VulkanRenderer::Init(void *windowHandle)
 {
     swapChainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
@@ -112,7 +112,7 @@ void VulkanRenderer::render()
     swapchainRenderer->EndRenderCommandsAndPresent(graphicsQueue);
 }
 
-void VulkanRenderer::cleanup() {
+void VulkanRenderer::Shutdown() {
     // Attendre que le device soit inactif avant de nettoyer
     if (device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(device);
@@ -226,7 +226,6 @@ void VulkanRenderer::createSurface(void *windowHandle)
     throw std::runtime_error("Surface creation not supported for this platform!");
 #endif
 }
-
 
 void VulkanRenderer::selectPhysicalDevice()
 {

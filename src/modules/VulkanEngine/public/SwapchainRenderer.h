@@ -1,10 +1,11 @@
 #ifndef SWAPCHAINRENDERER_H
 #define SWAPCHAINRENDERER_H
 
+#include "IRenderTarget.h"
 #include <vulkan/vulkan.h>
 #include <vector>
 
-class SwapchainRenderer
+class SwapchainRenderer //: public IRenderTarget
 {
 private:
     VkDevice device;
