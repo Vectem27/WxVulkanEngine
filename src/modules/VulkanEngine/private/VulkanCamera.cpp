@@ -236,7 +236,7 @@ void VulkanCamera::CreateDescriptors()
 void VulkanCamera::UpdateViewMatrix()
 {
     viewData.view = glm::lookAt(
-        glm::vec3(5.0f, 3.0f, 4.0f), // Position caméra
+        glm::vec3(-5.0f, -3.0f, -4.0f), // Position caméra
         glm::vec3(0.0f, 0.0f, 0.0f),  // Point cible
         glm::vec3(0.0f, 1.0f, 0.0f)   // Vecteur "up"
     );
