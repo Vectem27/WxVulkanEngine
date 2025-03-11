@@ -1,0 +1,12 @@
+Cmake build :
+cmake -S . -B ./build -G "MinGW Makefiles" -DBUILD_App=ON -DBUILD_CompilationTest=OFF -DCOMPILE_SHADERS=OFF
+cmake --build ./build -j8 --config Debug
+
+
+Launche app
+start .\bin\Debug\WxVulkanEngine\WxVulkanEngine.exe
+.\bin\Debug\WxVulkanEngine\WxVulkanEngine.exe
+
+
+Remove build
+rm -r -force bin ; rm -r -force build
