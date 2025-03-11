@@ -40,30 +40,35 @@ public:
 
 
     VkFormat GetSwapChainImageFormat() const { return swapChainImageFormat;}
+    VkFormat GetDepthStencilImageFormat() const { return depthStencilImageFormat;}
     VkQueue GetPresentQueue() const { return presentQueue; }
     VkQueue GetGraphicsQueue() const { return graphicsQueue; }
+    VkRenderPass GetDefaultRenderPass() const { return defaultRenderPass; }
 
     const VkDescriptorSetLayout* GetCameraDescriptorLayout() const { return &cameraDescriptorLayout; }
     const VkDescriptorSetLayout* GetObjectDescriptorLayout() const { return &objectDescriptorLayout; }
 private:
-    VkInstance instance;
-    VkPhysicalDevice physicalDevice;
-    VkDevice device;
-    VkSurfaceKHR surface;
+    VkInstance instance{VK_NULL_HANDLE};
+    VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
+    VkDevice device{VK_NULL_HANDLE};
+    VkSurfaceKHR surface{VK_NULL_HANDLE};
 
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
+    VkQueue graphicsQueue{VK_NULL_HANDLE};
+    VkQueue presentQueue{VK_NULL_HANDLE};
 
     // Rendering
     VkFormat swapChainImageFormat;
+    VkFormat depthStencilImageFormat;
     SwapchainRenderer* swapchainRenderer;
     VulkanCamera* camera;
 
     uint32_t graphicsQueueFamilyIndex;
 
 
-    VkDescriptorSetLayout cameraDescriptorLayout;
-    VkDescriptorSetLayout objectDescriptorLayout;
+    VkDescriptorSetLayout cameraDescriptorLayout{VK_NULL_HANDLE};
+    VkDescriptorSetLayout objectDescriptorLayout{VK_NULL_HANDLE};
+
+    VkRenderPass defaultRenderPass{VK_NULL_HANDLE};
     
 public:
     // Material
@@ -78,6 +83,7 @@ private:
     void InitMaterials();
     void CreateDescriptorLayouts();
     void createDescriptorPool();
+    void CreateRenderPass();
 public:
     void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
         VkBufferCreateInfo bufferCreateInfo = {};

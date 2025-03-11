@@ -25,9 +25,9 @@ public:
     bool Bind(class VulkanCamera* camera);
 
 private:
-    VkPipeline graphicsPipeline;
-    VkPipelineLayout pipelineLayout;
-    VkDescriptorSet objectDescriptorSet;
+    VkPipeline graphicsPipeline{VK_NULL_HANDLE};
+    VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
+    VkDescriptorSet objectDescriptorSet{VK_NULL_HANDLE};
 
     class VulkanRenderer* renderer;
 

@@ -24,10 +24,7 @@ bool SwapchainRenderer::Init(IRenderEngine *renderEngine)
     {
         return false;
     }
-
-    //CreateSwapChain();
-    //CreateImageViews();
-    //CreateFramebuffers();
+    
     CreateCommandPool();
     CreateCommandBuffers();
     CreateSync();
@@ -91,7 +88,7 @@ bool SwapchainRenderer::BeginRenderCommands()
     // Débute le render pass
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.renderPass = renderEngine->GetDefaultRenderPass();
     renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = {width, height};
@@ -249,7 +246,7 @@ void SwapchainRenderer::CreateImageViews()
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = depthImages[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = depthFormat;
+        createInfo.format = renderEngine->GetDepthStencilImageFormat();
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -298,8 +295,6 @@ void SwapchainRenderer::CreateFramebuffers()
 
 void SwapchainRenderer::CreateDepthResources()
 {
-    VkFormat depthFormat = VK_FORMAT_D24_UNORM_S8_UINT; // ou VK_FORMAT_D32_SFLOAT_S8_UINT
-
     depthImages.resize(swapChainImages.size());
     depthImageMemorys.resize(swapChainImages.size());
 
@@ -313,7 +308,7 @@ void SwapchainRenderer::CreateDepthResources()
         imageInfo.extent.depth = 1;
         imageInfo.mipLevels = 1;
         imageInfo.arrayLayers = 1;
-        imageInfo.format = depthFormat;
+        imageInfo.format = renderEngine->GetDepthStencilImageFormat();
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
@@ -399,25 +394,28 @@ void SwapchainRenderer::RecreateSwapChain()
     CreateDepthResources();
     CreateImageViews();
     CreateFramebuffers();
+
+    // Détruire les anciens command buffers avant de les recréer
+    if (!commandBuffers.empty()) 
+    {
+        vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
+        commandBuffers.clear();
+    }
     CreateCommandBuffers();
 }
 
 void SwapchainRenderer::CleanupSwapchain()
 {
     // Détruire les framebuffers
-    for (auto framebuffer : swapChainFramebuffers) 
-    {
-        if (framebuffer != VK_NULL_HANDLE) 
-        {
+    for (auto framebuffer : swapChainFramebuffers) {
+        if (framebuffer != VK_NULL_HANDLE) {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
         }
     }
-    swapChainFramebuffers.clear(); // Vider la liste après destruction
-
+    swapChainFramebuffers.clear();
 
     // Détruire les image views
-    for (size_t i = 0; i < swapChainImageViews.size(); i++)
-    {
+    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
         vkDestroyImageView(device, swapChainImageViews[i], nullptr);
         vkDestroyImageView(device, depthImageViews[i], nullptr);
         vkDestroyImage(device, depthImages[i], nullptr);

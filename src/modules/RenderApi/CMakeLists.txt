@@ -5,4 +5,4 @@ target_include_directories(RenderApi
 )
 
 target_include_directories(RenderApi INTERFACE ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(RenderApi INTERFACE ${Vulkan_LIBRARIES} RenderApi)
+target_link_libraries(RenderApi INTERFACE ${Vulkan_LIBRARIES})

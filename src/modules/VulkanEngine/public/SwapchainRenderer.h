@@ -12,15 +12,15 @@ private:
     VkPhysicalDevice physicalDevice;
     VkSurfaceKHR surface;
     VkFormat swapChainImageFormat;
-    VkRenderPass renderPass;
+    VkRenderPass renderPass{VK_NULL_HANDLE};
     uint32_t graphicsQueueFamilyIndex;
 
     // Commands
-    VkCommandPool commandPool;
+    VkCommandPool commandPool{VK_NULL_HANDLE};
     std::vector<VkCommandBuffer> commandBuffers;
 
     // Swapchain
-    VkSwapchainKHR swapChain;
+    VkSwapchainKHR swapChain{VK_NULL_HANDLE};
     std::vector<VkImage> swapChainImages;
     VkExtent2D swapChainExtent;
     std::vector<VkImageView> swapChainImageViews;
@@ -32,7 +32,6 @@ private:
     std::vector<VkDeviceMemory> depthImageMemorys;
     std::vector<VkImageView> depthImageViews;
     std::vector<VkFramebuffer> depthFramebuffers;
-    VkFormat depthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
 
 public:
     uint32_t width { 720 };

@@ -20,7 +20,6 @@ public: // ICamera Interface
     virtual void SetRenderTarget(class IRenderTarget* renderTarget) override;
 
 public:
-    VkRenderPass GetRenderPass() const { return renderPass; }
     VkBuffer GetViewDataBuffer() const { return viewBuffer.GetBuffer(); }
     VkBuffer GetObjectDataBuffer() const { return objectBuffer.GetBuffer(); }
     const VkDescriptorSet* GetDescriptorSet() const { return &cameraDescriptorSet; }
@@ -33,9 +32,8 @@ private:
     class VulkanRenderer* renderEngine;
     class IRenderTarget* renderTarget;
 
-    VkDescriptorSet cameraDescriptorSet;
-    VkDescriptorPool cameraDescriptorPool;
-    VkRenderPass renderPass;
+    VkDescriptorSet cameraDescriptorSet{VK_NULL_HANDLE};
+    VkDescriptorPool cameraDescriptorPool{VK_NULL_HANDLE};
 
     UniformBuffer viewBuffer;
     TransformMVP viewData;
@@ -45,7 +43,6 @@ private:
 
 
 private: // Create
-    void CreateRenderPass();
     void CreateDescriptorPool();
     void CreateDescriptors();
 

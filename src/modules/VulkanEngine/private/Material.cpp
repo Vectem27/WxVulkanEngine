@@ -138,8 +138,8 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    //rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
-    rasterizer.lineWidth = 1.0f;
+    rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+    rasterizer.lineWidth = 3.5f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -193,10 +193,10 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
         VK_DYNAMIC_STATE_SCISSOR
     };
     VkPipelineDynamicStateCreateInfo dynamicStateCreateInfo = {};
-        dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-        dynamicStateCreateInfo.dynamicStateCount = 2;
-        dynamicStateCreateInfo.pDynamicStates = dynamicStates;
-
+    dynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicStateCreateInfo.dynamicStateCount = 2;
+    dynamicStateCreateInfo.pDynamicStates = dynamicStates;
+ 
     // Création du pipeline graphique
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -211,6 +211,7 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     pipelineInfo.layout = pipelineLayout;
     pipelineInfo.pDynamicState = &dynamicStateCreateInfo;
     pipelineInfo.pDepthStencilState = &depthStencil; // Ajoutez cette ligne
+    pipelineInfo.renderPass = renderer->GetDefaultRenderPass();
 
     if (vkCreateGraphicsPipelines(renderer->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
     {
