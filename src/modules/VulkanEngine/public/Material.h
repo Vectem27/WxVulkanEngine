@@ -20,19 +20,18 @@ public:
 
     VkPipeline GetGraphicsPipeline() { return graphicsPipeline; }
     VkPipelineLayout GetPipelineLayout() { return pipelineLayout; }
-    VkDescriptorSet* GetDescriptorSet() { return &descriptorSet; }
+    VkDescriptorSet* GetObjectDescriptorSet() { return &objectDescriptorSet; }
+
+    bool Bind(class VulkanCamera* camera);
 
 private:
     VkPipeline graphicsPipeline;
     VkPipelineLayout pipelineLayout;
-    VkDescriptorSetLayout descriptorSetLayout;
-    VkDescriptorSet descriptorSet;
+    VkDescriptorSet objectDescriptorSet;
 
     class VulkanRenderer* renderer;
 
-    void createDescriptorSetLayout();
     void allocateDescriptorSet();
-    void createGraphicsPipeline();
 private:
     void initShaderModule(VkDevice device, VkShaderModule *shaderModule, const std::vector<char>& code) {
         VkShaderModuleCreateInfo createInfo{};

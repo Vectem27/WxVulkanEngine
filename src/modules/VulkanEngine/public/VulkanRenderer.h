@@ -17,36 +17,34 @@
 #include "UniformBufferObject.h"
 
 #include "SwapchainRenderer.h"
+#include "VulkanCamera.h"
+#include "IRenderEngine.h"
 
 class VulkanRenderer : public IRenderEngine
 {
 public:
     VulkanRenderer() : instance(VK_NULL_HANDLE), physicalDevice(VK_NULL_HANDLE), device(VK_NULL_HANDLE),
-                       graphicsQueue(VK_NULL_HANDLE), surface(VK_NULL_HANDLE),
-                       renderPass(VK_NULL_HANDLE),
-                       graphicsQueueFamilyIndex(0) { }
+                       graphicsQueue(VK_NULL_HANDLE), surface(VK_NULL_HANDLE), graphicsQueueFamilyIndex(0) 
+    { }
 
-    ~VulkanRenderer() 
-    {
-        Shutdown();
-    }
+    ~VulkanRenderer() { Shutdown(); }
 
-    // Initialise Vulkan en utilisant le handle de la fenêtre native.
     virtual bool Init(void* windowHandle) override;
-
-    // Lance le rendu : ici, on se contente d’un clear en noir.
     void render();
-
-    // Nettoyage de toutes les ressources Vulkan.
     virtual void Shutdown() override;
 
-    void setClearColor(float r, float g, float b, float a);
-
-    float* getClearColor();
 
     VkDevice GetDevice() const { return device; }
-    VkRenderPass GetRenderPass() const { return renderPass; }
+    VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
     VkDescriptorPool GetDescriptorPool() const { return descriptorPool; }
+
+
+    VkFormat GetSwapChainImageFormat() const { return swapChainImageFormat;}
+    VkQueue GetPresentQueue() const { return presentQueue; }
+    VkQueue GetGraphicsQueue() const { return graphicsQueue; }
+
+    const VkDescriptorSetLayout* GetCameraDescriptorLayout() const { return &cameraDescriptorLayout; }
+    const VkDescriptorSetLayout* GetObjectDescriptorLayout() const { return &objectDescriptorLayout; }
 private:
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
@@ -56,45 +54,32 @@ private:
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
-    VkRenderPass renderPass;
-
     // Rendering
     VkFormat swapChainImageFormat;
     SwapchainRenderer* swapchainRenderer;
-
-    VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
+    VulkanCamera* camera;
 
     uint32_t graphicsQueueFamilyIndex;
 
+
+    VkDescriptorSetLayout cameraDescriptorLayout;
+    VkDescriptorSetLayout objectDescriptorLayout;
+    
+public:
     // Material
     VkDescriptorPool descriptorPool;
     Material material;
-public:
-    UniformBuffer ubo;
 private:
-    // Création de l'instance Vulkan.
     void createInstance();
-
-    // Création de la surface en fonction de la plateforme.
     void createSurface(void* windowHandle);
-
-    // Choix du GPU physique.
     void selectPhysicalDevice();
-
-    // Pour cet exemple, on considère qu'un GPU est adapté s'il possède une file graphique
-    // avec support de la présentation sur la surface.
     bool isDeviceSuitable(VkPhysicalDevice device);
-
-    // Création du device logique et récupération de la file graphique.
     void createLogicalDevice();
-
-    void createRenderPass();
-
     void InitMaterials();
-
+    void CreateDescriptorLayouts();
     void createDescriptorPool();
-
-    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
+public:
+    void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
         VkBufferCreateInfo bufferCreateInfo = {};
         bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferCreateInfo.size = size;
@@ -112,7 +97,7 @@ private:
         VkMemoryAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+        allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
     
         if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate buffer memory!");
@@ -120,14 +105,17 @@ private:
     
         vkBindBufferMemory(device, buffer, bufferMemory, 0);
     }
-
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    
+    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) 
+    {
         VkPhysicalDeviceMemoryProperties memProperties;
         vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
     
         // Parcourir tous les types de mémoire pour trouver celui qui correspond aux critères
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
+        {
+            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
+            {
                 return i;
             }
         }

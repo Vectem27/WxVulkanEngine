@@ -36,3 +36,5 @@ cmake -G "MSYS Makefiles" -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DwxWidgets_COMPONE
 
 
 
+
+

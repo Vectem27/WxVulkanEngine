@@ -4,8 +4,8 @@
 class IRenderable
 {
 public:
-    virtual bool Init(class IRenderEngine engine) = 0;
-    virtual void draw(class IRenderTarget renderTarget) = 0;
+    virtual bool Init(class IRenderEngine* engine) = 0;
+    virtual void draw(class ICamera* camera) = 0;
 };
 
 #endif // IRENDERABLE_H

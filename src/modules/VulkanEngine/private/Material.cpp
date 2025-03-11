@@ -6,6 +6,8 @@
 #include <iostream>
 #include "Vertex.h"
 #include "VulkanRenderer.h"
+#include "SwapchainRenderer.h"
+#include "VulkanCamera.h"
 
 std::vector<char> readFile(const std::string &filename)
 {
@@ -43,9 +45,7 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
 {
     this->renderer = renderer;
 
-    createDescriptorSetLayout();
     allocateDescriptorSet();
-    createGraphicsPipeline();
 
     // Charge les shaders (remplacez par votre propre système de chargement)
     auto vertShaderCode = readFile(Info.vertexShader);
@@ -80,16 +80,26 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     bindingDescription.stride = sizeof(Vertex);
     bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+    std::array<VkVertexInputAttributeDescription, 4> attributeDescriptions{};
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT; // vec2
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT; // vec2
     attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
     attributeDescriptions[1].binding = 0;
     attributeDescriptions[1].location = 1;
     attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
     attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+    attributeDescriptions[2].binding = 0;
+    attributeDescriptions[2].location = 2;
+    attributeDescriptions[2].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3
+    attributeDescriptions[2].offset = offsetof(Vertex, normal);
+
+    attributeDescriptions[3].binding = 0;
+    attributeDescriptions[3].location = 3;
+    attributeDescriptions[3].format = VK_FORMAT_R32G32_SFLOAT; // vec3
+    attributeDescriptions[3].offset = offsetof(Vertex, uv);
 
     vertexInputInfo.vertexBindingDescriptionCount = 1;
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
@@ -128,9 +138,10 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+    //rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
     rasterizer.lineWidth = 1.0f;
-    //rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -140,7 +151,7 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     multisampling.sampleShadingEnable = VK_FALSE;
     multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-    // Configuration du blending (désactivé ici)
+    // Configuration du blending
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
@@ -151,11 +162,26 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     colorBlending.attachmentCount = 1;
     colorBlending.pAttachments = &colorBlendAttachment;
 
+    // Configuration du depth/stencil state
+    VkPipelineDepthStencilStateCreateInfo depthStencil{};
+    depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depthStencil.depthTestEnable = VK_TRUE;
+    depthStencil.depthWriteEnable = VK_TRUE;
+    depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+    depthStencil.depthBoundsTestEnable = VK_FALSE;
+    depthStencil.stencilTestEnable = VK_FALSE;
+
+    VkDescriptorSetLayout descSetLayouts[] 
+    {
+        *renderer->GetCameraDescriptorLayout(),
+        *renderer->GetObjectDescriptorLayout()
+    };
+
     // Création du pipeline layout (aucun uniform ou push constant ici)
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 1; // Ajouté
-    pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout; // Ajouté
+    pipelineLayoutInfo.setLayoutCount = 2;
+    pipelineLayoutInfo.pSetLayouts = descSetLayouts; // Ajouté
 
     if (vkCreatePipelineLayout(renderer->GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
     {
@@ -183,10 +209,8 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
     pipelineInfo.layout = pipelineLayout;
-    pipelineInfo.renderPass = renderer->GetRenderPass();
-    pipelineInfo.subpass = 0;
     pipelineInfo.pDynamicState = &dynamicStateCreateInfo;
-
+    pipelineInfo.pDepthStencilState = &depthStencil; // Ajoutez cette ligne
 
     if (vkCreateGraphicsPipelines(renderer->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
     {
@@ -198,46 +222,17 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     vkDestroyShaderModule(renderer->GetDevice(), fragShaderModule, nullptr);
 }
 
-void Material::createDescriptorSetLayout()
+bool Material::Bind(VulkanCamera *camera)
 {
-    VkDescriptorSetLayoutBinding uboLayoutBinding{};
-    uboLayoutBinding.binding = 0;
-    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    uboLayoutBinding.descriptorCount = 1;
-    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings = &uboLayoutBinding;
-
-    if (vkCreateDescriptorSetLayout(renderer->GetDevice(), &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Échec de la création du descriptor set layout !");
-    }
-}
-
-void Material::allocateDescriptorSet()
-{
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = renderer->GetDescriptorPool();
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &descriptorSetLayout;
-
-    if (vkAllocateDescriptorSets(renderer->GetDevice(), &allocInfo, &descriptorSet) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Échec de l'allocation du descriptor set !");
-    }
-
-    VkDescriptorBufferInfo bufferInfo{};
-    bufferInfo.buffer = renderer->ubo.getBuffer(); // Supposons que ubo expose son buffer
+    VkDescriptorBufferInfo bufferInfo {};
+    bufferInfo.buffer = camera->GetObjectDataBuffer(); // Supposons que ubo expose son buffer
     bufferInfo.offset = 0;
-    bufferInfo.range = sizeof(ViewData);
+    bufferInfo.range = sizeof(ObjectData);
 
-    VkWriteDescriptorSet descriptorWrite{};
+    VkWriteDescriptorSet descriptorWrite {};
     descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = *GetDescriptorSet();
+    descriptorWrite.dstSet = *GetObjectDescriptorSet();
     descriptorWrite.dstBinding = 0;
     descriptorWrite.dstArrayElement = 0;
     descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -245,8 +240,25 @@ void Material::allocateDescriptorSet()
     descriptorWrite.pBufferInfo = &bufferInfo;
 
     vkUpdateDescriptorSets(renderer->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+
+    vkCmdBindPipeline(camera->GetRenderTarget()->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetGraphicsPipeline());
+    vkCmdBindDescriptorSets(camera->GetRenderTarget()->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 0, 1, camera->GetDescriptorSet(), 0, nullptr);
+    vkCmdBindDescriptorSets(camera->GetRenderTarget()->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 1, 1, GetObjectDescriptorSet(), 0, nullptr);
+
+    return true;
 }
 
-void Material::createGraphicsPipeline()
+
+void Material::allocateDescriptorSet()
 {
+    VkDescriptorSetAllocateInfo allocInfo {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    allocInfo.descriptorPool = renderer->GetDescriptorPool();
+    allocInfo.descriptorSetCount = 1;
+    allocInfo.pSetLayouts = renderer->GetObjectDescriptorLayout();
+
+    if (vkAllocateDescriptorSets(renderer->GetDevice(), &allocInfo, &objectDescriptorSet) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Échec de l'allocation du descriptor set !");
+    }
 }

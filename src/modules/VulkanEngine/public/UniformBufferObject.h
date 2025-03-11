@@ -3,11 +3,12 @@
 
 #include <vulkan/vulkan.h>
 #include <cstring>
+#include <stdexcept>
 
 class UniformBuffer
 {
 public:
-    void create(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size)
+    void Create(VkDevice device, VkPhysicalDevice physicalDevice, VkDeviceSize size)
     {
         this->device = device;
         bufferSize = size;
@@ -35,7 +36,7 @@ public:
         vkBindBufferMemory(device, buffer, bufferMemory, 0);
     }
 
-    void update(void* data)
+    void Update(void* data)
     {
         void* mappedData;
         vkMapMemory(device, bufferMemory, 0, bufferSize, 0, &mappedData);
@@ -43,13 +44,13 @@ public:
         vkUnmapMemory(device, bufferMemory);
     }
 
-    void cleanup()
+    void Cleanup()
     {
         vkDestroyBuffer(device, buffer, nullptr);
         vkFreeMemory(device, bufferMemory, nullptr);
     }
 
-    VkBuffer getBuffer() const { return buffer; }
+    VkBuffer GetBuffer() const { return buffer; }
 
 private:
     VkDevice device;

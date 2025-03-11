@@ -1,21 +1,41 @@
 #include "SwapchainRenderer.h"
 #include <stdexcept>
 #include <algorithm>
+#include "VulkanRenderer.h"
+#include <array>
 
 SwapchainRenderer::SwapchainRenderer(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, 
-    VkRenderPass renderPass, VkFormat swapChainImageFormat, uint32_t graphicsQueueFamilyIndex)
-    : device(device), physicalDevice(physicalDevice), surface(surface), renderPass(renderPass),
+    VkFormat swapChainImageFormat, uint32_t graphicsQueueFamilyIndex)
+    : device(device), physicalDevice(physicalDevice), surface(surface), renderPass(VK_NULL_HANDLE),
     swapChainImageFormat(swapChainImageFormat), graphicsQueueFamilyIndex(graphicsQueueFamilyIndex)
 {
-    CreateSwapChain();
-    CreateImageViews();
-    CreateFramebuffers();
-    CreateCommandPool();
-    CreateCommandBuffers();
-    CreateSync();
+
 }
 
 SwapchainRenderer::~SwapchainRenderer()
+{
+    Cleanup();
+}
+
+bool SwapchainRenderer::Init(IRenderEngine *renderEngine)
+{
+    this->renderEngine = dynamic_cast<VulkanRenderer*>(renderEngine);
+    if (!this->renderEngine)
+    {
+        return false;
+    }
+
+    //CreateSwapChain();
+    //CreateImageViews();
+    //CreateFramebuffers();
+    CreateCommandPool();
+    CreateCommandBuffers();
+    CreateSync();
+
+    return true;
+}
+
+void SwapchainRenderer::Cleanup()
 {
     CleanupSwapchain();
 
@@ -39,10 +59,9 @@ SwapchainRenderer::~SwapchainRenderer()
         vkDestroyCommandPool(device, commandPool, nullptr);
         commandPool = VK_NULL_HANDLE;
     }
-
 }
 
-VkCommandBuffer SwapchainRenderer::BeginRenderCommands(VkClearValue *clearColor)
+bool SwapchainRenderer::BeginRenderCommands()
 {
     vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(device, 1, &inFlightFence);
@@ -51,7 +70,7 @@ VkCommandBuffer SwapchainRenderer::BeginRenderCommands(VkClearValue *clearColor)
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
         RecreateSwapChain();
-        return VK_NULL_HANDLE;
+        return false;
     } else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("vkAcquireNextImageKHR failed!");
     }
@@ -72,21 +91,25 @@ VkCommandBuffer SwapchainRenderer::BeginRenderCommands(VkClearValue *clearColor)
     // Débute le render pass
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;                         // Variable de classe
-    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex]; // Variable de classe
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = {width, height}; // Taille de la fenêtre
+    renderPassInfo.renderArea.extent = {width, height};
 
-    // Couleur de fond (noir)
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = clearColor;
+    // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = clearColor.color; // Couleur de fond
+    clearValues[1].depthStencil = {1.0f, 0}; // Valeur de profondeur initiale (1.0 = loin)
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    return commandBuffers[imageIndex];
+    return true;
 }
 
-void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue graphicsQueue)
+void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueue graphicsQueue)
 {
 
     // Termine le render pass
@@ -128,7 +151,7 @@ void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue graphicsQueue)
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    VkResult res = vkQueuePresentKHR(graphicsQueue, &presentInfo);
+    VkResult res = vkQueuePresentKHR(presentQueue, &presentInfo);
     if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) 
     {
         RecreateSwapChain();
@@ -137,6 +160,12 @@ void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue graphicsQueue)
     {
         throw std::runtime_error("failed to present swap chain image!");
     }
+}
+
+void SwapchainRenderer::SetRenderPass(VkRenderPass renderPass)
+{
+    this->renderPass = renderPass;
+    RecreateSwapChain();
 }
 
 void SwapchainRenderer::CreateSwapChain()
@@ -212,6 +241,36 @@ void SwapchainRenderer::CreateImageViews()
             throw std::runtime_error("failed to create image views!");
         }
     }
+
+    depthImageViews.resize(depthImages.size());
+    for (size_t i = 0; i < depthImages.size(); i++)
+    {
+        VkImageViewCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        createInfo.image = depthImages[i];
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        createInfo.format = depthFormat;
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        // Correction du masque d'aspect pour le depth/stencil
+        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+        createInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+
+        createInfo.subresourceRange.baseMipLevel = 0;
+        createInfo.subresourceRange.levelCount = 1;
+        createInfo.subresourceRange.baseArrayLayer = 0;
+        createInfo.subresourceRange.layerCount = 1;
+
+        // Correction : stocker la vue dans depthImageViews au lieu de swapChainImageViews
+        if (vkCreateImageView(device, &createInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create depth image views!");
+        }
+    }
+
 }
 
 void SwapchainRenderer::CreateFramebuffers()
@@ -219,13 +278,13 @@ void SwapchainRenderer::CreateFramebuffers()
     swapChainFramebuffers.resize(swapChainImageViews.size());
     for (size_t i = 0; i < swapChainImageViews.size(); i++)
     {
-        VkImageView attachments[] = {swapChainImageViews[i]};
+        std::array<VkImageView, 2> attachments = {swapChainImageViews[i], depthImageViews[i]};
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = 1;
-        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = swapChainExtent.width;
         framebufferInfo.height = swapChainExtent.height;
         framebufferInfo.layers = 1;
@@ -234,6 +293,52 @@ void SwapchainRenderer::CreateFramebuffers()
         {
             throw std::runtime_error("failed to create framebuffer!");
         }
+    }
+}
+
+void SwapchainRenderer::CreateDepthResources()
+{
+    VkFormat depthFormat = VK_FORMAT_D24_UNORM_S8_UINT; // ou VK_FORMAT_D32_SFLOAT_S8_UINT
+
+    depthImages.resize(swapChainImages.size());
+    depthImageMemorys.resize(swapChainImages.size());
+
+    for (size_t i = 0; i < swapChainImages.size(); i++)
+    {
+        VkImageCreateInfo imageInfo{};
+        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        imageInfo.imageType = VK_IMAGE_TYPE_2D;
+        imageInfo.extent.width = swapChainExtent.width;
+        imageInfo.extent.height = swapChainExtent.height;
+        imageInfo.extent.depth = 1;
+        imageInfo.mipLevels = 1;
+        imageInfo.arrayLayers = 1;
+        imageInfo.format = depthFormat;
+        imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+        if (vkCreateImage(device, &imageInfo, nullptr, &depthImages[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to create depth image!");
+        }
+
+        VkMemoryRequirements memRequirements;
+        vkGetImageMemoryRequirements(device, depthImages[i], &memRequirements);
+
+        VkMemoryAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+        allocInfo.allocationSize = memRequirements.size;
+        allocInfo.memoryTypeIndex = renderEngine->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+        if (vkAllocateMemory(device, &allocInfo, nullptr, &depthImageMemorys[i]) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to allocate depth image memory!");
+        }
+
+        vkBindImageMemory(device, depthImages[i], depthImageMemorys[i], 0);
     }
 }
 
@@ -291,6 +396,7 @@ void SwapchainRenderer::RecreateSwapChain()
     CleanupSwapchain();
 
     CreateSwapChain();
+    CreateDepthResources();
     CreateImageViews();
     CreateFramebuffers();
     CreateCommandBuffers();
@@ -299,8 +405,10 @@ void SwapchainRenderer::RecreateSwapChain()
 void SwapchainRenderer::CleanupSwapchain()
 {
     // Détruire les framebuffers
-    for (auto framebuffer : swapChainFramebuffers) {
-        if (framebuffer != VK_NULL_HANDLE) {
+    for (auto framebuffer : swapChainFramebuffers) 
+    {
+        if (framebuffer != VK_NULL_HANDLE) 
+        {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
         }
     }
@@ -308,15 +416,22 @@ void SwapchainRenderer::CleanupSwapchain()
 
 
     // Détruire les image views
-    for (auto imageView : swapChainImageViews) {
-        if (imageView != VK_NULL_HANDLE) {
-            vkDestroyImageView(device, imageView, nullptr);
-        }
+    for (size_t i = 0; i < swapChainImageViews.size(); i++)
+    {
+        vkDestroyImageView(device, swapChainImageViews[i], nullptr);
+        vkDestroyImageView(device, depthImageViews[i], nullptr);
+        vkDestroyImage(device, depthImages[i], nullptr);
+        vkFreeMemory(device, depthImageMemorys[i], nullptr);
     }
+
     swapChainImageViews.clear();
+    depthImageViews.clear();
+    depthImages.clear();
+    depthImageMemorys.clear();
 
     // Détruire la swap chain
-    if (swapChain != VK_NULL_HANDLE) {
+    if (swapChain != VK_NULL_HANDLE) 
+    {
         vkDestroySwapchainKHR(device, swapChain, nullptr);
         swapChain = VK_NULL_HANDLE;
     }

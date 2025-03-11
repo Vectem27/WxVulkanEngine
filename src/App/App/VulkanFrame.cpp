@@ -36,24 +36,24 @@ void wxVulkanFrame::OnButtonClick(wxCommandEvent &evt)
 {
     try
     {
-        float red = renderPanel->renderer->getClearColor()[0];
-        float green = renderPanel->renderer->getClearColor()[1];
-        float blue = renderPanel->renderer->getClearColor()[2];
-
-        if (blue < 1.0f)
-            blue += 0.1f;
-        else if (green < 1.0f)
-            green += 0.1f;
-        else if (red < 1.0f)
-            red += 0.1f;
-        else
-            wxMessageBox("White screen", "Info", wxICON_INFORMATION);
-
-        red = red > 1.0f ? 1.0f : red;
-        green = green > 1.0f ? 1.0f : green;
-        blue = blue > 1.0f ? 1.0f : blue;
-
-        renderPanel->renderer->setClearColor(red, green, blue, renderPanel->renderer->getClearColor()[3]);
+//        float red = renderPanel->renderer->getClearColor()[0];
+//        float green = renderPanel->renderer->getClearColor()[1];
+//        float blue = renderPanel->renderer->getClearColor()[2];
+//
+//        if (blue < 1.0f)
+//            blue += 0.1f;
+//        else if (green < 1.0f)
+//            green += 0.1f;
+//        else if (red < 1.0f)
+//            red += 0.1f;
+//        else
+//            wxMessageBox("White screen", "Info", wxICON_INFORMATION);
+//
+//        red = red > 1.0f ? 1.0f : red;
+//        green = green > 1.0f ? 1.0f : green;
+//        blue = blue > 1.0f ? 1.0f : blue;
+//
+//        renderPanel->renderer->setClearColor(red, green, blue, renderPanel->renderer->getClearColor()[3]);
     }
     catch (const std::exception &e)
     {

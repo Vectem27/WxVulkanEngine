@@ -70,9 +70,8 @@ public:
     void Cleanup();
     void Render();
 
-private:
     VulkanPanel *renderPanel;
-
+private:
     void OnSize(wxSizeEvent &evt);
 
     void OnButtonClick(wxCommandEvent &evt); // Ajoutez cette ligne

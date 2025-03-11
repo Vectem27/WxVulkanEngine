@@ -8,16 +8,20 @@
 
 struct Vertex 
 {
-    glm::vec3 pos; // Position en 2D
-    glm::vec3 color; // Couleur
-    //glm::vec3 normal; // Normal
-    //glm::vec2 uv; // uv
+    glm::vec3 pos {0.0f, 0.0f, 0.0f}; // Position en 2D
+    glm::vec3 color {0.0f, 0.0f, 0.0f}; // Couleur
+    glm::vec3 normal {0.0f, 0.0f, 0.0f}; // Normal
+    glm::vec2 uv {0.0f, 0.0f}; // uv
 };
 
-struct ViewData
+struct TransformMVP
 {
-    alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
+};
+
+struct ObjectData
+{
+    alignas(16) glm::mat4 model;
 };
 #endif // VERTEX_H

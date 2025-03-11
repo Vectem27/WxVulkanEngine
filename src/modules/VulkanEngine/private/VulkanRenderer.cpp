@@ -5,6 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 
+#include "Scene.h"
+
 bool VulkanRenderer::Init(void *windowHandle)
 {
     swapChainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
@@ -21,12 +23,14 @@ bool VulkanRenderer::Init(void *windowHandle)
     // 4 Create logical device & Queue
     createLogicalDevice();
 
-    createRenderPass();
-
-    swapchainRenderer = new SwapchainRenderer(device, physicalDevice, surface, renderPass, swapChainImageFormat, graphicsQueueFamilyIndex);
-
-    // 8 Create Render Pipeline
+    CreateDescriptorLayouts();
     createDescriptorPool();
+
+    camera = new VulkanCamera();
+    swapchainRenderer = new SwapchainRenderer(device, physicalDevice, surface, swapChainImageFormat, graphicsQueueFamilyIndex);
+    swapchainRenderer->Init(this);
+    camera->Init(this, swapchainRenderer);
+    
     InitMaterials();
 
     return true;
@@ -34,82 +38,14 @@ bool VulkanRenderer::Init(void *windowHandle)
 
 void VulkanRenderer::render()
 {
-
-    const std::vector<Vertex> vertices =
-        {
-            {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},  // Vertex 1 (red)
-            {{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},  // Vertex 3 (green)
-            {{-0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}},  // Vertex 2 (purple)
-
-            {{ 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}},  // Vertex 1 (blue)
-            {{-0.5f,  0.5f, 0.0f}, {1.0f, 0.0f, 1.0f}},  // Vertex 2 (purple)
-            {{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},  // Vertex 3 (green)
-        };
-
-    // Définir la taille du buffer
-    VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
-
-    // Créer le buffer de vertex
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    createBuffer(bufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer, vertexBufferMemory);
-
-    // Copier les données des vertices dans le buffer
-    void *data;
-    vkMapMemory(device, vertexBufferMemory, 0, bufferSize, 0, &data);
-    memcpy(data, vertices.data(), (size_t)bufferSize);
-    vkUnmapMemory(device, vertexBufferMemory);
-
-    auto cmd = swapchainRenderer->BeginRenderCommands(&clearColor);
-
-    if(cmd == VK_NULL_HANDLE)
+    static Scene* scene;
+    if (!scene)
     {
-        std::cout << "nullhandle" << std::endl;
+        scene = new Scene();
+        scene->Init(this);
     }
 
-    VkViewport viewport = {};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = static_cast<float>(swapchainRenderer->width);
-    viewport.height = static_cast<float>(swapchainRenderer->height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-
-    VkRect2D scissor{}; 
-    scissor.offset = {0, 0};
-    scissor.extent = {swapchainRenderer->width, swapchainRenderer->height};
-
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-
-
-    ViewData uboData = {};
-    uboData.model = glm::mat4(1.0f);
-    float aspectRatio = static_cast<float>(swapchainRenderer->width) / static_cast<float>(swapchainRenderer->height);
-    uboData.proj = glm::perspective(glm::radians(103.0f), aspectRatio, 0.1f, 100.0f);
-    uboData.view = glm::lookAt(
-        glm::vec3(1.0f, -1.0f, 1.0f), // Position caméra
-        glm::vec3(0.0f, 0.0f, 0.0f),  // Point cible
-        glm::vec3(0.0f, 1.0f, 0.0f)   // Vecteur "up"
-    );
-
-    ubo.update(&uboData);
-
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material.GetGraphicsPipeline());
-
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, material.GetPipelineLayout(), 0, 1, material.GetDescriptorSet(), 0, nullptr);
-
-    // Offset dans vertex des données
-    VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(cmd, 0, 1, &vertexBuffer, &offset);
-
-    // Dessine un triangle (exemple simple)
-    vkCmdDraw(cmd, 6, 1, 0, 0);
-
-    swapchainRenderer->EndRenderCommandsAndPresent(graphicsQueue);
+    camera->Render(scene);
 }
 
 void VulkanRenderer::Shutdown() {
@@ -119,13 +55,10 @@ void VulkanRenderer::Shutdown() {
     }
 
     // Nettoyer la swap chain
+    swapchainRenderer->Cleanup();
     delete swapchainRenderer;
-    
-    // Détruire le render pass
-    if (renderPass != VK_NULL_HANDLE) {
-        vkDestroyRenderPass(device, renderPass, nullptr);
-        renderPass = VK_NULL_HANDLE;
-    }
+    camera->Cleanup();
+    delete camera;
 
     // Détruire le descriptor pool
     if (descriptorPool != VK_NULL_HANDLE) {
@@ -150,19 +83,6 @@ void VulkanRenderer::Shutdown() {
         vkDestroyInstance(instance, nullptr);
         instance = VK_NULL_HANDLE;
     }
-}
-
-void VulkanRenderer::setClearColor(float r, float g, float b, float a)
-{
-    clearColor.color.float32[0] = r;
-    clearColor.color.float32[1] = g;
-    clearColor.color.float32[2] = b;
-    clearColor.color.float32[3] = a;
-}
-
-float *VulkanRenderer::getClearColor()
-{
-    return clearColor.color.float32;
 }
 
 void VulkanRenderer::createInstance()
@@ -320,49 +240,47 @@ void VulkanRenderer::createLogicalDevice()
     vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &presentQueue);
 }
 
-void VulkanRenderer::createRenderPass()
-{
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapChainImageFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-
-    if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create render pass!");
-    }
-}
-
 void VulkanRenderer::InitMaterials()
 {
-    ubo.create(device, physicalDevice, sizeof(ViewData));
-
     MaterialInfo matInfo = {};
     matInfo.fragmentShader = "shaders/shader.frag";
     matInfo.vertexShader = "shaders/shader.vert";
 
     material.Init(this, matInfo);
+}
+
+void VulkanRenderer::CreateDescriptorLayouts()
+{
+    // Layout pour camera_vp (Set 0, Binding 0)
+    VkDescriptorSetLayoutBinding cameraVpBinding{};
+    cameraVpBinding.binding = 0;
+    cameraVpBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    cameraVpBinding.descriptorCount = 1;
+    cameraVpBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    cameraVpBinding.pImmutableSamplers = nullptr;
+
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &cameraVpBinding;
+
+    vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &cameraDescriptorLayout);
+
+    // Layout pour object (Set 1, Binding 0)
+    VkDescriptorSetLayoutBinding objectBinding{};
+    objectBinding.binding = 0;
+    objectBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    objectBinding.descriptorCount = 1;
+    objectBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    objectBinding.pImmutableSamplers = nullptr;
+
+    layoutInfo = {};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &cameraVpBinding;
+    
+    vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &objectDescriptorLayout);
 }
 
 void VulkanRenderer::createDescriptorPool()
@@ -382,3 +300,5 @@ void VulkanRenderer::createDescriptorPool()
         throw std::runtime_error("Échec de la création du descriptor pool !");
     }
 }
+
+
