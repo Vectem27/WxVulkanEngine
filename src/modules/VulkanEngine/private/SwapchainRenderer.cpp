@@ -57,9 +57,7 @@ void SwapchainRenderer::Cleanup()
 
 bool SwapchainRenderer::BeginRenderCommands()
 {
-    vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
-
+   
     auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
@@ -69,6 +67,10 @@ bool SwapchainRenderer::BeginRenderCommands()
         throw std::runtime_error("vkAcquireNextImageKHR failed!");
     }
 
+    vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
+
+    
     // Réinitialise le command buffer
     if (vkResetCommandBuffer(commandBuffers[imageIndex], 0) != VK_SUCCESS) 
     {

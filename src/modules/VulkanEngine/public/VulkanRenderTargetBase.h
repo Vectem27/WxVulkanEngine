@@ -14,6 +14,7 @@ public:
 
     virtual const VkCommandBuffer& GetCurrentCommandBuffer() const override = 0;
     virtual const VkFence& GetCurrentRenderFence() const = 0;
+    virtual const VkFramebuffer& GetCurrentFrameBuffer() const = 0;
 
     virtual const VkQueue& GetGraphicsQueue() const = 0;
     virtual const VkQueue& GetPresentQueue() const = 0;
@@ -26,9 +27,11 @@ protected:
     void SetHeight(uint32_t height) { this->height = height; }
 
 public: // Render commands
-    virtual void BeginRenderCommands();
+    virtual bool BeginRenderCommands();
     virtual void EndRenderCommands();
     virtual void Present();
+
+    VkClearColorValue clearColor{0.0f,0.0f,0.0f,0.0f};
 
 private:
     uint32_t width{0};
