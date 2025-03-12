@@ -3,7 +3,7 @@
 
 bool VulkanRenderTargetBase::Init(IRenderEngine *renderEngine)
 {
-    this->renderEngine
+    this->renderEngine;
     return true;
 }
 
