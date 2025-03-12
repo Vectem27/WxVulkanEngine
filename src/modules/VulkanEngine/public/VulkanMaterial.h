@@ -1,5 +1,5 @@
-#ifndef MATERIAL_H
-#define MATERIAL_H
+#ifndef VULKANMATERIAL_H
+#define VULKANMATERIAL_H
 
 #include <vulkan/vulkan.h>
 #include <string>
@@ -13,7 +13,7 @@ struct MaterialInfo
 };
 
 
-class Material
+class VulkanMaterial
 {
 public:
     void Init(class VulkanRenderer* renderer, const MaterialInfo& Info);
@@ -47,4 +47,4 @@ private:
    
 };
 
-#endif // MATERIAL_H
+#endif // VULKANMATERIAL_H

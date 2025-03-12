@@ -29,7 +29,7 @@ bool VulkanRenderer::Init(void *windowHandle)
     createDescriptorPool();
 
     camera = new VulkanCamera();
-    swapchainRenderer = new SwapchainRenderer(device, physicalDevice, surface, swapChainImageFormat, graphicsQueueFamilyIndex);
+    swapchainRenderer = new SwapchainRenderer(surface, graphicsQueueFamilyIndex);
     swapchainRenderer->Init(this);
     camera->Init(this, swapchainRenderer);
     

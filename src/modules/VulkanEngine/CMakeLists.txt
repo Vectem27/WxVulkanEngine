@@ -1,4 +1,5 @@
-add_library(VulkanEngine STATIC private/VulkanCamera.cpp private/VulkanRenderer.cpp private/Material.cpp private/SwapchainRenderer.cpp private/Scene.cpp)
+add_library(VulkanEngine STATIC private/VulkanCamera.cpp private/VulkanRenderer.cpp private/VulkanMaterial.cpp private/SwapchainRenderer.cpp private/Scene.cpp
+    private/VulkanSurface.cpp private/VulkanRenderTargetBase.cpp)
 target_include_directories(VulkanEngine 
     PUBLIC public
     PRIVATE private

@@ -12,10 +12,9 @@
 #include <stdexcept>
 #include <iostream>
 
-#include "Material.h"
+#include "VulkanMaterial.h"
 #include "Vertex.h"
 #include "UniformBufferObject.h"
-
 #include "SwapchainRenderer.h"
 #include "VulkanCamera.h"
 #include "IRenderEngine.h"
@@ -33,7 +32,7 @@ public:
     void render();
     virtual void Shutdown() override;
 
-
+    VkInstance GetInstance() { return instance; }
     VkDevice GetDevice() const { return device; }
     VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
     VkDescriptorPool GetDescriptorPool() const { return descriptorPool; }
@@ -73,7 +72,7 @@ private:
 public:
     // Material
     VkDescriptorPool descriptorPool;
-    Material material;
+    VulkanMaterial material;
 private:
     void createInstance();
     void createSurface(void* windowHandle);

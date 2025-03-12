@@ -8,12 +8,10 @@
 class SwapchainRenderer : public IRenderTarget
 {
 private:
-    VkDevice device;
-    VkPhysicalDevice physicalDevice;
     VkSurfaceKHR surface;
-    VkFormat swapChainImageFormat;
-    VkRenderPass renderPass{VK_NULL_HANDLE};
     uint32_t graphicsQueueFamilyIndex;
+
+    VkRenderPass renderPass{VK_NULL_HANDLE};
 
     // Commands
     VkCommandPool commandPool{VK_NULL_HANDLE};
@@ -50,8 +48,7 @@ private:
 
     VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 public:
-    SwapchainRenderer(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, 
-        VkFormat swapChainImageFormat, uint32_t graphicsQueueFamilyIndex);
+    SwapchainRenderer(VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex);
     ~SwapchainRenderer();
 
     virtual bool Init(class IRenderEngine* renderEngine) override;

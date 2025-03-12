@@ -1,4 +1,4 @@
-#include "Material.h"
+#include "VulkanMaterial.h"
 
 #include <sstream>
 #include <array>
@@ -41,7 +41,7 @@ std::vector<char> readFile(const std::string &filename)
 }
 
 
-void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
+void VulkanMaterial::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
 {
     this->renderer = renderer;
 
@@ -138,10 +138,10 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+    //rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
     rasterizer.lineWidth = 3.5f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.cullMode = VK_CULL_MODE_NONE;
+    //rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -223,7 +223,7 @@ void Material::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
     vkDestroyShaderModule(renderer->GetDevice(), fragShaderModule, nullptr);
 }
 
-bool Material::Bind(VulkanCamera *camera)
+bool VulkanMaterial::Bind(VulkanCamera *camera)
 {
 
     VkDescriptorBufferInfo bufferInfo {};
@@ -249,8 +249,7 @@ bool Material::Bind(VulkanCamera *camera)
     return true;
 }
 
-
-void Material::allocateDescriptorSet()
+void VulkanMaterial::allocateDescriptorSet()
 {
     VkDescriptorSetAllocateInfo allocInfo {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;

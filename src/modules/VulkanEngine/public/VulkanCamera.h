@@ -40,8 +40,6 @@ private:
 
     UniformBuffer objectBuffer;
     ObjectData objectData;
-
-
 private: // Create
     void CreateDescriptorPool();
     void CreateDescriptors();
