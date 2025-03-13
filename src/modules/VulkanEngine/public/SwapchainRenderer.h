@@ -15,31 +15,17 @@ private:
     // Commands
     VkCommandPool commandPool{VK_NULL_HANDLE};
     std::vector<VkCommandBuffer> commandBuffers;
-
-    // Swapchain
-    VkSwapchainKHR swapChain{VK_NULL_HANDLE};
-    std::vector<VkImage> swapChainImages;
-    VkExtent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
-    std::vector<VkFramebuffer> swapChainFramebuffers;
-
-
-    // Depth/stencil buffer
-    std::vector<VkImage> depthImages;
-    std::vector<VkDeviceMemory> depthImageMemorys;
-    std::vector<VkImageView> depthImageViews;
-    std::vector<VkFramebuffer> depthFramebuffers;
-
-public:
-    uint32_t width { 720 };
-    uint32_t height { 480 };
-
-private:
+    
     // Sync
     VkSemaphore imageAvailableSemaphore; // Wait the image is unused befor render in it
     VkSemaphore renderFinishedSemaphore; // Wait for render finished before present
     VkFence inFlightFence; // Wait for the last rendering finished
 
+
+    VulkanSwapchain* vulkanSwapchain{ nullptr };
+
+private:
+    
     // Rendering
     uint32_t imageIndex; // Current rendered image index
 
@@ -53,8 +39,8 @@ public:
     virtual bool Init(class IRenderEngine* renderEngine) override;
     virtual void Cleanup() override;
     virtual const VkCommandBuffer& GetCurrentCommandBuffer() const override { return commandBuffers[imageIndex]; }
-    virtual uint32_t GetWidth() const override { return width; }
-    virtual uint32_t GetHeight() const override { return height; }
+    virtual uint32_t GetWidth() const override { return vulkanSwapchain->GetExtent().width; }
+    virtual uint32_t GetHeight() const override { return vulkanSwapchain->GetExtent().height; }
 
     bool BeginRenderCommands();
     void EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueue graphicsQueue);
@@ -63,14 +49,6 @@ public:
     void SetRenderPass(VkRenderPass renderPass);
 
 private: // Initialization
-    void CreateSwapChain();
-
-    void CreateImageViews();
-
-    void CreateFramebuffers();
-
-    void CreateDepthResources();
-
     void CreateCommandPool();
 
     void CreateCommandBuffers();

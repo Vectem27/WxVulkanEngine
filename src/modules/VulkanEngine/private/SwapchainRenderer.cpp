@@ -21,6 +21,8 @@ bool SwapchainRenderer::Init(IRenderEngine *renderEngine)
     {
         return false;
     }
+
+    vulkanSwapchain = new VulkanSwapchain(this->renderEngine, surface, graphicsQueueFamilyIndex);
     
     CreateCommandPool();
     CreateCommandBuffers();
@@ -58,7 +60,7 @@ void SwapchainRenderer::Cleanup()
 bool SwapchainRenderer::BeginRenderCommands()
 {
    
-    auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), vulkanSwapchain->GetSwapchain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
         RecreateSwapChain();
@@ -88,9 +90,9 @@ bool SwapchainRenderer::BeginRenderCommands()
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderEngine->GetDefaultRenderPass();
-    renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+    renderPassInfo.framebuffer = vulkanSwapchain->GetFrameBuffers()[imageIndex];
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = {width, height};
+    renderPassInfo.renderArea.extent = {vulkanSwapchain->GetExtent().width, vulkanSwapchain->GetExtent().height};
 
     // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
     std::array<VkClearValue, 2> clearValues{};
@@ -143,7 +145,7 @@ void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueu
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
     presentInfo.swapchainCount = 1;
-    VkSwapchainKHR swapChains[] = {swapChain};
+    VkSwapchainKHR swapChains[] = {vulkanSwapchain->GetSwapchain()};
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
@@ -160,180 +162,7 @@ void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueu
 
 void SwapchainRenderer::SetRenderPass(VkRenderPass renderPass)
 {
-    this->renderPass = renderPass;
-    RecreateSwapChain();
-}
-
-void SwapchainRenderer::CreateSwapChain()
-{
-    VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(renderEngine->GetPhysicalDevice(), surface, &capabilities);
-
-    VkExtent2D extent = capabilities.currentExtent;
-    if (extent.width == UINT32_MAX)
-    {
-        extent.width = std::clamp(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
-        extent.height = std::clamp(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
-
-    }
-    width = extent.width;
-    height = extent.height;
-
-    swapChainExtent = extent;
-
-    VkSwapchainCreateInfoKHR createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface;
-    createInfo.minImageCount = capabilities.minImageCount + 1;
-    if (capabilities.maxImageCount > 0 && createInfo.minImageCount > capabilities.maxImageCount)
-    {
-        createInfo.minImageCount = capabilities.maxImageCount;
-    }
-    createInfo.imageFormat = renderEngine->GetSwapChainImageFormat();
-    createInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-    createInfo.imageExtent = swapChainExtent;
-    createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    createInfo.preTransform = capabilities.currentTransform;
-    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    createInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
-    createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
-
-    if (vkCreateSwapchainKHR(renderEngine->GetDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create swap chain!");
-    }
-
-    uint32_t imageCount;
-    vkGetSwapchainImagesKHR(renderEngine->GetDevice(), swapChain, &imageCount, nullptr);
-    swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(renderEngine->GetDevice(), swapChain, &imageCount, swapChainImages.data());
-}
-
-void SwapchainRenderer::CreateImageViews()
-{
-    swapChainImageViews.resize(swapChainImages.size());
-    for (size_t i = 0; i < swapChainImages.size(); i++)
-    {
-        VkImageViewCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = swapChainImages[i];
-        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = renderEngine->GetSwapChainImageFormat();
-        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        createInfo.subresourceRange.baseMipLevel = 0;
-        createInfo.subresourceRange.levelCount = 1;
-        createInfo.subresourceRange.baseArrayLayer = 0;
-        createInfo.subresourceRange.layerCount = 1;
-
-        if (vkCreateImageView(renderEngine->GetDevice(), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create image views!");
-        }
-    }
-
-    depthImageViews.resize(depthImages.size());
-    for (size_t i = 0; i < depthImages.size(); i++)
-    {
-        VkImageViewCreateInfo createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = depthImages[i];
-        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = renderEngine->GetDepthStencilImageFormat();
-        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-        // Correction du masque d'aspect pour le depth/stencil
-        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-        createInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-
-        createInfo.subresourceRange.baseMipLevel = 0;
-        createInfo.subresourceRange.levelCount = 1;
-        createInfo.subresourceRange.baseArrayLayer = 0;
-        createInfo.subresourceRange.layerCount = 1;
-
-        // Correction : stocker la vue dans depthImageViews au lieu de swapChainImageViews
-        if (vkCreateImageView(renderEngine->GetDevice(), &createInfo, nullptr, &depthImageViews[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create depth image views!");
-        }
-    }
-
-}
-
-void SwapchainRenderer::CreateFramebuffers()
-{
-    swapChainFramebuffers.resize(swapChainImageViews.size());
-    for (size_t i = 0; i < swapChainImageViews.size(); i++)
-    {
-        std::array<VkImageView, 2> attachments = {swapChainImageViews[i], depthImageViews[i]};
-
-        VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-        framebufferInfo.pAttachments = attachments.data();
-        framebufferInfo.width = swapChainExtent.width;
-        framebufferInfo.height = swapChainExtent.height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(renderEngine->GetDevice(), &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create framebuffer!");
-        }
-    }
-}
-
-void SwapchainRenderer::CreateDepthResources()
-{
-    depthImages.resize(swapChainImages.size());
-    depthImageMemorys.resize(swapChainImages.size());
-
-    for (size_t i = 0; i < swapChainImages.size(); i++)
-    {
-        VkImageCreateInfo imageInfo{};
-        imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-        imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent.width = swapChainExtent.width;
-        imageInfo.extent.height = swapChainExtent.height;
-        imageInfo.extent.depth = 1;
-        imageInfo.mipLevels = 1;
-        imageInfo.arrayLayers = 1;
-        imageInfo.format = renderEngine->GetDepthStencilImageFormat();
-        imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-        imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-        imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-        imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        if (vkCreateImage(renderEngine->GetDevice(), &imageInfo, nullptr, &depthImages[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to create depth image!");
-        }
-
-        VkMemoryRequirements memRequirements;
-        vkGetImageMemoryRequirements(renderEngine->GetDevice(), depthImages[i], &memRequirements);
-
-        VkMemoryAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = renderEngine->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-        if (vkAllocateMemory(renderEngine->GetDevice(), &allocInfo, nullptr, &depthImageMemorys[i]) != VK_SUCCESS)
-        {
-            throw std::runtime_error("failed to allocate depth image memory!");
-        }
-
-        vkBindImageMemory(renderEngine->GetDevice(), depthImages[i], depthImageMemorys[i], 0);
-    }
+    vulkanSwapchain->SetRenderPass(renderPass);
 }
 
 void SwapchainRenderer::CreateCommandPool()
@@ -350,7 +179,7 @@ void SwapchainRenderer::CreateCommandPool()
 
 void SwapchainRenderer::CreateCommandBuffers()
 {
-    commandBuffers.resize(swapChainFramebuffers.size());
+    commandBuffers.resize(vulkanSwapchain->GetImageCount());
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = commandPool;
@@ -385,14 +214,7 @@ void SwapchainRenderer::CreateSync()
 
 void SwapchainRenderer::RecreateSwapChain()
 {
-    vkDeviceWaitIdle(renderEngine->GetDevice());
-
-    CleanupSwapchain();
-
-    CreateSwapChain();
-    CreateDepthResources();
-    CreateImageViews();
-    CreateFramebuffers();
+    vulkanSwapchain->Recreate();
 
     // Détruire les anciens command buffers avant de les recréer
     if (!commandBuffers.empty()) 
@@ -405,31 +227,5 @@ void SwapchainRenderer::RecreateSwapChain()
 
 void SwapchainRenderer::CleanupSwapchain()
 {
-    // Détruire les framebuffers
-    for (auto framebuffer : swapChainFramebuffers) {
-        if (framebuffer != VK_NULL_HANDLE) {
-            vkDestroyFramebuffer(renderEngine->GetDevice(), framebuffer, nullptr);
-        }
-    }
-    swapChainFramebuffers.clear();
-
-    // Détruire les image views
-    for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-        vkDestroyImageView(renderEngine->GetDevice(), swapChainImageViews[i], nullptr);
-        vkDestroyImageView(renderEngine->GetDevice(), depthImageViews[i], nullptr);
-        vkDestroyImage(renderEngine->GetDevice(), depthImages[i], nullptr);
-        vkFreeMemory(renderEngine->GetDevice(), depthImageMemorys[i], nullptr);
-    }
-
-    swapChainImageViews.clear();
-    depthImageViews.clear();
-    depthImages.clear();
-    depthImageMemorys.clear();
-
-    // Détruire la swap chain
-    if (swapChain != VK_NULL_HANDLE) 
-    {
-        vkDestroySwapchainKHR(renderEngine->GetDevice(), swapChain, nullptr);
-        swapChain = VK_NULL_HANDLE;
-    }
+    delete vulkanSwapchain;
 }
