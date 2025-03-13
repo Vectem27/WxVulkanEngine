@@ -24,43 +24,18 @@ bool SwapchainRenderer::Init(IRenderEngine *renderEngine)
 
     vulkanSwapchain = new VulkanSwapchain(this->renderEngine, surface, graphicsQueueFamilyIndex);
     
-    CreateCommandPool();
-    CreateCommandBuffers();
-    CreateSync();
-
     return true;
 }
 
 void SwapchainRenderer::Cleanup()
 {
     CleanupSwapchain();
-
-    
-    // Détruire les sémaphores et la fence
-    if (imageAvailableSemaphore != VK_NULL_HANDLE) {
-        vkDestroySemaphore(renderEngine->GetDevice(), imageAvailableSemaphore, nullptr);
-        imageAvailableSemaphore = VK_NULL_HANDLE;
-    }
-    if (renderFinishedSemaphore != VK_NULL_HANDLE) {
-        vkDestroySemaphore(renderEngine->GetDevice(), renderFinishedSemaphore, nullptr);
-        renderFinishedSemaphore = VK_NULL_HANDLE;
-    }
-    if (inFlightFence != VK_NULL_HANDLE) {
-        vkDestroyFence(renderEngine->GetDevice(), inFlightFence, nullptr);
-        inFlightFence = VK_NULL_HANDLE;
-    }
-
-    // Détruire le command pool
-    if (commandPool != VK_NULL_HANDLE) {
-        vkDestroyCommandPool(renderEngine->GetDevice(), commandPool, nullptr);
-        commandPool = VK_NULL_HANDLE;
-    }
 }
 
 bool SwapchainRenderer::BeginRenderCommands()
 {
    
-    auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), vulkanSwapchain->GetSwapchain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), vulkanSwapchain->GetSwapchain(), UINT64_MAX, vulkanSwapchain->GetImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
         RecreateSwapChain();
@@ -69,19 +44,24 @@ bool SwapchainRenderer::BeginRenderCommands()
         throw std::runtime_error("vkAcquireNextImageKHR failed!");
     }
 
+    VkCommandBuffer commandBuffer = vulkanSwapchain->GetCommandBuffer(imageIndex);
+    VkFramebuffer frameBuffer = vulkanSwapchain->GetFrameBuffer(imageIndex);
+    VkFence inFlightFence = vulkanSwapchain->GetInFlightFence(imageIndex);
+    VkSemaphore renderFinishedSemaphore = vulkanSwapchain->GetRenderFinishedSemaphore(imageIndex);
+
     vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
 
     
     // Réinitialise le command buffer
-    if (vkResetCommandBuffer(commandBuffers[imageIndex], 0) != VK_SUCCESS) 
+    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
     {
         throw std::runtime_error("failed to reset command buffer!");
     }
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS)
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to begin command buffer!");
     }
@@ -102,7 +82,7 @@ bool SwapchainRenderer::BeginRenderCommands()
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
-    vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     return true;
 }
@@ -110,11 +90,16 @@ bool SwapchainRenderer::BeginRenderCommands()
 void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueue graphicsQueue)
 {
 
+    VkCommandBuffer commandBuffer = vulkanSwapchain->GetCommandBuffer(imageIndex);
+    VkFramebuffer frameBuffer = vulkanSwapchain->GetFrameBuffer(imageIndex);
+    VkFence inFlightFence = vulkanSwapchain->GetInFlightFence(imageIndex);
+    VkSemaphore renderFinishedSemaphore = vulkanSwapchain->GetRenderFinishedSemaphore(imageIndex);
+
     // Termine le render pass
-    vkCmdEndRenderPass(commandBuffers[imageIndex]);
+    vkCmdEndRenderPass(commandBuffer);
 
     // Termine l'enregistrement du command buffer
-    if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS)
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to end command buffer!");
     }
@@ -123,13 +108,13 @@ void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueu
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+    VkSemaphore waitSemaphores[] = {vulkanSwapchain->GetImageAvailableSemaphore()};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers[imageIndex];
+    submitInfo.pCommandBuffers = &commandBuffer;
 
     VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
     submitInfo.signalSemaphoreCount = 1;
@@ -165,64 +150,9 @@ void SwapchainRenderer::SetRenderPass(VkRenderPass renderPass)
     vulkanSwapchain->SetRenderPass(renderPass);
 }
 
-void SwapchainRenderer::CreateCommandPool()
-{
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    if (vkCreateCommandPool(renderEngine->GetDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create command pool!");
-    }
-}
-
-void SwapchainRenderer::CreateCommandBuffers()
-{
-    commandBuffers.resize(vulkanSwapchain->GetImageCount());
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-    if (vkAllocateCommandBuffers(renderEngine->GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to allocate command buffers!");
-    }
-}
-
-void SwapchainRenderer::CreateSync()
-{
-    VkSemaphoreCreateInfo semaphoreInfo{};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    if (vkCreateSemaphore(renderEngine->GetDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
-        vkCreateSemaphore(renderEngine->GetDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create semaphores!");
-    }
-
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // La fence est initialement signalée
-
-    if (vkCreateFence(renderEngine->GetDevice(), &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create fence!");
-    }
-}
-
 void SwapchainRenderer::RecreateSwapChain()
 {
     vulkanSwapchain->Recreate();
-
-    // Détruire les anciens command buffers avant de les recréer
-    if (!commandBuffers.empty()) 
-    {
-        vkFreeCommandBuffers(renderEngine->GetDevice(), commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
-        commandBuffers.clear();
-    }
-    CreateCommandBuffers();
 }
 
 void SwapchainRenderer::CleanupSwapchain()

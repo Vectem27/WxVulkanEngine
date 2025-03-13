@@ -12,16 +12,6 @@ private:
     VkSurfaceKHR surface;
     uint32_t graphicsQueueFamilyIndex;
 
-    // Commands
-    VkCommandPool commandPool{VK_NULL_HANDLE};
-    std::vector<VkCommandBuffer> commandBuffers;
-    
-    // Sync
-    VkSemaphore imageAvailableSemaphore; // Wait the image is unused befor render in it
-    VkSemaphore renderFinishedSemaphore; // Wait for render finished before present
-    VkFence inFlightFence; // Wait for the last rendering finished
-
-
     VulkanSwapchain* vulkanSwapchain{ nullptr };
 
 private:
@@ -38,7 +28,7 @@ public:
 
     virtual bool Init(class IRenderEngine* renderEngine) override;
     virtual void Cleanup() override;
-    virtual const VkCommandBuffer& GetCurrentCommandBuffer() const override { return commandBuffers[imageIndex]; }
+    virtual const VkCommandBuffer& GetCurrentCommandBuffer() const override { return vulkanSwapchain->GetCommandBuffer(imageIndex); }
     virtual uint32_t GetWidth() const override { return vulkanSwapchain->GetExtent().width; }
     virtual uint32_t GetHeight() const override { return vulkanSwapchain->GetExtent().height; }
 
@@ -47,13 +37,6 @@ public:
 
 public:
     void SetRenderPass(VkRenderPass renderPass);
-
-private: // Initialization
-    void CreateCommandPool();
-
-    void CreateCommandBuffers();
-
-    void CreateSync();
 
 private: // Modification
     void RecreateSwapChain();
