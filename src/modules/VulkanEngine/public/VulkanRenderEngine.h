@@ -18,6 +18,8 @@
 #include "SwapchainRenderer.h"
 #include "VulkanCamera.h"
 #include "IRenderEngine.h"
+#include "VulkanDeviceManager.h"
+#include "VulkanSurface.h"
 
 class VulkanRenderEngine : public IRenderEngine
 {
@@ -33,24 +35,26 @@ public:
     virtual void Shutdown() override;
 
     VkInstance GetInstance() { return instance; }
-    VkDevice GetDevice() const { return device; }
-    VkPhysicalDevice GetPhysicalDevice() const { return physicalDevice; }
+    VkDevice GetDevice() const { return deviceManager->GetDevice(); }
+    VkPhysicalDevice GetPhysicalDevice() const { return deviceManager->GetPhysicalDevice(); }
     VkDescriptorPool GetDescriptorPool() const { return descriptorPool; }
 
 
     VkFormat GetSwapChainImageFormat() const { return swapChainImageFormat;}
     VkFormat GetDepthStencilImageFormat() const { return depthStencilImageFormat;}
-    VkQueue GetPresentQueue() const { return presentQueue; }
-    VkQueue GetGraphicsQueue() const { return graphicsQueue; }
+    VkQueue GetPresentQueue() const { return surfaceTest->GetPresentQueue(); }
+    VkQueue GetGraphicsQueue() const { return deviceManager->GetGraphicsQueue(); }
     VkRenderPass GetDefaultRenderPass() const { return defaultRenderPass; }
 
     const VkDescriptorSetLayout* GetCameraDescriptorLayout() const { return &cameraDescriptorLayout; }
     const VkDescriptorSetLayout* GetObjectDescriptorLayout() const { return &objectDescriptorLayout; }
 private:
-    VkInstance instance{VK_NULL_HANDLE};
+    VkInstance instance{ VK_NULL_HANDLE };
+    VulkanDeviceManager* deviceManager{ nullptr };
+    VulkanSurface* surfaceTest{ nullptr };
+
     VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
     VkDevice device{VK_NULL_HANDLE};
-    VkSurfaceKHR surface{VK_NULL_HANDLE};
 
     VkQueue graphicsQueue{VK_NULL_HANDLE};
     VkQueue presentQueue{VK_NULL_HANDLE};
@@ -58,11 +62,11 @@ private:
     // Rendering
     VkFormat swapChainImageFormat;
     VkFormat depthStencilImageFormat;
-    SwapchainRenderer* swapchainRenderer;
-    VulkanCamera* camera;
 
+public: // Temps
     uint32_t graphicsQueueFamilyIndex;
-
+    VkSurfaceKHR surface{VK_NULL_HANDLE};
+private:
 
     VkDescriptorSetLayout cameraDescriptorLayout{VK_NULL_HANDLE};
     VkDescriptorSetLayout objectDescriptorLayout{VK_NULL_HANDLE};
@@ -73,13 +77,13 @@ public:
     // Material
     VkDescriptorPool descriptorPool;
     VulkanMaterial material;
+
 private:
     void createInstance();
     void createSurface(void* windowHandle);
     void selectPhysicalDevice();
     bool isDeviceSuitable(VkPhysicalDevice device);
     void createLogicalDevice();
-    void InitMaterials();
     void CreateDescriptorLayouts();
     void createDescriptorPool();
     void CreateRenderPass();

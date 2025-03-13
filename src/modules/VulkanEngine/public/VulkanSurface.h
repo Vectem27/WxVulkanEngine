@@ -1,26 +1,27 @@
 #ifndef VULKANSURFACE_H
 #define VULKANSURFACE_H
 
-#include <vulkan/vulkan.h>
+#include "VulkanDeviceManager.h"
 
-class VulkanSurface
+class VulkanSurface 
 {
-    VulkanSurface(class VulkanRenderEngine* renderEngine, void* windowHandle);
-    ~VulkanSurface();
 public:
+    VulkanSurface(VkInstance instance, const VulkanDeviceManager* deviceManager, void* windowHandle);
+    ~VulkanSurface();
+
     VkSurfaceKHR GetSurface() const { return surface; }
-    uint32_t GetSupportedQueueFamilyIndex() const { return supportedQueueFamilyIndex; }
+    VkQueue GetPresentQueue() const { return presentQueue; }
+    uint32_t GetPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }
+
 private:
-    class VulkanRenderEngine* renderEngine;
+    void CreateSurface(VkInstance instance, void* windowHandle);
+    void FindPresentQueue(const VulkanDeviceManager* deviceManager);
 
-    VkSurfaceKHR surface;
-    uint32_t supportedQueueFamilyIndex;
+    VkInstance instance;
 
-    
-private:
-    void CreateSurface(void* windowHandle);
-
-    void Cleanup();
+    VkSurfaceKHR surface{ VK_NULL_HANDLE };
+    VkQueue presentQueue{ VK_NULL_HANDLE };
+    uint32_t presentQueueFamilyIndex{ UINT32_MAX };
 };
 
 #endif // VULKANSURFACE_H

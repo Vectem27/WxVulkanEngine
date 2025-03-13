@@ -12,86 +12,59 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     swapChainImageFormat = VK_FORMAT_B8G8R8A8_UNORM;
     depthStencilImageFormat = VK_FORMAT_D24_UNORM_S8_UINT;
 
-    
-
-    // 1 Create Instance
     createInstance();
-
-    // 2 Create Surface
+    deviceManager = new VulkanDeviceManager(instance);
+    surfaceTest = new VulkanSurface(instance, deviceManager, windowHandle);
     createSurface(windowHandle);
-
-    // 3 Device
     selectPhysicalDevice();
-
-    // 4 Create logical device & Queue
     createLogicalDevice();
-
     CreateRenderPass();
-
     CreateDescriptorLayouts();
     createDescriptorPool();
 
-    camera = new VulkanCamera();
-    swapchainRenderer = new SwapchainRenderer(surface, graphicsQueueFamilyIndex);
-    swapchainRenderer->Init(this);
-    camera->Init(this, swapchainRenderer);
-    
-    InitMaterials();
+    MaterialInfo matInfo = {};
+    matInfo.fragmentShader = "shaders/shader.frag";
+    matInfo.vertexShader = "shaders/shader.vert";
+
+    material.Init(this, matInfo);
 
     return true;
 }
 
-void VulkanRenderEngine::render()
-{
-    static Scene* scene;
-    if (!scene)
-    {
-        scene = new Scene();
-        scene->Init(this);
-    }
-
-    camera->Render(scene);
-}
 
 void VulkanRenderEngine::Shutdown() {
-    // Attendre que le device soit inactif avant de nettoyer
-    if (device != VK_NULL_HANDLE) {
+    if (device != VK_NULL_HANDLE) 
         vkDeviceWaitIdle(device);
-    }
 
-    // Nettoyer la swap chain
-    swapchainRenderer->Cleanup();
-    delete swapchainRenderer;
-    camera->Cleanup();
-    delete camera;
-
-    // Détruire le render pass
     if (defaultRenderPass != VK_NULL_HANDLE) 
     {
         vkDestroyRenderPass(GetDevice(), defaultRenderPass, nullptr);
         defaultRenderPass = VK_NULL_HANDLE;
     }
 
-    // Détruire le descriptor pool
-    if (descriptorPool != VK_NULL_HANDLE) {
+    if (descriptorPool != VK_NULL_HANDLE) 
+    {
         vkDestroyDescriptorPool(device, descriptorPool, nullptr);
         descriptorPool = VK_NULL_HANDLE;
     }
 
-    // Détruire le device logique
-    if (device != VK_NULL_HANDLE) {
+    if (device != VK_NULL_HANDLE) 
+    {
         vkDestroyDevice(device, nullptr);
         device = VK_NULL_HANDLE;
     }
 
-    // Détruire la surface
-    if (surface != VK_NULL_HANDLE) {
+    if (surface != VK_NULL_HANDLE) 
+    {
         vkDestroySurfaceKHR(instance, surface, nullptr);
         surface = VK_NULL_HANDLE;
     }
+    
+    delete surfaceTest;
+    delete deviceManager;
 
-    // Détruire l'instance Vulkan
-    if (instance != VK_NULL_HANDLE) {
+    if (instance != VK_NULL_HANDLE) 
+    {
         vkDestroyInstance(instance, nullptr);
         instance = VK_NULL_HANDLE;
     }
@@ -270,15 +243,6 @@ void VulkanRenderEngine::createLogicalDevice()
     vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &presentQueue);
 }
 
-void VulkanRenderEngine::InitMaterials()
-{
-    MaterialInfo matInfo = {};
-    matInfo.fragmentShader = "shaders/shader.frag";
-    matInfo.vertexShader = "shaders/shader.vert";
-
-    material.Init(this, matInfo);
-}
-
 void VulkanRenderEngine::CreateDescriptorLayouts()
 {
     // Layout pour camera_vp (Set 0, Binding 0)
@@ -295,7 +259,7 @@ void VulkanRenderEngine::CreateDescriptorLayouts()
     layoutInfo.bindingCount = 1;
     layoutInfo.pBindings = &cameraVpBinding;
 
-    vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &cameraDescriptorLayout);
+    vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, nullptr, &cameraDescriptorLayout);
 
     // Layout pour object (Set 1, Binding 0)
     VkDescriptorSetLayoutBinding objectBinding{};
@@ -310,7 +274,7 @@ void VulkanRenderEngine::CreateDescriptorLayouts()
     layoutInfo.bindingCount = 1;
     layoutInfo.pBindings = &cameraVpBinding;
     
-    vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &objectDescriptorLayout);
+    vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, nullptr, &objectDescriptorLayout);
 }
 
 void VulkanRenderEngine::createDescriptorPool()
@@ -325,7 +289,7 @@ void VulkanRenderEngine::createDescriptorPool()
     poolInfo.pPoolSizes = &poolSize;
     poolInfo.maxSets = 100;
 
-    if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+    if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
     {
         throw std::runtime_error("Échec de la création du descriptor pool !");
     }

@@ -10,7 +10,7 @@ wxVulkanFrame::wxVulkanFrame(const wxString &title)
     wxPanel* mainPanel = new wxPanel(this);
     
     // Création d'un panneau pour le rendu
-    renderPanel = new VulkanPanel(mainPanel); // Ajuster la position et la taille
+    renderPanel = new RenderPanel(mainPanel); // Ajuster la position et la taille
     renderPanel->SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     
     wxButton *button = new wxButton(mainPanel, wxID_ANY, "Test", wxPoint(10, 10), wxSize(90, 30));
