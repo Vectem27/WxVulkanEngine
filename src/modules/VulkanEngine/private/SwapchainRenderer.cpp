@@ -5,9 +5,11 @@
 #include <array>
 
 
-SwapchainRenderer::SwapchainRenderer(VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex)
-    : surface(surface), graphicsQueueFamilyIndex(graphicsQueueFamilyIndex)
-{}
+SwapchainRenderer::SwapchainRenderer(VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex)
+    : surface(surface), graphicsQueueFamilyIndex(graphicsQueueFamilyIndex), presentQueueFamilyIndex(presentQueueFamilyIndex)
+{
+
+}
 
 SwapchainRenderer::~SwapchainRenderer()
 {
@@ -22,7 +24,7 @@ bool SwapchainRenderer::Init(IRenderEngine *renderEngine)
         return false;
     }
 
-    vulkanSwapchain = new VulkanSwapchain(this->renderEngine, surface, graphicsQueueFamilyIndex);
+    //vulkanSwapchain = new VulkanSwapchain(this->renderEngine, surface, graphicsQueueFamilyIndex, presentQueueFamilyIndex);
     
     return true;
 }

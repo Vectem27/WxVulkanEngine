@@ -11,6 +11,7 @@ class SwapchainRenderer : public IRenderTarget
 private:
     VkSurfaceKHR surface;
     uint32_t graphicsQueueFamilyIndex;
+    uint32_t presentQueueFamilyIndex;
 
     VulkanSwapchain* vulkanSwapchain{ nullptr };
 
@@ -23,7 +24,7 @@ private:
 
     VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 public:
-    SwapchainRenderer(VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex);
+    SwapchainRenderer(VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex, uint32_t presentQueueFamilyIndex);
     ~SwapchainRenderer();
 
     virtual bool Init(class IRenderEngine* renderEngine) override;
