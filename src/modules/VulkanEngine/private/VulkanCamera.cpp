@@ -3,14 +3,14 @@
 #include "IRenderable.h"
 #include "ICamera.h"
 #include "SwapchainRenderer.h"
-#include "VulkanRenderer.h"
+#include "VulkanRenderEngine.h"
 #include <array>
 
 #include <glm/gtc/matrix_transform.hpp>
 
 bool VulkanCamera::Init(IRenderEngine* renderEngine, class IRenderTarget* renderTarget)
 {
-    this->renderEngine = dynamic_cast<VulkanRenderer*>(renderEngine);
+    this->renderEngine = dynamic_cast<VulkanRenderEngine*>(renderEngine);
     if (!this->renderEngine)
     {
         return false;

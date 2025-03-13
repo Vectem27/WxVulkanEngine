@@ -1,7 +1,7 @@
 #include "SwapchainRenderer.h"
 #include <stdexcept>
 #include <algorithm>
-#include "VulkanRenderer.h"
+#include "VulkanRenderEngine.h"
 #include <array>
 
 
@@ -16,7 +16,7 @@ SwapchainRenderer::~SwapchainRenderer()
 
 bool SwapchainRenderer::Init(IRenderEngine *renderEngine)
 {
-    this->renderEngine = dynamic_cast<VulkanRenderer*>(renderEngine);
+    this->renderEngine = dynamic_cast<VulkanRenderEngine*>(renderEngine);
     if (!this->renderEngine)
     {
         return false;

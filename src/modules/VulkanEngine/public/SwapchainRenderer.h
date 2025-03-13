@@ -4,14 +4,13 @@
 #include "IRenderTarget.h"
 #include <vulkan/vulkan.h>
 #include <vector>
+#include "VulkanSwapchain.h"
 
 class SwapchainRenderer : public IRenderTarget
 {
 private:
     VkSurfaceKHR surface;
     uint32_t graphicsQueueFamilyIndex;
-
-    VkRenderPass renderPass{VK_NULL_HANDLE};
 
     // Commands
     VkCommandPool commandPool{VK_NULL_HANDLE};
@@ -44,7 +43,7 @@ private:
     // Rendering
     uint32_t imageIndex; // Current rendered image index
 
-    class VulkanRenderer* renderEngine;
+    class VulkanRenderEngine* renderEngine;
 
     VkClearValue clearColor = {0.0f, 0.0f, 0.0f, 1.0f};
 public:
@@ -62,8 +61,6 @@ public:
 
 public:
     void SetRenderPass(VkRenderPass renderPass);
-
-
 
 private: // Initialization
     void CreateSwapChain();

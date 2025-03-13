@@ -1,12 +1,12 @@
 #include "Scene.h"
-#include "VulkanRenderer.h"
+#include "VulkanRenderEngine.h"
 #include "IRenderTarget.h"
 
 
 bool Scene::Init(IRenderEngine *renderEngine)
 {
 
-    this->renderEngine = dynamic_cast<VulkanRenderer*>(renderEngine);
+    this->renderEngine = dynamic_cast<VulkanRenderEngine*>(renderEngine);
     if (!this->renderEngine)
     {
         return false;

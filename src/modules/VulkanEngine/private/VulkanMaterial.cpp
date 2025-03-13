@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include "Vertex.h"
-#include "VulkanRenderer.h"
+#include "VulkanRenderEngine.h"
 #include "SwapchainRenderer.h"
 #include "VulkanCamera.h"
 
@@ -41,7 +41,7 @@ std::vector<char> readFile(const std::string &filename)
 }
 
 
-void VulkanMaterial::Init(VulkanRenderer* renderer, const MaterialInfo &Info)
+void VulkanMaterial::Init(VulkanRenderEngine* renderer, const MaterialInfo &Info)
 {
     this->renderer = renderer;
 

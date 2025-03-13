@@ -29,7 +29,7 @@ public:
     void SetNearPlan(float nearPlan);
     void SetFarPlan(float farPlan);
 private: 
-    class VulkanRenderer* renderEngine;
+    class VulkanRenderEngine* renderEngine;
     class IRenderTarget* renderTarget;
 
     VkDescriptorSet cameraDescriptorSet{VK_NULL_HANDLE};

@@ -2,7 +2,7 @@
 #define WX_VULKAN_FRAME_H
 
 #include <wx/wx.h>
-#include "VulkanRenderer.h"
+#include "VulkanRenderEngine.h"
 
 class VulkanPanel : public wxWindow
 {
@@ -12,7 +12,7 @@ public:
     {
         SetWindowLongPtr(GetHWND(), GWL_STYLE, GetWindowLongPtr(GetHWND(), GWL_STYLE) | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 
-        renderer = new VulkanRenderer();
+        renderer = new VulkanRenderEngine();
 
         if (!rendererInitialized)
         {
@@ -56,7 +56,7 @@ public:
     }
 
 public:
-    VulkanRenderer *renderer;
+    VulkanRenderEngine *renderer;
 private:
     bool rendererInitialized{false};
 };

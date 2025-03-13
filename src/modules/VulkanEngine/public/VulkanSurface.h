@@ -5,13 +5,13 @@
 
 class VulkanSurface
 {
-    VulkanSurface(class VulkanRenderer* renderEngine, void* windowHandle);
+    VulkanSurface(class VulkanRenderEngine* renderEngine, void* windowHandle);
     ~VulkanSurface();
 public:
     VkSurfaceKHR GetSurface() const { return surface; }
     uint32_t GetSupportedQueueFamilyIndex() const { return supportedQueueFamilyIndex; }
 private:
-    class VulkanRenderer* renderEngine;
+    class VulkanRenderEngine* renderEngine;
 
     VkSurfaceKHR surface;
     uint32_t supportedQueueFamilyIndex;

@@ -19,7 +19,7 @@ private: // Temp
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
 
-    class VulkanRenderer* renderEngine;
+    class VulkanRenderEngine* renderEngine;
 
     std::vector<uint32_t> indices;
     std::vector<class Vertex> vertices;

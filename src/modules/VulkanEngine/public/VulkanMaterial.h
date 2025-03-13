@@ -16,7 +16,7 @@ struct MaterialInfo
 class VulkanMaterial
 {
 public:
-    void Init(class VulkanRenderer* renderer, const MaterialInfo& Info);
+    void Init(class VulkanRenderEngine* renderer, const MaterialInfo& Info);
 
     VkPipeline GetGraphicsPipeline() { return graphicsPipeline; }
     VkPipelineLayout GetPipelineLayout() { return pipelineLayout; }
@@ -29,7 +29,7 @@ private:
     VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
     VkDescriptorSet objectDescriptorSet{VK_NULL_HANDLE};
 
-    class VulkanRenderer* renderer;
+    class VulkanRenderEngine* renderer;
 
     void allocateDescriptorSet();
 private:

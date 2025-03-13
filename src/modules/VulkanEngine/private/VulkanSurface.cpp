@@ -1,7 +1,7 @@
 #include "VulkanSurface.h"
-#include "VulkanRenderer.h"
+#include "VulkanRenderEngine.h"
 
-VulkanSurface::VulkanSurface(VulkanRenderer *renderEngine, void* windowHandle)
+VulkanSurface::VulkanSurface(VulkanRenderEngine *renderEngine, void* windowHandle)
     : renderEngine(renderEngine)
 {
     CreateSurface(windowHandle);
