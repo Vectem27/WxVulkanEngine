@@ -1,57 +1,34 @@
-#include "SwapchainRenderer.h"
-#include <stdexcept>
-#include <algorithm>
+#include "VulkanRenderer.h"
+
 #include "VulkanRenderEngine.h"
+#include "IRenderable.h"
+#include "ICamera.h"
+#include "VulkanSwapchain.h"
 #include <array>
 
-
-SwapchainRenderer::SwapchainRenderer(VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex)
-    : surface(surface), graphicsQueueFamilyIndex(graphicsQueueFamilyIndex)
-{}
-
-SwapchainRenderer::~SwapchainRenderer()
+bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenerable *renderObject, ICamera* camera, VkQueue graphicsQueue, VkQueue presentQueue)
 {
-    Cleanup();
-}
-
-bool SwapchainRenderer::Init(IRenderEngine *renderEngine)
-{
-    this->renderEngine = dynamic_cast<VulkanRenderEngine*>(renderEngine);
-    if (!this->renderEngine)
-    {
-        return false;
-    }
-
-    vulkanSwapchain = new VulkanSwapchain(this->renderEngine, surface, graphicsQueueFamilyIndex);
-    
-    return true;
-}
-
-void SwapchainRenderer::Cleanup()
-{
-    CleanupSwapchain();
-}
-
-bool SwapchainRenderer::BeginRenderCommands()
-{
-    auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), vulkanSwapchain->GetSwapchain(), UINT64_MAX, vulkanSwapchain->GetImageAvailableSemaphore(), VK_NULL_HANDLE, &imageIndex);
+    uint32_t imageIndex;
+    VkSemaphore imageAvailableSemaphore = swapchain->GetImageAvailableSemaphore();
+    auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), swapchain->GetSwapchain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
-        RecreateSwapChain();
+        swapchain->Recreate();
         return false;
-    } else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) {
+    } else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) 
+    {
         throw std::runtime_error("vkAcquireNextImageKHR failed!");
     }
 
-    VkCommandBuffer commandBuffer = vulkanSwapchain->GetCommandBuffer(imageIndex);
-    VkFramebuffer frameBuffer = vulkanSwapchain->GetFrameBuffer(imageIndex);
-    VkFence inFlightFence = vulkanSwapchain->GetInFlightFence();
-    VkSemaphore renderFinishedSemaphore = vulkanSwapchain->GetRenderFinishedSemaphore();
+    VkCommandBuffer commandBuffer = swapchain->GetCommandBuffer(imageIndex);
+    VkFramebuffer frameBuffer = swapchain->GetFrameBuffer(imageIndex);
+    VkFence inFlightFence = swapchain->GetInFlightFence();
+    VkSemaphore renderFinishedSemaphore = swapchain->GetRenderFinishedSemaphore();
+
 
     vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
 
-    
     // Réinitialise le command buffer
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
     {
@@ -71,11 +48,11 @@ bool SwapchainRenderer::BeginRenderCommands()
     renderPassInfo.renderPass = renderEngine->GetDefaultRenderPass();
     renderPassInfo.framebuffer = frameBuffer;
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = {vulkanSwapchain->GetExtent().width, vulkanSwapchain->GetExtent().height};
+    renderPassInfo.renderArea.extent = {swapchain->GetExtent().width, swapchain->GetExtent().height};
 
     // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = clearColor.color; // Couleur de fond
+    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f}; // Couleur de fond
     clearValues[1].depthStencil = {1.0f, 0}; // Valeur de profondeur initiale (1.0 = loin)
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -83,16 +60,9 @@ bool SwapchainRenderer::BeginRenderCommands()
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    return true;
-}
+    // Render
+    
 
-void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueue graphicsQueue)
-{
-
-    VkCommandBuffer commandBuffer = vulkanSwapchain->GetCommandBuffer(imageIndex);
-    VkFramebuffer frameBuffer = vulkanSwapchain->GetFrameBuffer(imageIndex);
-    VkFence inFlightFence = vulkanSwapchain->GetInFlightFence();
-    VkSemaphore renderFinishedSemaphore = vulkanSwapchain->GetRenderFinishedSemaphore();
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
@@ -103,11 +73,10 @@ void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueu
         throw std::runtime_error("failed to end command buffer!");
     }
 
-
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = {vulkanSwapchain->GetImageAvailableSemaphore()};
+    VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
@@ -129,32 +98,19 @@ void SwapchainRenderer::EndRenderCommandsAndPresent(VkQueue presentQueue, VkQueu
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
     presentInfo.swapchainCount = 1;
-    VkSwapchainKHR swapChains[] = {vulkanSwapchain->GetSwapchain()};
+    VkSwapchainKHR swapChains[] = {swapchain->GetSwapchain()};
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    VkResult res = vkQueuePresentKHR(presentQueue, &presentInfo);
+    res = vkQueuePresentKHR(presentQueue, &presentInfo);
     if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) 
     {
-        RecreateSwapChain();
+        swapchain->Recreate();
     } 
     else if (res != VK_SUCCESS) 
     {
         throw std::runtime_error("failed to present swap chain image!");
     }
-}
 
-void SwapchainRenderer::SetRenderPass(VkRenderPass renderPass)
-{
-    vulkanSwapchain->SetRenderPass(renderPass);
-}
-
-void SwapchainRenderer::RecreateSwapChain()
-{
-    vulkanSwapchain->Recreate();
-}
-
-void SwapchainRenderer::CleanupSwapchain()
-{
-    delete vulkanSwapchain;
+    return true;
 }
