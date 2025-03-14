@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <array>
 
-VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex)
+VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface* surface)
     : renderEngine(renderEngine), surface(surface)
 { 
-    CreateCommandPool(graphicsQueueFamilyIndex);
+    CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
     CreateSync();
 
     CreateSwapchain();
@@ -129,7 +129,7 @@ void VulkanSwapchain::CreateSync()
 void VulkanSwapchain::CreateSwapchain()
 {
     VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(renderEngine->GetPhysicalDevice(), surface, &capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(renderEngine->GetPhysicalDevice(), surface->GetSurface(), &capabilities);
 
     VkExtent2D extent = capabilities.currentExtent;
     if (extent.width == UINT32_MAX)
@@ -143,9 +143,11 @@ void VulkanSwapchain::CreateSwapchain()
 
     swapchainExtent = extent;
 
+    bool queuesAreDifferent = (renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex() != surface->GetPresentQueueFamilyIndex());
+
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = surface;
+    createInfo.surface = surface->GetSurface();
     createInfo.minImageCount = capabilities.minImageCount + 1;
     if (capabilities.maxImageCount > 0 && createInfo.minImageCount > capabilities.maxImageCount)
     {
@@ -156,7 +158,20 @@ void VulkanSwapchain::CreateSwapchain()
     createInfo.imageExtent = swapchainExtent;
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    if (queuesAreDifferent) 
+    {
+        uint32_t queueFamilyIndices[] = {renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex(), surface->GetPresentQueueFamilyIndex()};
+        
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;  // Permet à plusieurs queues d'accéder aux images
+        createInfo.queueFamilyIndexCount = 2;
+        createInfo.pQueueFamilyIndices = queueFamilyIndices;
+    } 
+    else 
+    {
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;  // Plus performant si une seule famille utilise la swapchain
+        createInfo.queueFamilyIndexCount = 0;
+        createInfo.pQueueFamilyIndices = nullptr;
+    }
     createInfo.preTransform = capabilities.currentTransform;
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;

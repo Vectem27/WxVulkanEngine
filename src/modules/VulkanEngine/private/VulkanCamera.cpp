@@ -1,9 +1,8 @@
 #include "VulkanCamera.h"
-#include "SwapchainRenderer.h"
 #include "IRenderable.h"
 #include "ICamera.h"
-#include "SwapchainRenderer.h"
 #include "VulkanRenderEngine.h"
+#include "IRenderTarget.h"
 #include <array>
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -33,15 +32,8 @@ bool VulkanCamera::Init(IRenderEngine* renderEngine, class IRenderTarget* render
     return true;
 }
 
-bool VulkanCamera::Render(IRenderable* renderable)
+bool VulkanCamera::Render(IRenderable* renderable, const VkCommandBuffer& commandBuffer)
 {
-
-    SwapchainRenderer* sr = dynamic_cast<SwapchainRenderer*>(renderTarget);
-    if (sr)
-    {
-        
-        if(!sr->BeginRenderCommands())
-            return false;
 
         VkViewport viewport = {};
         viewport.x = 0.0f;
@@ -55,8 +47,8 @@ bool VulkanCamera::Render(IRenderable* renderable)
         scissor.offset = {0, 0};
         scissor.extent = {GetRenderTarget()->GetWidth(), GetRenderTarget()->GetHeight()};
     
-        vkCmdSetViewport(GetRenderTarget()->GetCurrentCommandBuffer(), 0, 1, &viewport);
-        vkCmdSetScissor(GetRenderTarget()->GetCurrentCommandBuffer(), 0, 1, &scissor);
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
     
         SetAspectRatio(static_cast<float>(GetRenderTarget()->GetWidth()) / static_cast<float>(GetRenderTarget()->GetHeight()));
 
@@ -67,14 +59,11 @@ bool VulkanCamera::Render(IRenderable* renderable)
 
 
 
-        renderEngine->material.Bind(this);
+        renderEngine->material.Bind(commandBuffer, GetObjectDataBuffer(), GetDescriptorSet());
 
     
         if (renderable)
-            renderable->draw(this);
-
-        sr->EndRenderCommandsAndPresent(renderEngine->GetPresentQueue(),renderEngine->GetGraphicsQueue());
-    }
+            renderable->draw(commandBuffer);
 
     return true;
 }
@@ -95,11 +84,6 @@ void VulkanCamera::Cleanup()
 void VulkanCamera::SetRenderTarget(IRenderTarget *renderTarget)
 {
     this->renderTarget = renderTarget;
-    SwapchainRenderer* sr = dynamic_cast<SwapchainRenderer*>(renderTarget);
-    if (sr)
-    {
-        sr->SetRenderPass(renderEngine->GetDefaultRenderPass());
-    }
 }
 
 void VulkanCamera::SetAspectRatio(float aspectRatio)

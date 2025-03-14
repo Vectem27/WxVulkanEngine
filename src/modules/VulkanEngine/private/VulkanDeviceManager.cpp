@@ -47,8 +47,7 @@ void VulkanDeviceManager::PickPhysicalDevice(VkInstance instance)
                 hasGraphics = true;
             }
 
-            if (queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT && 
-                !(queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) // Idéalement une queue transfert dédiée
+            if (queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT) // Idéalement une queue transfert dédiée
             {
                 transferQueueFamilyIndex = i;
                 hasTransfer = true;
@@ -81,6 +80,7 @@ void VulkanDeviceManager::CreateLogicalDevice()
         queueCreateInfo.pQueuePriorities = &queuePriority;
         queueCreateInfos.push_back(queueCreateInfo);
     }
+    const char* deviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     VkDeviceCreateInfo createInfo{};
@@ -88,6 +88,8 @@ void VulkanDeviceManager::CreateLogicalDevice()
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.enabledExtensionCount = 1;
+    createInfo.ppEnabledExtensionNames = deviceExtensions;
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) 
     {

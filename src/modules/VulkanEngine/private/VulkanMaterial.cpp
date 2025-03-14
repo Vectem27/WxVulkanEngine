@@ -6,7 +6,6 @@
 #include <iostream>
 #include "Vertex.h"
 #include "VulkanRenderEngine.h"
-#include "SwapchainRenderer.h"
 #include "VulkanCamera.h"
 
 std::vector<char> readFile(const std::string &filename)
@@ -223,11 +222,11 @@ void VulkanMaterial::Init(VulkanRenderEngine* renderer, const MaterialInfo &Info
     vkDestroyShaderModule(renderer->GetDevice(), fragShaderModule, nullptr);
 }
 
-bool VulkanMaterial::Bind(VulkanCamera *camera)
+bool VulkanMaterial::Bind(const VkCommandBuffer& commandBuffer,const VkBuffer& bufferTest, const VkDescriptorSet* cameraDescriptorSet)
 {
 
     VkDescriptorBufferInfo bufferInfo {};
-    bufferInfo.buffer = camera->GetObjectDataBuffer(); // Supposons que ubo expose son buffer
+    bufferInfo.buffer = bufferTest; // Supposons que ubo expose son buffer
     bufferInfo.offset = 0;
     bufferInfo.range = sizeof(ObjectData);
 
@@ -242,9 +241,9 @@ bool VulkanMaterial::Bind(VulkanCamera *camera)
 
     vkUpdateDescriptorSets(renderer->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 
-    vkCmdBindPipeline(camera->GetRenderTarget()->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetGraphicsPipeline());
-    vkCmdBindDescriptorSets(camera->GetRenderTarget()->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 0, 1, camera->GetDescriptorSet(), 0, nullptr);
-    vkCmdBindDescriptorSets(camera->GetRenderTarget()->GetCurrentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 1, 1, GetObjectDescriptorSet(), 0, nullptr);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetGraphicsPipeline());
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 0, 1, cameraDescriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 1, 1, GetObjectDescriptorSet(), 0, nullptr);
 
     return true;
 }

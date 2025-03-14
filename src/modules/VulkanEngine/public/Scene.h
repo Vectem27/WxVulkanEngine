@@ -9,8 +9,8 @@
 class Scene : public IRenderable
 {
 public: // IRenderable Interface
-    virtual bool Init(class IRenderEngine* engine) override;
-    virtual void draw(class ICamera* camera) override;
+    virtual bool Init(IRenderEngine *renderEngine) override;
+    virtual void draw(const VkCommandBuffer& commandBuffer) override;
 
 private: // Temp
     VkBuffer vertexBuffer;

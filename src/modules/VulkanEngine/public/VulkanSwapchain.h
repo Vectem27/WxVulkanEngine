@@ -2,6 +2,7 @@
 #define VULKANSWAPCHAIN_H
 
 #include <vulkan/vulkan.h>
+#include "IRenderTarget.h"
 #include <vector>
 
 struct SwapchainSupportDetails 
@@ -11,12 +12,17 @@ struct SwapchainSupportDetails
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class VulkanSwapchain
+class VulkanSwapchain : public IRenderTarget
 {
 public:
-    VulkanSwapchain(class VulkanRenderEngine* renderEngine, VkSurfaceKHR surface, uint32_t graphicsQueueFamilyIndex);
+    VulkanSwapchain(class VulkanRenderEngine* renderEngine, class VulkanSurface* surface);
     ~VulkanSwapchain();
 
+public:
+    virtual uint32_t GetWidth() const override { return GetExtent().width; }
+    virtual uint32_t GetHeight() const override { return GetExtent().height; }
+
+public:
     void Create(VkRenderPass renderPass);
     void SetRenderPass(VkRenderPass renderPass);
     void Recreate();
@@ -31,9 +37,11 @@ public:
 
     int32_t GetImageCount() const { return imageCount; }
 
+
+
 private:
     void CreateCommandPool(uint32_t graphicsQueueFamilyIndex);
-    void CreateCommandBuffers();
+    void CreateCommandBuffers();    
     void CreateSync();
 
     void CreateSwapchain();
@@ -46,7 +54,7 @@ private:
 
 private:
     class VulkanRenderEngine* renderEngine;
-    VkSurfaceKHR surface;
+    class VulkanSurface* surface;
 
     VkRenderPass renderPass;
 
@@ -64,8 +72,7 @@ private:
     std::vector<VkFramebuffer> depthFramebuffers;
 
     VkExtent2D swapchainExtent;
-
-
+    
     // Commands
     VkCommandPool commandPool{VK_NULL_HANDLE};
     std::vector<VkCommandBuffer> commandBuffers;

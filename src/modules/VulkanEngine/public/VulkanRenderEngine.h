@@ -15,8 +15,6 @@
 #include "VulkanMaterial.h"
 #include "Vertex.h"
 #include "UniformBufferObject.h"
-#include "SwapchainRenderer.h"
-#include "VulkanCamera.h"
 #include "IRenderEngine.h"
 #include "VulkanDeviceManager.h"
 #include "VulkanSurface.h"
@@ -24,10 +22,6 @@
 class VulkanRenderEngine : public IRenderEngine
 {
 public:
-    VulkanRenderEngine() : instance(VK_NULL_HANDLE), physicalDevice(VK_NULL_HANDLE), device(VK_NULL_HANDLE),
-                       graphicsQueue(VK_NULL_HANDLE), surface(VK_NULL_HANDLE), graphicsQueueFamilyIndex(0) 
-    { }
-
     ~VulkanRenderEngine() { Shutdown(); }
 
     virtual bool Init(void* windowHandle) override;
@@ -48,25 +42,17 @@ public:
 
     const VkDescriptorSetLayout* GetCameraDescriptorLayout() const { return &cameraDescriptorLayout; }
     const VkDescriptorSetLayout* GetObjectDescriptorLayout() const { return &objectDescriptorLayout; }
+
+    VulkanSurface* GetSurfaceTest() const { return surfaceTest; }
+    VulkanDeviceManager* GetDeviceManager() const { return deviceManager; }
 private:
     VkInstance instance{ VK_NULL_HANDLE };
     VulkanDeviceManager* deviceManager{ nullptr };
     VulkanSurface* surfaceTest{ nullptr };
 
-    VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
-    VkDevice device{VK_NULL_HANDLE};
-
-    VkQueue graphicsQueue{VK_NULL_HANDLE};
-    VkQueue presentQueue{VK_NULL_HANDLE};
-
     // Rendering
     VkFormat swapChainImageFormat;
     VkFormat depthStencilImageFormat;
-
-public: // Temps
-    uint32_t graphicsQueueFamilyIndex;
-    VkSurfaceKHR surface{VK_NULL_HANDLE};
-private:
 
     VkDescriptorSetLayout cameraDescriptorLayout{VK_NULL_HANDLE};
     VkDescriptorSetLayout objectDescriptorLayout{VK_NULL_HANDLE};
@@ -80,10 +66,6 @@ public:
 
 private:
     void createInstance();
-    void createSurface(void* windowHandle);
-    void selectPhysicalDevice();
-    bool isDeviceSuitable(VkPhysicalDevice device);
-    void createLogicalDevice();
     void CreateDescriptorLayouts();
     void createDescriptorPool();
     void CreateRenderPass();
@@ -95,30 +77,30 @@ public:
         bufferCreateInfo.usage = usage;
         bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     
-        if (vkCreateBuffer(device, &bufferCreateInfo, nullptr, &buffer) != VK_SUCCESS) 
+        if (vkCreateBuffer(GetDevice(), &bufferCreateInfo, nullptr, &buffer) != VK_SUCCESS) 
         {
             throw std::runtime_error("failed to create buffer!");
         }
     
         VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+        vkGetBufferMemoryRequirements(GetDevice(), buffer, &memRequirements);
     
         VkMemoryAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
         allocInfo.allocationSize = memRequirements.size;
         allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
     
-        if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+        if (vkAllocateMemory(GetDevice(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
             throw std::runtime_error("failed to allocate buffer memory!");
         }
     
-        vkBindBufferMemory(device, buffer, bufferMemory, 0);
+        vkBindBufferMemory(GetDevice(), buffer, bufferMemory, 0);
     }
     
     uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) 
     {
         VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+        vkGetPhysicalDeviceMemoryProperties(GetPhysicalDevice(), &memProperties);
     
         // Parcourir tous les types de mémoire pour trouver celui qui correspond aux critères
         for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 

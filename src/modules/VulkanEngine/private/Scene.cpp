@@ -63,10 +63,10 @@ bool Scene::Init(IRenderEngine *renderEngine)
     return true;
 }
 
-void Scene::draw(ICamera *camera)
+void Scene::draw(const VkCommandBuffer& commandBuffer)
 {
     VkDeviceSize offset = 0;
-    vkCmdBindVertexBuffers(camera->GetRenderTarget()->GetCurrentCommandBuffer(), 0, 1, &vertexBuffer, &offset);
-    vkCmdBindIndexBuffer(camera->GetRenderTarget()->GetCurrentCommandBuffer(), indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(camera->GetRenderTarget()->GetCurrentCommandBuffer(), static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 }

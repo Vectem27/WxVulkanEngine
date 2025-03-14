@@ -15,9 +15,6 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     createInstance();
     deviceManager = new VulkanDeviceManager(instance);
     surfaceTest = new VulkanSurface(instance, deviceManager, windowHandle);
-    createSurface(windowHandle);
-    selectPhysicalDevice();
-    createLogicalDevice();
     CreateRenderPass();
     CreateDescriptorLayouts();
     createDescriptorPool();
@@ -33,8 +30,8 @@ bool VulkanRenderEngine::Init(void *windowHandle)
 
 
 void VulkanRenderEngine::Shutdown() {
-    if (device != VK_NULL_HANDLE) 
-        vkDeviceWaitIdle(device);
+    if (GetDevice() != VK_NULL_HANDLE) 
+        vkDeviceWaitIdle(GetDevice());
 
     if (defaultRenderPass != VK_NULL_HANDLE) 
     {
@@ -44,22 +41,10 @@ void VulkanRenderEngine::Shutdown() {
 
     if (descriptorPool != VK_NULL_HANDLE) 
     {
-        vkDestroyDescriptorPool(device, descriptorPool, nullptr);
+        vkDestroyDescriptorPool(GetDevice(), descriptorPool, nullptr);
         descriptorPool = VK_NULL_HANDLE;
     }
 
-    if (device != VK_NULL_HANDLE) 
-    {
-        vkDestroyDevice(device, nullptr);
-        device = VK_NULL_HANDLE;
-    }
-
-    if (surface != VK_NULL_HANDLE) 
-    {
-        vkDestroySurfaceKHR(instance, surface, nullptr);
-        surface = VK_NULL_HANDLE;
-    }
-    
     delete surfaceTest;
     delete deviceManager;
 
@@ -114,133 +99,6 @@ void VulkanRenderEngine::createInstance()
     {
         throw std::runtime_error("failed to create Vulkan instance!");
     }
-}
-
-void VulkanRenderEngine::createSurface(void *windowHandle)
-{
-#ifdef _WIN32
-    VkWin32SurfaceCreateInfoKHR createInfo{}; 
-    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-    createInfo.hwnd = reinterpret_cast<HWND>(windowHandle);
-    createInfo.hinstance = GetModuleHandle(nullptr);
-    if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create window surface!");
-    }
-#elif defined(__linux__)  // Pour Linux
-    VkXcbSurfaceCreateInfoKHR createInfo{}; 
-    createInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-    createInfo.connection = XGetXCBConnection(XOpenDisplay(nullptr));
-    createInfo.window = reinterpret_cast<xcb_window_t>(windowHandle);
-    if (vkCreateXcbSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create XCB window surface!");
-    }
-#elif defined(__APPLE__)  // Pour macOS
-    VkCocoaSurfaceCreateInfoKHR createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_COCOA_SURFACE_CREATE_INFO_KHR;
-    createInfo.pView = windowHandle;  // Utilisation du handle natif macOS
-    if (vkCreateCocoaSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create Cocoa window surface!");
-    }
-#else
-    // Autres plateformes
-    throw std::runtime_error("Surface creation not supported for this platform!");
-#endif
-}
-
-void VulkanRenderEngine::selectPhysicalDevice()
-{
-    uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-    if (deviceCount == 0)
-    {
-        throw std::runtime_error("failed to find GPUs with Vulkan support!");
-    }
-    std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
-    for (const auto &device : devices)
-    {
-        if (isDeviceSuitable(device))
-        {
-            physicalDevice = device;
-            break;
-        }
-    }
-    if (physicalDevice == VK_NULL_HANDLE)
-    {
-        throw std::runtime_error("failed to find a suitable GPU!");
-    }
-}
-
-bool VulkanRenderEngine::isDeviceSuitable(VkPhysicalDevice device)
-{
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-    bool graphicsFound = false;
-    bool presentFound = false;
-    for (uint32_t i = 0; i < queueFamilyCount; i++)
-    {
-        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-        {
-            graphicsFound = true;
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-            if (presentSupport)
-            {
-                presentFound = true;
-                break;
-            }
-        }
-    }
-    return graphicsFound && presentFound;
-}
-
-void VulkanRenderEngine::createLogicalDevice()
-{
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
-    for (uint32_t i = 0; i < queueFamilyCount; i++)
-    {
-        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-        {
-            VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
-            if (presentSupport)
-            {
-                graphicsQueueFamilyIndex = i;
-                break;
-            }
-        }
-    }
-    float queuePriority = 1.0f;
-    VkDeviceQueueCreateInfo queueCreateInfo{};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
-    queueCreateInfo.queueCount = 1;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
-
-    VkDeviceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.queueCreateInfoCount = 1;
-    createInfo.pQueueCreateInfos = &queueCreateInfo;
-
-    // Extension nécessaire pour le swapchain.
-    const char *deviceExtensions[] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-    createInfo.enabledExtensionCount = 1;
-    createInfo.ppEnabledExtensionNames = deviceExtensions;
-
-    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
-    {
-        throw std::runtime_error("failed to create logical device!");
-    }
-    vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);
-    vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &presentQueue);
 }
 
 void VulkanRenderEngine::CreateDescriptorLayouts()

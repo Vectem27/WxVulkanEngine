@@ -6,10 +6,10 @@
 class IRenderTarget
 {
 public:
-    virtual bool Init(class IRenderEngine* renderEngine) = 0;
-    virtual void Cleanup() = 0;
-
-    virtual const VkCommandBuffer& GetCurrentCommandBuffer() const = 0;
+    //virtual bool Init(class IRenderEngine* renderEngine) = 0;
+    //virtual void Cleanup() = 0;
+//
+    //virtual const VkCommandBuffer& GetCurrentCommandBuffer() const = 0;
 
     virtual uint32_t GetWidth() const = 0;
     virtual uint32_t GetHeight() const = 0;

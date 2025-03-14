@@ -7,10 +7,10 @@ class VulkanRenderer
 {
 public:
     VulkanRenderer(class VulkanRenderEngine* renderEngine);
-    ~VulkanRenderer();
+    ~VulkanRenderer() = default;
 
-    bool RenderToSwapchain( class VulkanSwapchain* swapchain ,class IRenerable* renderObject, 
-        class ICamera* camera, VkQueue graphicsQueue, VkQueue presentQueue);
+    bool RenderToSwapchain( class VulkanSwapchain* swapchain ,class IRenderable* renderObject, 
+        class VulkanCamera* camera, VkQueue graphicsQueue, VkQueue presentQueue);
 
 private:
     class VulkanRenderEngine* renderEngine{nullptr};

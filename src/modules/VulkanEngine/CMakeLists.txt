@@ -1,8 +1,7 @@
 add_library(VulkanEngine STATIC 
     private/VulkanCamera.cpp 
     private/VulkanRenderEngine.cpp 
-    private/VulkanMaterial.cpp 
-    private/SwapchainRenderer.cpp 
+    private/VulkanMaterial.cpp
     private/Scene.cpp
     private/VulkanSurface.cpp 
     private/VulkanRenderTarget.cpp 

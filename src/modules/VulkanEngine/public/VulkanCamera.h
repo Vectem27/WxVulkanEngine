@@ -14,7 +14,7 @@ public:
 
 public: // ICamera Interface
     virtual bool Init(class IRenderEngine* renderEngine, class IRenderTarget* renderTarget = nullptr) override;
-    virtual bool Render(class IRenderable* renderable) override;
+    virtual bool Render(class IRenderable* renderable, const VkCommandBuffer& commandBuffer);
     virtual void Cleanup() override;
     virtual class IRenderTarget* GetRenderTarget() const override;
     virtual void SetRenderTarget(class IRenderTarget* renderTarget) override;

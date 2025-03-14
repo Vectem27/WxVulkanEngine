@@ -5,7 +5,9 @@
 #include <vulkan/vulkan.h>
 #include "Scene.h"
 #include "VulkanMaterial.h"
-
+#include "VulkanRenderer.h"
+#include "VulkanSwapchain.h"
+#include "VulkanCamera.h"
 
 class RenderPanel : public wxWindow
 {
@@ -15,53 +17,50 @@ public:
     {
         SetWindowLongPtr(GetHWND(), GWL_STYLE, GetWindowLongPtr(GetHWND(), GWL_STYLE) | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 
-        renderer = new VulkanRenderEngine();
+        renderEngine = new VulkanRenderEngine();
 
-        if (!rendererInitialized)
+        try
         {
-#ifdef __WXMSW__
-            // Pour Windows, récupération du handle natif.
-            renderer->Init(reinterpret_cast<void *>(GetHWND()));
-#elif defined(__WXGTK__)  // Pour Linux (GTK)
-            // Pour Linux, récupération du handle natif pour un panel GTK.
-            renderer->Init(reinterpret_cast<void *>(GetHandle()));
-#elif defined(__WXMAC__)  // Pour macOS
-            // Pour macOS, récupération du handle natif.
-            renderer->Init(reinterpret_cast<void *>(GetHandle()));
-#else
-            // Pour d'autres plateformes, il faudra récupérer le handle natif approprié.
-            renderer->Init(nullptr);
-    #endif
-            rendererInitialized = true;
+            renderEngine->Init(reinterpret_cast<void *>(GetHandle()));
+            
+            surface = new VulkanSurface(renderEngine->GetInstance(), renderEngine->GetDeviceManager(), reinterpret_cast<void *>(GetHandle()));
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
         }
 
+
+        swapchain = new VulkanSwapchain(renderEngine, surface);
+        swapchain->Create(renderEngine->GetDefaultRenderPass());
+
+        renderer = new VulkanRenderer(renderEngine);
+
+        camera = new VulkanCamera();
+        
+        camera->Init(renderEngine, swapchain);
+  
+        scene = new Scene();
+        scene->Init(renderEngine);
+  
         MaterialInfo matInfo = {};
         matInfo.fragmentShader = "shaders/shader.frag";
         matInfo.vertexShader = "shaders/shader.vert";
 
-        material.Init(renderer, matInfo);
-
-        camera = new VulkanCamera();
-        swapchainRenderer = new SwapchainRenderer(renderer->surface, renderer->graphicsQueueFamilyIndex);
-        swapchainRenderer->Init(renderer);
-        camera->Init(renderer, swapchainRenderer);
-  
-        scene = new Scene();
-        scene->Init(renderer);
-        
+        material.Init(renderEngine, matInfo);
     }
 
     void Cleanup()
     {
-        swapchainRenderer->Cleanup();
-        delete swapchainRenderer;
         camera->Cleanup();
         delete camera;
         delete scene;
+        delete swapchain;
+        delete renderer;
 
-        if (renderer)
+        if (renderEngine)
         {
-            renderer->Shutdown();
+            renderEngine->Shutdown();
             delete renderer;
         }
     }
@@ -71,7 +70,8 @@ public:
     {
         try
         {
-            camera->Render(scene);
+            //camera->Render(scene);
+            renderer->RenderToSwapchain(swapchain, scene, camera, renderEngine->GetDeviceManager()->GetGraphicsQueue(), surface->GetPresentQueue());
         }
         catch (const std::exception &e)
         {
@@ -80,13 +80,14 @@ public:
     }
 
 public:
-    VulkanRenderEngine *renderer;
+    VulkanRenderEngine *renderEngine;
     VulkanCamera* camera;
-    SwapchainRenderer* swapchainRenderer;
     VulkanMaterial material;
     Scene* scene;
-private:
-    bool rendererInitialized{false};
+
+    VulkanRenderer* renderer;
+    VulkanSwapchain* swapchain;
+    VulkanSurface* surface;
 };
 
 

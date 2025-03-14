@@ -22,7 +22,7 @@ public:
     VkPipelineLayout GetPipelineLayout() { return pipelineLayout; }
     VkDescriptorSet* GetObjectDescriptorSet() { return &objectDescriptorSet; }
 
-    bool Bind(class VulkanCamera* camera);
+    bool Bind(const VkCommandBuffer& commandBuffer, const VkBuffer& bufferTest, const VkDescriptorSet* cameraDescriptorSet);
 
 private:
     VkPipeline graphicsPipeline{VK_NULL_HANDLE};

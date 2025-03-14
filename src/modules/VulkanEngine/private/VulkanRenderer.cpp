@@ -2,11 +2,16 @@
 
 #include "VulkanRenderEngine.h"
 #include "IRenderable.h"
-#include "ICamera.h"
+#include "VulkanCamera.h"
 #include "VulkanSwapchain.h"
 #include <array>
 
-bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenerable *renderObject, ICamera* camera, VkQueue graphicsQueue, VkQueue presentQueue)
+VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
+    : renderEngine(renderEngine)
+{
+}
+
+bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *renderObject, VulkanCamera *camera, VkQueue graphicsQueue, VkQueue presentQueue)
 {
     uint32_t imageIndex;
     VkSemaphore imageAvailableSemaphore = swapchain->GetImageAvailableSemaphore();
@@ -29,11 +34,13 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenerable *r
     vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
 
+
     // Réinitialise le command buffer
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
     {
         throw std::runtime_error("failed to reset command buffer!");
     }
+
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -42,6 +49,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenerable *r
         throw std::runtime_error("failed to begin command buffer!");
     }
    
+
     // Débute le render pass
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -62,7 +70,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenerable *r
 
     // Render
     
-
+    camera->Render(renderObject, commandBuffer);
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
