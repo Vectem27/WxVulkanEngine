@@ -21,7 +21,6 @@ public: // ICamera Interface
 
 public:
     VkBuffer GetViewDataBuffer() const { return viewBuffer.GetBuffer(); }
-    VkBuffer GetObjectDataBuffer() const { return objectBuffer.GetBuffer(); }
     const VkDescriptorSet* GetDescriptorSet() const { return &cameraDescriptorSet; }
 
     void SetAspectRatio(float aspectRatio);
@@ -38,8 +37,6 @@ private:
     UniformBuffer viewBuffer;
     TransformMVP viewData;
 
-    UniformBuffer objectBuffer;
-    ObjectData objectData;
 private: // Create
     void CreateDescriptorPool();
     void CreateDescriptors();

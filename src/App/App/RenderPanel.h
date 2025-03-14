@@ -4,7 +4,7 @@
 #include <wx/wx.h>
 #include <vulkan/vulkan.h>
 #include "Scene.h"
-#include "VulkanMaterial.h"
+#include "Pipeline/VulkanOpaqueMaterial.h"
 #include "VulkanRenderer.h"
 #include "VulkanSwapchain.h"
 #include "VulkanCamera.h"
@@ -24,30 +24,34 @@ public:
             renderEngine->Init(reinterpret_cast<void *>(GetHandle()));
             
             surface = new VulkanSurface(renderEngine->GetInstance(), renderEngine->GetDeviceManager(), reinterpret_cast<void *>(GetHandle()));
+
+            swapchain = new VulkanSwapchain(renderEngine, surface);
+            swapchain->Create(renderEngine->GetDefaultRenderPass());
+
+            renderer = new VulkanRenderer(renderEngine);
+
+            camera = new VulkanCamera();
+            
+            camera->Init(renderEngine, swapchain);
+    
+            scene = new Scene();
+            scene->Init(renderEngine);
+    
+            MaterialInfo matInfo = {};
+            matInfo.fragmentShader = "shaders/shader.frag";
+            matInfo.vertexShader = "shaders/shader.vert";
+
+            material = new VulkanOpaqueMaterial(renderEngine->GetPipelineManager());
+            material->CreatePipelines(renderEngine->GetDevice(), renderEngine->GetDefaultRenderPass(), matInfo);
+
+            scene->SetMaterial(material);
         }
         catch(const std::exception& e)
         {
-            std::cerr << e.what() << '\n';
+            wxMessageBox(e.what(), "Erreur", wxICON_ERROR);
         }
 
 
-        swapchain = new VulkanSwapchain(renderEngine, surface);
-        swapchain->Create(renderEngine->GetDefaultRenderPass());
-
-        renderer = new VulkanRenderer(renderEngine);
-
-        camera = new VulkanCamera();
-        
-        camera->Init(renderEngine, swapchain);
-  
-        scene = new Scene();
-        scene->Init(renderEngine);
-  
-        MaterialInfo matInfo = {};
-        matInfo.fragmentShader = "shaders/shader.frag";
-        matInfo.vertexShader = "shaders/shader.vert";
-
-        material.Init(renderEngine, matInfo);
     }
 
     void Cleanup()
@@ -70,7 +74,6 @@ public:
     {
         try
         {
-            //camera->Render(scene);
             renderer->RenderToSwapchain(swapchain, scene, camera, renderEngine->GetDeviceManager()->GetGraphicsQueue(), surface->GetPresentQueue());
         }
         catch (const std::exception &e)
@@ -82,7 +85,7 @@ public:
 public:
     VulkanRenderEngine *renderEngine;
     VulkanCamera* camera;
-    VulkanMaterial material;
+    VulkanOpaqueMaterial* material;
     Scene* scene;
 
     VulkanRenderer* renderer;

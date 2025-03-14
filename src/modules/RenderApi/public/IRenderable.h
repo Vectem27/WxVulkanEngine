@@ -8,7 +8,7 @@ class IRenderable
 {
 public:
     virtual bool Init(class IRenderEngine* engine) = 0;
-    virtual void draw(const VkCommandBuffer& commandBuffer) = 0;
+    virtual void draw(const VkCommandBuffer& commandBuffer, class VulkanCamera* camera) = 0;
 };
 
 #endif // IRENDERABLE_H

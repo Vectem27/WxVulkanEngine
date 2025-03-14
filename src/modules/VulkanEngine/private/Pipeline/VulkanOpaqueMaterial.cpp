@@ -1,14 +1,15 @@
-#include "VulkanMaterial.h"
+#include "Pipeline/VulkanOpaqueMaterial.h"
 
-#include <sstream>
+#include "Pipeline/VulkanPipelineManager.h"
+#include "Vertex.h"
+
+#include <vector>
+#include <stdexcept>
 #include <array>
 #include <fstream>
 #include <iostream>
-#include "Vertex.h"
-#include "VulkanRenderEngine.h"
-#include "VulkanCamera.h"
 
-std::vector<char> readFile(const std::string &filename)
+std::vector<char> ReadFile(const std::string &filename)
 {
     try
     {
@@ -39,22 +40,29 @@ std::vector<char> readFile(const std::string &filename)
     }
 }
 
+void InitShaderModule(VkDevice device, VkShaderModule *shaderModule, const std::vector<char>& code) {
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-void VulkanMaterial::Init(VulkanRenderEngine* renderer, const MaterialInfo &Info)
+    if (vkCreateShaderModule(device, &createInfo, nullptr, shaderModule) != VK_SUCCESS) 
+    {
+        throw std::runtime_error("Échec de la création du module shader !");
+    }
+}
+
+void VulkanOpaqueMaterial::CreatePipelines(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo)
 {
-    this->renderer = renderer;
-
-    allocateDescriptorSet();
-
     // Charge les shaders (remplacez par votre propre système de chargement)
-    auto vertShaderCode = readFile(Info.vertexShader);
-    auto fragShaderCode = readFile(Info.fragmentShader);
+    auto vertShaderCode = ReadFile(materialInfo.vertexShader);
+    auto fragShaderCode = ReadFile(materialInfo.fragmentShader);
 
     VkShaderModule vertShaderModule;
     VkShaderModule fragShaderModule;
 
-    initShaderModule(renderer->GetDevice(), &vertShaderModule, vertShaderCode);
-    initShaderModule(renderer->GetDevice(), &fragShaderModule, fragShaderCode);
+    InitShaderModule(device, &vertShaderModule, vertShaderCode);
+    InitShaderModule(device, &fragShaderModule, fragShaderCode);
 
     // Configuration des étapes de shader
     VkPipelineShaderStageCreateInfo shaderStages[2] = {};
@@ -170,23 +178,6 @@ void VulkanMaterial::Init(VulkanRenderEngine* renderer, const MaterialInfo &Info
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.stencilTestEnable = VK_FALSE;
 
-    VkDescriptorSetLayout descSetLayouts[] 
-    {
-        *renderer->GetCameraDescriptorLayout(),
-        *renderer->GetObjectDescriptorLayout()
-    };
-
-    // Création du pipeline layout (aucun uniform ou push constant ici)
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 2;
-    pipelineLayoutInfo.pSetLayouts = descSetLayouts; // Ajouté
-
-    if (vkCreatePipelineLayout(renderer->GetDevice(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Échec de la création du pipeline layout !");
-    }
-
     VkDynamicState dynamicStates[2] = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR
@@ -207,57 +198,22 @@ void VulkanMaterial::Init(VulkanRenderEngine* renderer, const MaterialInfo &Info
     pipelineInfo.pRasterizationState = &rasterizer;
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.layout = pipelineLayout;
+    pipelineInfo.layout = pipelineManager->GetPipelineLayout();
     pipelineInfo.pDynamicState = &dynamicStateCreateInfo;
     pipelineInfo.pDepthStencilState = &depthStencil; // Ajoutez cette ligne
-    pipelineInfo.renderPass = renderer->GetDefaultRenderPass();
+    pipelineInfo.renderPass = renderPass;
 
-    if (vkCreateGraphicsPipelines(renderer->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &basePipeline) != VK_SUCCESS)
     {
         throw std::runtime_error("Échec de la création du pipeline graphique !");
     }
 
     // Nettoie les modules shader (ils ne sont plus nécessaires après la création du pipeline)
-    vkDestroyShaderModule(renderer->GetDevice(), vertShaderModule, nullptr);
-    vkDestroyShaderModule(renderer->GetDevice(), fragShaderModule, nullptr);
+    vkDestroyShaderModule(device, vertShaderModule, nullptr);
+    vkDestroyShaderModule(device, fragShaderModule, nullptr);
 }
 
-bool VulkanMaterial::Bind(const VkCommandBuffer& commandBuffer,const VkBuffer& bufferTest, const VkDescriptorSet* cameraDescriptorSet)
+void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer) const
 {
-
-    VkDescriptorBufferInfo bufferInfo {};
-    bufferInfo.buffer = bufferTest; // Supposons que ubo expose son buffer
-    bufferInfo.offset = 0;
-    bufferInfo.range = sizeof(ObjectData);
-
-    VkWriteDescriptorSet descriptorWrite {};
-    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    descriptorWrite.dstSet = *GetObjectDescriptorSet();
-    descriptorWrite.dstBinding = 0;
-    descriptorWrite.dstArrayElement = 0;
-    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    descriptorWrite.descriptorCount = 1;
-    descriptorWrite.pBufferInfo = &bufferInfo;
-
-    vkUpdateDescriptorSets(renderer->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetGraphicsPipeline());
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 0, 1, cameraDescriptorSet, 0, nullptr);
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipelineLayout(), 1, 1, GetObjectDescriptorSet(), 0, nullptr);
-
-    return true;
-}
-
-void VulkanMaterial::allocateDescriptorSet()
-{
-    VkDescriptorSetAllocateInfo allocInfo {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = renderer->GetDescriptorPool();
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = renderer->GetObjectDescriptorLayout();
-
-    if (vkAllocateDescriptorSets(renderer->GetDevice(), &allocInfo, &objectDescriptorSet) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Échec de l'allocation du descriptor set !");
-    }
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBasePipeline());
 }

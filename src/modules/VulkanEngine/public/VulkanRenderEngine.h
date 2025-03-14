@@ -12,12 +12,12 @@
 #include <stdexcept>
 #include <iostream>
 
-#include "VulkanMaterial.h"
-#include "Vertex.h"
-#include "UniformBufferObject.h"
 #include "IRenderEngine.h"
 #include "VulkanDeviceManager.h"
 #include "VulkanSurface.h"
+
+#include "VulkanDescriptorPoolManager.h"
+#include "Pipeline/VulkanPipelineManager.h"
 
 class VulkanRenderEngine : public IRenderEngine
 {
@@ -31,20 +31,18 @@ public:
     VkInstance GetInstance() { return instance; }
     VkDevice GetDevice() const { return deviceManager->GetDevice(); }
     VkPhysicalDevice GetPhysicalDevice() const { return deviceManager->GetPhysicalDevice(); }
-    VkDescriptorPool GetDescriptorPool() const { return descriptorPool; }
-
 
     VkFormat GetSwapChainImageFormat() const { return swapChainImageFormat;}
     VkFormat GetDepthStencilImageFormat() const { return depthStencilImageFormat;}
     VkQueue GetPresentQueue() const { return surfaceTest->GetPresentQueue(); }
     VkQueue GetGraphicsQueue() const { return deviceManager->GetGraphicsQueue(); }
     VkRenderPass GetDefaultRenderPass() const { return defaultRenderPass; }
-
-    const VkDescriptorSetLayout* GetCameraDescriptorLayout() const { return &cameraDescriptorLayout; }
-    const VkDescriptorSetLayout* GetObjectDescriptorLayout() const { return &objectDescriptorLayout; }
-
+    
     VulkanSurface* GetSurfaceTest() const { return surfaceTest; }
     VulkanDeviceManager* GetDeviceManager() const { return deviceManager; }
+    VulkanDescriptorPoolManager* GetDescriptorPoolManager() { return descriptorPoolManager;}
+
+    VulkanPipelineManager* GetPipelineManager() { return pipelineManager; }
 private:
     VkInstance instance{ VK_NULL_HANDLE };
     VulkanDeviceManager* deviceManager{ nullptr };
@@ -52,21 +50,15 @@ private:
 
     // Rendering
     VkFormat swapChainImageFormat;
-    VkFormat depthStencilImageFormat;
-
-    VkDescriptorSetLayout cameraDescriptorLayout{VK_NULL_HANDLE};
-    VkDescriptorSetLayout objectDescriptorLayout{VK_NULL_HANDLE};
+    VkFormat depthStencilImageFormat; 
 
     VkRenderPass defaultRenderPass{VK_NULL_HANDLE};
     
-public:
-    // Material
-    VkDescriptorPool descriptorPool;
-    VulkanMaterial material;
+    VulkanDescriptorPoolManager* descriptorPoolManager;
 
+    VulkanPipelineManager* pipelineManager;
 private:
     void createInstance();
-    void CreateDescriptorLayouts();
     void createDescriptorPool();
     void CreateRenderPass();
 public:

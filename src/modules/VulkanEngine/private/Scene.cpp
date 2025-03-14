@@ -1,7 +1,10 @@
 #include "Scene.h"
 #include "VulkanRenderEngine.h"
 #include "IRenderTarget.h"
-
+#include "Pipeline/IVulkanMaterial.h"
+#include "glm/matrix.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "VulkanCamera.h"
 
 bool Scene::Init(IRenderEngine *renderEngine)
 {
@@ -12,6 +15,10 @@ bool Scene::Init(IRenderEngine *renderEngine)
         return false;
     }
 
+    if (!this->renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(&this->renderEngine->GetPipelineManager()->GetObjectDescriptorSetLayout(), 1, &objectDescriptorSet))
+    {
+        throw std::runtime_error("Échec de l'allocation du descriptor set !");
+    }
 
     // Les vertices du carré avec des couleurs différentes pour chaque coin
     vertices = 
@@ -59,14 +66,50 @@ bool Scene::Init(IRenderEngine *renderEngine)
     memcpy(indexData, indices.data(), (size_t)indexBufferSize);
     vkUnmapMemory(this->renderEngine->GetDevice(), indexBufferMemory);
 
+    objectBuffer.Create( this->renderEngine->GetDevice(), this->renderEngine->GetPhysicalDevice(), sizeof(ObjectData));
+
+    VkDescriptorBufferInfo bufferInfo {};
+    bufferInfo.buffer = objectBuffer.GetBuffer(); // Supposons que ubo expose son buffer
+    bufferInfo.offset = 0;
+    bufferInfo.range = sizeof(ObjectData);
+
+    VkWriteDescriptorSet descriptorWrite {};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = *GetObjectDescriptorSet();
+    descriptorWrite.dstBinding = 0;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+
+    
+    objectData.model = glm::mat4(1.0f);
+    objectData.model = glm::translate(objectData.model, {0.0f, 0.0f, 0.0f});
+
+    objectBuffer.Update(&objectData);
+
+    vkUpdateDescriptorSets(this->renderEngine->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 
     return true;
 }
 
-void Scene::draw(const VkCommandBuffer& commandBuffer)
+void Scene::draw(const VkCommandBuffer& commandBuffer, VulkanCamera* camera)
 {
+    if (material)
+        material->Bind(commandBuffer);
+
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderEngine->GetPipelineManager()->GetPipelineLayout(), 1, 1, GetObjectDescriptorSet(), 0, nullptr);
+
+
     VkDeviceSize offset = 0;
+
+
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+}
+
+void Scene::SetMaterial(IVulkanMaterial * material)
+{
+    this->material = material;
 }

@@ -16,18 +16,11 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     deviceManager = new VulkanDeviceManager(instance);
     surfaceTest = new VulkanSurface(instance, deviceManager, windowHandle);
     CreateRenderPass();
-    CreateDescriptorLayouts();
     createDescriptorPool();
-
-    MaterialInfo matInfo = {};
-    matInfo.fragmentShader = "shaders/shader.frag";
-    matInfo.vertexShader = "shaders/shader.vert";
-
-    material.Init(this, matInfo);
+    pipelineManager = new VulkanPipelineManager(GetDeviceManager()->GetDevice());
 
     return true;
 }
-
 
 void VulkanRenderEngine::Shutdown() {
     if (GetDevice() != VK_NULL_HANDLE) 
@@ -39,12 +32,10 @@ void VulkanRenderEngine::Shutdown() {
         defaultRenderPass = VK_NULL_HANDLE;
     }
 
-    if (descriptorPool != VK_NULL_HANDLE) 
-    {
-        vkDestroyDescriptorPool(GetDevice(), descriptorPool, nullptr);
-        descriptorPool = VK_NULL_HANDLE;
-    }
+    if (descriptorPoolManager)
+        delete descriptorPoolManager;
 
+    delete pipelineManager;
     delete surfaceTest;
     delete deviceManager;
 
@@ -64,7 +55,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
     return VK_FALSE; // On ne stoppe pas l'exécution du programme
 }
-
 
 void VulkanRenderEngine::createInstance()
 {
@@ -101,56 +91,9 @@ void VulkanRenderEngine::createInstance()
     }
 }
 
-void VulkanRenderEngine::CreateDescriptorLayouts()
-{
-    // Layout pour camera_vp (Set 0, Binding 0)
-    VkDescriptorSetLayoutBinding cameraVpBinding{};
-    cameraVpBinding.binding = 0;
-    cameraVpBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    cameraVpBinding.descriptorCount = 1;
-    cameraVpBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    cameraVpBinding.pImmutableSamplers = nullptr;
-
-
-    VkDescriptorSetLayoutCreateInfo layoutInfo{};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings = &cameraVpBinding;
-
-    vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, nullptr, &cameraDescriptorLayout);
-
-    // Layout pour object (Set 1, Binding 0)
-    VkDescriptorSetLayoutBinding objectBinding{};
-    objectBinding.binding = 0;
-    objectBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    objectBinding.descriptorCount = 1;
-    objectBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-    objectBinding.pImmutableSamplers = nullptr;
-
-    layoutInfo = {};
-    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    layoutInfo.bindingCount = 1;
-    layoutInfo.pBindings = &cameraVpBinding;
-    
-    vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, nullptr, &objectDescriptorLayout);
-}
-
 void VulkanRenderEngine::createDescriptorPool()
 {
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSize.descriptorCount = 100; // Gérer plusieurs materials
-
-    VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = 1;
-    poolInfo.pPoolSizes = &poolSize;
-    poolInfo.maxSets = 100;
-
-    if (vkCreateDescriptorPool(GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Échec de la création du descriptor pool !");
-    }
+    descriptorPoolManager = new VulkanDescriptorPoolManager(this);
 }
 
 void VulkanRenderEngine::CreateRenderPass()

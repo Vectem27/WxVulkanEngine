@@ -24,7 +24,6 @@ bool VulkanCamera::Init(IRenderEngine* renderEngine, class IRenderTarget* render
         SetRenderTarget(renderTarget);
 
     viewBuffer.Create( this->renderEngine->GetDevice(), this->renderEngine->GetPhysicalDevice(), sizeof(TransformMVP));
-    objectBuffer.Create( this->renderEngine->GetDevice(), this->renderEngine->GetPhysicalDevice(), sizeof(ObjectData));
 
     UpdateViewMatrix();
     UpdateProjectionMatrix();
@@ -35,35 +34,24 @@ bool VulkanCamera::Init(IRenderEngine* renderEngine, class IRenderTarget* render
 bool VulkanCamera::Render(IRenderable* renderable, const VkCommandBuffer& commandBuffer)
 {
 
-        VkViewport viewport = {};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = static_cast<float>(GetRenderTarget()->GetWidth());
-        viewport.height = static_cast<float>(GetRenderTarget()->GetHeight());
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-    
-        VkRect2D scissor{}; 
-        scissor.offset = {0, 0};
-        scissor.extent = {GetRenderTarget()->GetWidth(), GetRenderTarget()->GetHeight()};
-    
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-    
-        SetAspectRatio(static_cast<float>(GetRenderTarget()->GetWidth()) / static_cast<float>(GetRenderTarget()->GetHeight()));
+    VkViewport viewport = {};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(GetRenderTarget()->GetWidth());
+    viewport.height = static_cast<float>(GetRenderTarget()->GetHeight());
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
 
-        objectData.model = glm::mat4(1.0f);
-        objectData.model = glm::translate(objectData.model, {0.0f, 0.0f, 0.0f});
+    VkRect2D scissor{}; 
+    scissor.offset = {0, 0};
+    scissor.extent = {GetRenderTarget()->GetWidth(), GetRenderTarget()->GetHeight()};
 
-        objectBuffer.Update(&objectData);
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+    SetAspectRatio(static_cast<float>(GetRenderTarget()->GetWidth()) / static_cast<float>(GetRenderTarget()->GetHeight()));
 
-
-        renderEngine->material.Bind(commandBuffer, GetObjectDataBuffer(), GetDescriptorSet());
-
-    
-        if (renderable)
-            renderable->draw(commandBuffer);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderEngine->GetPipelineManager()->GetPipelineLayout(), 0, 1, GetDescriptorSet(), 0, nullptr);
 
     return true;
 }
@@ -71,7 +59,6 @@ bool VulkanCamera::Render(IRenderable* renderable, const VkCommandBuffer& comman
 void VulkanCamera::Cleanup()
 {
     viewBuffer.Cleanup();
-    objectBuffer.Cleanup();
 
     // Détruire le descriptor pool
     if (cameraDescriptorPool != VK_NULL_HANDLE) 
@@ -134,11 +121,12 @@ void VulkanCamera::CreateDescriptors()
 {
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorPool = renderEngine->GetDescriptorPool();
+    //allocInfo.descriptorPool = renderEngine->GetDescriptorPool();
     allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = renderEngine->GetCameraDescriptorLayout();
+    allocInfo.pSetLayouts = &renderEngine->GetPipelineManager()->GetCameraDescriptorSetLayout();
 
-    if (vkAllocateDescriptorSets(renderEngine->GetDevice(), &allocInfo, &cameraDescriptorSet) != VK_SUCCESS)
+    //vkAllocateDescriptorSets(renderEngine->GetDevice(), &allocInfo, &cameraDescriptorSet) != VK_SUCCESS
+    if (!renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(&renderEngine->GetPipelineManager()->GetCameraDescriptorSetLayout(), 1, &cameraDescriptorSet))
     {
         throw std::runtime_error("Échec de l'allocation du descriptor set !");
     }

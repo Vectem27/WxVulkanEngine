@@ -69,8 +69,9 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     // Render
-    
     camera->Render(renderObject, commandBuffer);
+    if (renderObject)
+        renderObject->draw(commandBuffer, camera);
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
