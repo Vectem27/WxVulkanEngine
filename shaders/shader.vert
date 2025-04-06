@@ -22,6 +22,7 @@ layout(location = 2) out vec2 fragUV;     // Couleur passée au fragment shader
 
 void main() 
 {
-    gl_Position = camera_vp.proj * camera_vp.view * object.model * vec4(inPosition, 1.0); // Position en 2D
+    vec4 pos = camera_vp.proj * camera_vp.view * object.model * vec4(inPosition, 1.0); // Position en 2D
+    gl_Position = pos;
     fragColor = inColor; // Passe la couleur au fragment shader
 }

@@ -37,6 +37,7 @@ public:
     VkQueue GetPresentQueue() const { return surfaceTest->GetPresentQueue(); }
     VkQueue GetGraphicsQueue() const { return deviceManager->GetGraphicsQueue(); }
     VkRenderPass GetDefaultRenderPass() const { return defaultRenderPass; }
+    VkRenderPass GetShadowMapRenderPass() const { return shadowMapRenderPass; }
     
     VulkanSurface* GetSurfaceTest() const { return surfaceTest; }
     VulkanDeviceManager* GetDeviceManager() const { return deviceManager; }
@@ -53,6 +54,7 @@ private:
     VkFormat depthStencilImageFormat; 
 
     VkRenderPass defaultRenderPass{VK_NULL_HANDLE};
+    VkRenderPass shadowMapRenderPass{VK_NULL_HANDLE};
     
     VulkanDescriptorPoolManager* descriptorPoolManager;
 

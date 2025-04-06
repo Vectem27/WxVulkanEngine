@@ -4,6 +4,7 @@
 #include "IRenderable.h"
 #include "VulkanCamera.h"
 #include "VulkanSwapchain.h"
+#include "VulkanRenderTarget.h"
 #include <array>
 
 VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
@@ -71,7 +72,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     // Render
     camera->Render(renderObject, commandBuffer);
     if (renderObject)
-        renderObject->draw(commandBuffer, camera);
+        renderObject->Draw(commandBuffer, camera);
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
@@ -120,6 +121,52 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     {
         throw std::runtime_error("failed to present swap chain image!");
     }
+
+    return true;
+}
+
+bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRenderable *renderObject, VulkanCamera *camera, VkQueue graphicsQueue)
+{
+    const auto& commandBuffer = renderTarget->GetCommandBuffer();
+
+    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
+        throw std::runtime_error("failed to reset command buffer!");
+
+    // Begin command buffer
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    // Clear value pour la profondeur
+    VkClearValue clearValue;
+    clearValue.depthStencil = {1.0f, 0}; // 1.0 = loin
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderEngine->GetShadowMapRenderPass(); // Utilisez le bon render pass
+    renderPassInfo.framebuffer = renderTarget->GetFramebuffer();
+    renderPassInfo.renderArea.extent = {renderTarget->GetWidth(), renderTarget->GetHeight()};
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearValue;
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    
+    // Render
+    camera->Render(renderObject, commandBuffer);
+    if (renderObject)
+        renderObject->Draw(commandBuffer, camera);
+    
+    vkCmdEndRenderPass(commandBuffer);
+    vkEndCommandBuffer(commandBuffer);
+
+    // Submit
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(graphicsQueue);
 
     return true;
 }

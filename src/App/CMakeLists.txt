@@ -11,6 +11,7 @@ COPY_LuaScripts()
 set(SHADER_SOURCE_FILES  
 	${SHADER_SOURCE_DIR}/shader.vert
 	${SHADER_SOURCE_DIR}/shader.frag
+	${SHADER_SOURCE_DIR}/shadowmap.vert
 )
 
 set(SHADER_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
@@ -19,7 +20,7 @@ if(COMPILE_SHADERS)
 	COPY_Shaders("${SHADER_SOURCE_FILES}" ${SHADER_OUTPUT_DIR})
 endif()
 
-add_executable(${PROJECT_NAME} main.cpp App/App.cpp App/VulkanFrame.cpp)
+add_executable(${PROJECT_NAME} main.cpp App/App.cpp App/VulkanFrame.cpp App/Cube.cpp)
 
 set(MINGW_EXTRA_LIBS)
 if(MINGW)
@@ -29,7 +30,13 @@ endif(MINGW)
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PUBLIC ${wxWidgets_LIBRARIES} LuaLib wxLuaLib wxLuaDebugLib wxLuaDebuggerLib wxLuaBindLib ${MINGW_EXTRA_LIBS} ${Vulkan_LIBRARIES} VulkanEngine)
+target_link_libraries(${PROJECT_NAME} PUBLIC 
+	${wxWidgets_LIBRARIES} 
+	LuaLib wxLuaLib wxLuaDebugLib wxLuaDebuggerLib wxLuaBindLib 
+	${MINGW_EXTRA_LIBS} 
+	${Vulkan_LIBRARIES} 
+	VulkanEngine World
+)
 
 
 

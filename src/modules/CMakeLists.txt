@@ -1,2 +1,4 @@
+add_subdirectory(EngineCore)
 add_subdirectory(RenderApi)
 add_subdirectory(VulkanEngine)
+add_subdirectory(World)

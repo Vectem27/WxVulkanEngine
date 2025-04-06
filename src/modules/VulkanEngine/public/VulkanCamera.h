@@ -5,6 +5,7 @@
 #include <vulkan/vulkan.h>
 #include "UniformBufferObject.h"
 #include "Vertex.h"
+#include "EngineCore.hpp"
 
 class VulkanCamera : public ICamera
 {
@@ -24,9 +25,13 @@ public:
     const VkDescriptorSet* GetDescriptorSet() const { return &cameraDescriptorSet; }
 
     void SetAspectRatio(float aspectRatio);
+    /* Y fov in degree*/
     void SetFOV(float fov);
     void SetNearPlan(float nearPlan);
     void SetFarPlan(float farPlan);
+
+protected:
+    void SetCameraTransform(Transform transform);
 private: 
     class VulkanRenderEngine* renderEngine;
     class IRenderTarget* renderTarget;
@@ -35,8 +40,7 @@ private:
     VkDescriptorPool cameraDescriptorPool{VK_NULL_HANDLE};
 
     UniformBuffer viewBuffer;
-    TransformMVP viewData;
-
+    ViewProj viewData;
 private: // Create
     void CreateDescriptorPool();
     void CreateDescriptors();
@@ -51,8 +55,8 @@ private:
     float aspectRatio {1.0f};
     float nearPlan {0.1f};
     float farPlan {1000.0f};
-    // Y fov in degree
-    float fov {45.0f};
+    /* Y fov in degree*/
+    float fov {103.0f};
 
 };
 #endif // VULKANCAMERA_H

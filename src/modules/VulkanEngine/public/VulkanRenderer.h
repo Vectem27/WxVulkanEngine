@@ -3,17 +3,27 @@
 
 #include <vulkan/vulkan.h>
 
+class VulkanRenderEngine;
+class VulkanRenderTarget;
+class VulkanSwapchain;
+class VulkanCamera;
+class IRenderable;
+
+
 class VulkanRenderer
 {
 public:
-    VulkanRenderer(class VulkanRenderEngine* renderEngine);
+    VulkanRenderer(VulkanRenderEngine* renderEngine);
     ~VulkanRenderer() = default;
 
-    bool RenderToSwapchain( class VulkanSwapchain* swapchain ,class IRenderable* renderObject, 
-        class VulkanCamera* camera, VkQueue graphicsQueue, VkQueue presentQueue);
+    bool RenderToSwapchain( VulkanSwapchain* swapchain , IRenderable* renderObject, 
+        VulkanCamera* camera, VkQueue graphicsQueue, VkQueue presentQueue);
 
-private:
-    class VulkanRenderEngine* renderEngine{nullptr};
+    bool RenderToShadowMap( VulkanRenderTarget* renderTarget ,IRenderable* renderObject, 
+        VulkanCamera* camera, VkQueue graphicsQueue);
+
+protected:
+    VulkanRenderEngine* renderEngine{nullptr};
 };
 
 #endif // VULKANRENDERER_H

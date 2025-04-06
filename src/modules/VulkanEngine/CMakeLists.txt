@@ -1,7 +1,6 @@
 add_library(VulkanEngine STATIC 
     private/VulkanCamera.cpp 
     private/VulkanRenderEngine.cpp
-    private/Scene.cpp
     private/VulkanSurface.cpp 
     private/VulkanRenderTarget.cpp 
     private/VulkanSwapchain.cpp 
@@ -20,4 +19,4 @@ target_include_directories(VulkanEngine
 )
 
 target_include_directories(VulkanEngine PUBLIC ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(VulkanEngine PUBLIC ${Vulkan_LIBRARIES} RenderApi)
+target_link_libraries(VulkanEngine PUBLIC ${Vulkan_LIBRARIES} RenderApi EngineCore)
