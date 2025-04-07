@@ -33,12 +33,15 @@ public:
     }
 
 public:
-    virtual bool Init(class IRenderEngine* engine) override { return true; }
-    virtual void Draw(const VkCommandBuffer& commandBuffer, ERenderPassType pass) override
+    // Presistent
+    virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return false; }
+
+    virtual void CollectAllRenderChilds(Array<const IRenderable*>& childs, ERenderPassType pass) const override
     {
         for (const auto& actor : GetActors())
-            actor->Draw(commandBuffer, pass);
+            actor->CollectAllRenderChilds(childs, pass);
     }
+    virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
 private:
     Array<Actor*> actors;
     class IRenderEngine* renderEngine;

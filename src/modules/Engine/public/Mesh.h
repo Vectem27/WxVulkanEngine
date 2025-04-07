@@ -13,6 +13,7 @@ class Mesh : public IVulkanMesh
 public: 
     Mesh() = default;
     Mesh(const Transform& transform) : meshTransform(transform) {}
+    ~Mesh();
 
 public: // Global public functions
     const Transform& GetMeshTransform() const { return meshTransform; }
@@ -25,11 +26,12 @@ private: // Global variables
 /* VULKAN */
 public: //IVulkanMesh Interface
     virtual void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine) override;
-    virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) const override;
 
-protected: // VulkanFunctions
+public: // Public vulkan functions
+
+protected: // Protected vulkan functions
     const bool& IsVulkanInitialized() const { return isVulkanInitialized; }
-    
+
     VulkanRenderEngine* GetVulkanRenderEngine() const { return vulkanRenderEngine; }
     
     UniformBuffer& GetVulkanMeshBuffer() { return vulkanMeshBuffer; }
@@ -38,6 +40,7 @@ protected: // VulkanFunctions
     const VkDescriptorSet& GetVulkanMeshDescriptorSet() const { return vulkanMeshDescriptorSet; } 
 
     virtual void UpdateVulkanMeshBuffer();
+
 private: // Vulkan variables
     bool isVulkanInitialized{false};
     VulkanRenderEngine* vulkanRenderEngine{nullptr};

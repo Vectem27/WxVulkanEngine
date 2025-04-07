@@ -4,6 +4,8 @@
 #include "Mesh.h"
 #include "Vertex.h"
 #include <vector>
+#include "Pipeline/IVulkanMaterial.h"
+#include "VulkanRenderEngine.h"
 
 class CubeMesh : public Mesh
 {
@@ -14,7 +16,8 @@ public:
 public:
     virtual void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine) override
     {
-        Super::InitVulkanMesh(vulkanRenderEngine);
+        Mesh::InitVulkanMesh(vulkanRenderEngine);
+        
         // Les vertices du carré avec des couleurs différentes pour chaque coin
         vertices = 
         {
@@ -68,7 +71,7 @@ public:
             material->Bind(commandBuffer, pass);
 
 
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderEngine->GetPipelineManager()->GetPipelineLayout(), 1, 1, GetObjectDescriptorSet(), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanRenderEngine()->GetPipelineManager()->GetPipelineLayout(), 1, 1, &GetVulkanMeshDescriptorSet(), 0, nullptr);
 
         VkDeviceSize offset = 0;
 
@@ -93,6 +96,6 @@ private:
     std::vector<class Vertex> vertices;
 
     IVulkanMaterial* material{ nullptr };
-}
+};
 
 #endif // CUBEMESH_H

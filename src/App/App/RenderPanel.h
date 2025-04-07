@@ -119,9 +119,9 @@ public:
         tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,yaw2));        
         try
         {
-            //renderer->RenderToSwapchain(swapchain, world, camera, renderEngine->GetDeviceManager()->GetGraphicsQueue(), surface->GetPresentQueue());
+            renderer->RenderToSwapchain(swapchain, world, camera, renderEngine->GetDeviceManager()->GetGraphicsQueue(), surface->GetPresentQueue());
             
-            //return;
+            return;
             renderer->RenderToShadowMap(renderTarget, world, light, renderEngine->GetDeviceManager()->GetGraphicsQueue());
             //** 
             // Après le rendu de la shadow map

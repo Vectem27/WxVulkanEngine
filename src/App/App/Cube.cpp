@@ -1,6 +1,7 @@
 #include "Cube.h"
 #include <iostream>
 
+/*
 bool Cube::Init(IRenderEngine *engine)
 {
 
@@ -109,3 +110,4 @@ void Cube::UpdateWorldTransform()
 
     vkUpdateDescriptorSets(renderEngine->GetDevice(), 1, &descriptorWrite, 0, nullptr);
 }
+*/

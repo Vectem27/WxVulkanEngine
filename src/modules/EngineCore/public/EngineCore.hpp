@@ -3,6 +3,7 @@
 
 #include "Converter.hpp"
 #include "Array.h"
+#include "BoundingBox.h"
 
 typedef Quaternion<float> Rotator;
 

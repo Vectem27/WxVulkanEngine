@@ -3,6 +3,12 @@
 #include "VulkanRenderEngine.h"
 #include "Vertex.h"
 
+Mesh::~Mesh()
+{
+    if (IsVulkanInitialized())
+        GetVulkanMeshBuffer().Cleanup();
+}
+
 void Mesh::SetMeshTransform(Transform newTransform)
 {
     meshTransform = newTransform;

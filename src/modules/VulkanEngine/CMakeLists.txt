@@ -12,8 +12,8 @@ add_library(VulkanEngine STATIC
     private/Pipeline/VulkanOpaqueMaterial.cpp
     private/VulkanLight.cpp
     
-    interface/IVulkanMesh.h
-    interface/IVulkanMaterial.h
+    public/IVulkanMesh.h
+    #public/IVulkanMaterial.h
 )
 
 

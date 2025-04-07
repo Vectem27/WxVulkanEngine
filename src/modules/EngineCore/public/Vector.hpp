@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <cmath>
 #include <inttypes.h>
+#include <algorithm>
 
 template<typename T>
 struct Vector2
@@ -164,7 +165,22 @@ struct Vector3
         }
     }
 
-    Vector3 operator-()
+    T operator[](const int& index) const
+    {
+        switch (index)
+        {
+        case 0:
+            return x;
+        case 1:
+            return y;
+        case 2:
+            return z;
+        default:
+            throw std::out_of_range("Invalid vector 3D index");
+        }
+    }
+
+    Vector3 operator-() const
     {
         Vector3 ret;
         ret.x = -x;
@@ -175,7 +191,7 @@ struct Vector3
     
     // With scalar
     template<typename U>
-    Vector3 operator+(const U& scalar)
+    Vector3 operator+(const U& scalar) const
     {
         Vector3 ret;
         ret.x = x + scalar;
@@ -185,7 +201,7 @@ struct Vector3
     }
 
     template<typename U>
-    Vector3 operator-(const U& scalar)
+    Vector3 operator-(const U& scalar) const
     {
         Vector3 ret;
         ret.x = x - scalar;
@@ -195,7 +211,7 @@ struct Vector3
     }
 
     template<typename U>
-    Vector3 operator*(const U& scalar)
+    Vector3 operator*(const U& scalar) const
     {
         Vector3 ret;
         ret.x = x * scalar;
@@ -205,7 +221,7 @@ struct Vector3
     }
 
     template<typename U>
-    Vector3 operator/(const U& scalar)
+    Vector3 operator/(const U& scalar) const
     {
         Vector3 ret;
         ret.x = x / scalar;
@@ -215,7 +231,7 @@ struct Vector3
     }
 
     // With other vector
-    Vector3 operator+(const Vector3& other)
+    Vector3 operator+(const Vector3& other) const
     {
         Vector3 ret;
         ret.x = x + other.x;
@@ -224,7 +240,7 @@ struct Vector3
         return ret;
     }
 
-    Vector3 operator-(const Vector3& other)
+    Vector3 operator-(const Vector3& other) const
     {
         Vector3 ret;
         ret.x = x - other.x;
@@ -278,6 +294,18 @@ struct Vector3
         if (norm == zero)
             return Vector3(zero);
         return *this / norm;
+    }
+
+    /* Get the min of all component x, y, z*/
+    static Vector3 Min(const Vector3& a, const Vector3& b) 
+    {
+        return Vector3(std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z));
+    }
+
+    /* Get the max of all component x, y, z*/
+    static Vector3 Max(const Vector3& a, const Vector3& b) 
+    {
+        return Vector3(std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z));
     }
 };
 

@@ -2,49 +2,46 @@
 #define CUBE_H
 
 #include "SceneComponent.h"
-#include <vulkan/vulkan.h>
-#include "Pipeline/IVulkanMaterial.h"
-#include "UniformBufferObject.h"
-#include "VulkanRenderEngine.h"
-#include <vector>
-#include "Vertex.h"
 #include "CubeMesh.h"
 
 class Cube : public SceneComponent
 {
-public:
-    ~Cube()
+public: // IRenderable Interface
+    bool Init(IRenderEngine* engine)
     {
-        objectBuffer.Cleanup();
+        mesh = new CubeMesh();
+        mesh->InitVulkanMesh(reinterpret_cast<VulkanRenderEngine*>(engine));
+        return true;
     }
 
-public: // IRenderable Interface
-    virtual bool Init(IRenderEngine* engine) override;
-    virtual void Draw(const VkCommandBuffer& commandBuffer, ERenderPassType pass) override;
+    virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return true; }
 
-    void SetMaterial(IVulkanMaterial* material);
+    virtual void CollectAllRenderChilds(Array<const IRenderable*>& childs, ERenderPassType pass) const override
+    {
+        childs.Add(this);
+        for (const auto& child : GetChilds())
+            child->CollectAllRenderChilds(childs, pass);
+            
+    }
+    virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
 
-    VkDescriptorSet* GetObjectDescriptorSet() { return &objectDescriptorSet; }
+    virtual void* GetRenderMesh() const override { return mesh; }
+
 
 public:
-    virtual void UpdateWorldTransform() override;
+    void SetMaterial(IVulkanMaterial* material)
+    {
+        mesh->SetMaterial(material);
+    }
+public:
+    virtual void UpdateWorldTransform() override
+    {
+        SceneComponent::UpdateWorldTransform();
+        mesh->SetMeshTransform(GetWorldTransform());
+    }
 
-private: // Temp
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
+private: 
+    CubeMesh* mesh;
 
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
-
-    std::vector<uint32_t> indices;
-    std::vector<class Vertex> vertices;
-
-    IVulkanMaterial* material{ nullptr };
-
-    UniformBuffer objectBuffer;
-
-    VkDescriptorSet objectDescriptorSet{VK_NULL_HANDLE};
-
-    VulkanRenderEngine* renderEngine;
 };
 #endif // CUBE_H

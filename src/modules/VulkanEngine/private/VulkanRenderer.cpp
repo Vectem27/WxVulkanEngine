@@ -7,6 +7,7 @@
 #include "VulkanSwapchain.h"
 #include "VulkanRenderTarget.h"
 #include <array>
+#include "IVulkanMesh.h"
 
 VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
     : renderEngine(renderEngine)
@@ -72,8 +73,20 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     // Render
     camera->Render(renderObject, commandBuffer);
+
+    Array<const IRenderable*> scene;
     if (renderObject)
-        renderObject->Draw(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+        renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+
+    IVulkanMesh* mesh;
+    for (const auto& object : scene)
+    {
+        mesh = reinterpret_cast<IVulkanMesh*>(object->GetRenderMesh());
+        if (mesh)
+        {
+            mesh->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+        }
+    }
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
@@ -154,8 +167,21 @@ bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRender
     
     // Render
     light->Render(renderObject, commandBuffer);
+    Array<const IRenderable*> scene;
     if (renderObject)
-        renderObject->Draw(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
+        renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+
+    IVulkanMesh* mesh;
+    for (const auto& object : scene)
+    {
+        mesh = reinterpret_cast<IVulkanMesh*>(object->GetRenderMesh());
+        if (mesh)
+        {
+            mesh->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+        }
+    }
+
+
     
     vkCmdEndRenderPass(commandBuffer);
     vkEndCommandBuffer(commandBuffer);

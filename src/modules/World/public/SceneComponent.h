@@ -23,12 +23,16 @@ public: // IWorldContextObject Interface
     }
     
 public: // IRenderable
-    virtual bool Init(class IRenderEngine* engine) override { return true; }
-    virtual void Draw(const VkCommandBuffer& commandBuffer, ERenderPassType pass) override
+    virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return false; }
+
+    virtual void CollectAllRenderChilds(Array<const IRenderable*>& childs, ERenderPassType pass) const override
     {
+        if (ShouldRenderInPass(pass))
+            childs.Add(this);
         for (const auto& child : GetChilds())
-            child->Draw(commandBuffer, pass);
+            child->CollectAllRenderChilds(childs, pass);
     }
+    virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
 
 public: // ISceneNode Interface
     virtual void AddChild(SceneComponent* child);
