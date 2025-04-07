@@ -23,7 +23,7 @@ void VulkanPipelineManager::InitSamplers(VkDevice device)
     samplerInfo.compareOp = VK_COMPARE_OP_LESS;
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = 1.0f;
-    
+
     vkCreateSampler(device, &samplerInfo, nullptr, &shadowMapSampler);
 }
 
@@ -78,7 +78,7 @@ void VulkanPipelineManager::InitDescriptorSetLayouts(VkDevice device)
     // Binding pour la matrice lumière (Set 2, Binding 1)
     VkDescriptorSetLayoutBinding lightMatrixBinding{};
     lightMatrixBinding.binding = 1;
-    lightMatrixBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    lightMatrixBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     lightMatrixBinding.descriptorCount = 1;
     lightMatrixBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // Utilisé dans le vertex shader
     lightMatrixBinding.pImmutableSamplers = nullptr;

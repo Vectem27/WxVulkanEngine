@@ -14,14 +14,18 @@ add_library(VulkanEngine STATIC
     public/IVulkanMesh.h
     #public/IVulkanMaterial.h
     public/Light/VulkanLight.h
+    private/Light/VulkanProjectorLight.cpp
+    private/Light/VulkanLightManager.cpp
 )
 
 
 target_include_directories(VulkanEngine 
-    PUBLIC public
-    PUBLIC public/Light
     INTERFACE interface
+    PUBLIC public
     PRIVATE private
+
+    PUBLIC public/Light
+    PRIVATE private/Light
 )
 
 target_include_directories(VulkanEngine PUBLIC ${Vulkan_INCLUDE_DIRS})

@@ -4,6 +4,7 @@
 #include <algorithm>  
 #include <memory>
 #include <stdexcept>
+#include <initializer_list>
 
 enum class ArrayOpt
 {
@@ -24,6 +25,14 @@ public:
     Array(unsigned long size)
     {
         Resize(size);
+    }
+
+    Array(std::initializer_list<T> content)
+    {
+        for (const auto& val : content)
+        {
+            Add(val);
+        }
     }
 
     Array(const Array& other)
@@ -91,6 +100,10 @@ public:
         {
             DecreaseCapacity();
             SetCapacity(requestedSize);
+        }
+        else if (requestedSize <= 1)
+        {
+            SetCapacity(2);
         }
     }
 
@@ -160,7 +173,7 @@ public:
         return step > 0;
     }
 
-    bool Insert(const T& value, unsigned long index, bool bSizeToFit = false)
+    bool Insert(const T& value, unsigned long index, bool bSizeToFit = true)
     {
         if (index >= GetSize() && !bSizeToFit)
             return false;
@@ -182,6 +195,8 @@ public:
     {
         Resize(0);
     }
+
+    T* GetData() { return data; }
 
 private:
     T* data{ nullptr };

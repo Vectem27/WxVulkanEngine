@@ -28,5 +28,5 @@ void main() {
     float shadow = calculateShadow(fragPosLightSpace);
     vec3 lighting = min((0.2 + vec3(shadow)), 1) * fragColor;
     outColor = vec4(lighting, 1.0); //vec4(lighting, 1.0);
-    //outColor = vec4(vec3(fragPosLightSpace.z / fragPosLightSpace.w), 1.0);
+    //outColor = vec4(vec3((fragPosLightSpace.z / fragPosLightSpace.w)), 1.0);
 }

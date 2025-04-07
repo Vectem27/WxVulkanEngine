@@ -125,6 +125,8 @@ void wxVulkanApp::InitVulkan()
     catch(const std::exception& e)
     {
         wxMessageBox(e.what(), "Erreur", wxICON_ERROR);
+        ShutdownVulkan();
+        exit(1);
     }
 }
 
@@ -145,9 +147,25 @@ void wxVulkanApp::RenderVulkan()
     tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,yaw2));        
     try
     {
-        
-        renderer->RenderToShadowMap(renderTarget, world, light, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue());
+        Array<Cube*> meshes{cube, tinyCube, floor};
+        for(auto mesh : meshes)
+        {
+            reinterpret_cast<CubeMesh*>(mesh->GetRenderMesh())->light.SetShadowMap(
+                renderTarget->GetImageView(), 
+                vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler() 
+            );
+            
+            //reinterpret_cast<CubeMesh*>(mesh->GetRenderMesh())->light.SetTransform(
+            //    light->GetWorldTransform()
+            //);
+            //Temps
+            reinterpret_cast<CubeMesh*>(mesh->GetRenderMesh())->light.SetViewProj(
+                light->GetViewData().view * light->GetViewData().proj
+            );
+        }
 
+        renderer->RenderToShadowMap(renderTarget, world, light, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue());
+/*
         reinterpret_cast<CubeMesh*>(cube->GetRenderMesh())->light.SetShadowMap(
             renderTarget->GetImageView(), 
             vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler(), 
@@ -160,11 +178,12 @@ void wxVulkanApp::RenderVulkan()
             renderTarget->GetImageView(), 
             vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler(), 
             light->GetViewData());
+*/
+        
         
         if(frame->renderSurface->IsVulkanInitialized())
             renderer->RenderToSwapchain(swapchain, world, camera, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue(), frame->renderSurface->GetVulkanSurface()->GetPresentQueue());
         
-
         return;
         ++counter;
         if (counter % 5 != 0)
@@ -210,6 +229,8 @@ void wxVulkanApp::RenderVulkan()
     catch (const std::exception &e)
     {
         wxMessageBox(e.what(), "Erreur", wxICON_ERROR);
+        ShutdownVulkan();
+        exit(1);
     }
 }
 

@@ -18,8 +18,7 @@ layout(set = 1, binding = 0) uniform ObjectBuffer
 
 layout(set = 2, binding = 1) uniform LightBuffer
 {
-    mat4 view;
-    mat4 proj;
+    mat4 viewProj;
 } light;
 
 layout(location = 0) out vec3 fragColor;  // Couleur passée au fragment shader
@@ -29,10 +28,11 @@ layout(location = 3) out vec4 fragPosLightSpace;
 
 void main() 
 {
+    fragPosLightSpace = light.viewProj * object.model * vec4(inPosition, 1.0);
+
     vec4 pos = camera.proj * camera.view * object.model * vec4(inPosition, 1.0); // Position en 2D
     gl_Position = pos;
     fragUV = inUV;
     fragNormal = inNormal;
     fragColor = inColor; // Passe la couleur au fragment shader
-    fragPosLightSpace = light.proj * light.view * object.model * vec4(inPosition, 1.0);
 }
