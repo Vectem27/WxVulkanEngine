@@ -18,6 +18,10 @@ void Mesh::InitVulkanMesh(VulkanRenderEngine *vulkanRenderEngine)
 
     this->vulkanRenderEngine = vulkanRenderEngine;
 
+    if (!vulkanRenderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(&vulkanRenderEngine->GetPipelineManager()->GetObjectDescriptorSetLayout(), 1, &GetVulkanMeshDescriptorSet()))
+        throw std::runtime_error("Failed to allocate descriptor set !");
+
+
     GetVulkanMeshBuffer().Create(vulkanRenderEngine->GetDevice(), vulkanRenderEngine->GetPhysicalDevice(), sizeof(ObjectData));
 
     UpdateVulkanMeshBuffer();

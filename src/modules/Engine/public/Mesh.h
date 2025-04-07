@@ -29,7 +29,9 @@ public: //IVulkanMesh Interface
 
 protected: // VulkanFunctions
     const bool& IsVulkanInitialized() const { return isVulkanInitialized; }
+    
     VulkanRenderEngine* GetVulkanRenderEngine() const { return vulkanRenderEngine; }
+    
     UniformBuffer& GetVulkanMeshBuffer() { return vulkanMeshBuffer; }
     const UniformBuffer& GetVulkanMeshBuffer() const { return vulkanMeshBuffer; }
     VkDescriptorSet& GetVulkanMeshDescriptorSet() { return vulkanMeshDescriptorSet; } 

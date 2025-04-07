@@ -8,6 +8,7 @@
 #include "VulkanRenderEngine.h"
 #include <vector>
 #include "Vertex.h"
+#include "CubeMesh.h"
 
 class Cube : public SceneComponent
 {
