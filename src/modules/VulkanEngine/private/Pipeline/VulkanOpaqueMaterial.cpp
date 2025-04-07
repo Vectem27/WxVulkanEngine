@@ -8,6 +8,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 std::vector<char> ReadFile(const std::string &filename)
 {
@@ -329,8 +330,18 @@ void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkDevice device, VkRenderPass
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
-void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer) const
+void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const
 {
-    //vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBasePipeline());
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetShadowMapPipeline());
+    switch (pass)
+    {
+    case ERenderPassType::RENDER_PASS_TYPE_DEFAULT:
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBasePipeline());
+        break;
+    case ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP:
+        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetShadowMapPipeline());
+        break;
+    default:
+        throw std::invalid_argument("Invalid Pass");
+        break;
+    }
 }

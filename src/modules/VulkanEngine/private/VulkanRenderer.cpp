@@ -3,6 +3,7 @@
 #include "VulkanRenderEngine.h"
 #include "IRenderable.h"
 #include "VulkanCamera.h"
+#include "VulkanLight.h"
 #include "VulkanSwapchain.h"
 #include "VulkanRenderTarget.h"
 #include <array>
@@ -72,7 +73,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     // Render
     camera->Render(renderObject, commandBuffer);
     if (renderObject)
-        renderObject->Draw(commandBuffer, camera);
+        renderObject->Draw(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
@@ -125,7 +126,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     return true;
 }
 
-bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRenderable *renderObject, VulkanCamera *camera, VkQueue graphicsQueue)
+bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRenderable *renderObject, VulkanLight *light, VkQueue graphicsQueue)
 {
     const auto& commandBuffer = renderTarget->GetCommandBuffer();
 
@@ -152,9 +153,9 @@ bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRender
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     
     // Render
-    camera->Render(renderObject, commandBuffer);
+    light->Render(renderObject, commandBuffer);
     if (renderObject)
-        renderObject->Draw(commandBuffer, camera);
+        renderObject->Draw(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
     
     vkCmdEndRenderPass(commandBuffer);
     vkEndCommandBuffer(commandBuffer);

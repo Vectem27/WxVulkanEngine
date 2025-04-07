@@ -29,13 +29,13 @@ if(MINGW)
 endif(MINGW)
 
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} PUBLIC Engine ${Vulkan_INCLUDE_DIRS} ${wxWidgets_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC 
 	${wxWidgets_LIBRARIES} 
 	LuaLib wxLuaLib wxLuaDebugLib wxLuaDebuggerLib wxLuaBindLib 
 	${MINGW_EXTRA_LIBS} 
 	${Vulkan_LIBRARIES} 
-	VulkanEngine World
+	Engine
 )
 
 

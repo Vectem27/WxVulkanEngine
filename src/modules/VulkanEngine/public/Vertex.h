@@ -5,23 +5,17 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
+#include "EngineCore.hpp"
 
-struct Vertex 
-{
-    glm::vec3 pos {0.0f, 0.0f, 0.0f}; // Position en 2D
-    glm::vec3 color {0.0f, 0.0f, 0.0f}; // Couleur
-    glm::vec3 normal {0.0f, 0.0f, 0.0f}; // Normal
-    glm::vec2 uv {0.0f, 0.0f}; // uv
-};
 
 struct ViewProj
 {
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
+    alignas(16) Matrix4f view;
+    alignas(16) Matrix4f proj;
 };
 
 struct ObjectData
 {
-    alignas(16) glm::mat4 model;
+    alignas(16) Matrix4f model;
 };
 #endif // VERTEX_H

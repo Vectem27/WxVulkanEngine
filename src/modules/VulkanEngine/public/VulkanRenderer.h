@@ -7,6 +7,7 @@ class VulkanRenderEngine;
 class VulkanRenderTarget;
 class VulkanSwapchain;
 class VulkanCamera;
+class VulkanLight;
 class IRenderable;
 
 
@@ -20,7 +21,7 @@ public:
         VulkanCamera* camera, VkQueue graphicsQueue, VkQueue presentQueue);
 
     bool RenderToShadowMap( VulkanRenderTarget* renderTarget ,IRenderable* renderObject, 
-        VulkanCamera* camera, VkQueue graphicsQueue);
+        VulkanLight* light, VkQueue graphicsQueue);
 
 protected:
     VulkanRenderEngine* renderEngine{nullptr};

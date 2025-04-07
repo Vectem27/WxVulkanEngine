@@ -11,6 +11,7 @@
 #include "World.h"
 #include "Cube.h"
 #include "CameraComponent.h"
+#include "LightComponent.h"
 
 class RenderPanel : public wxWindow
 {
@@ -37,8 +38,9 @@ public:
             renderer = new VulkanRenderer(renderEngine);
 
             camera = new CameraComponent();
-            //camera->VulkanCamera::Init(renderEngine, swapchain);
-            camera->VulkanCamera::Init(renderEngine, renderTarget);
+            light = new LightComponent();
+            camera->VulkanCamera::Init(renderEngine, swapchain);
+            light->VulkanLight::Init(renderEngine, renderTarget);
     
             cube = new Cube();
             cube->Init(renderEngine);
@@ -68,8 +70,10 @@ public:
             cubeActor->AddChild(cube);
             cubeActor->AddChild(tinyCube);
             world->SpawnActor<Actor>()->AddChild(camera);
+            world->SpawnActor<Actor>()->AddChild(light);
 
             camera->SetRelativeTransform(Transform({0,0,5}, Quaternion<float>::FromEulerDegrees(-90,0,0), {1,1,1}));
+            light->SetRelativeTransform(camera->GetRelativeTransform());
         }
         catch(const std::exception& e)
         {
@@ -83,6 +87,10 @@ public:
     {
         camera->Cleanup();
         delete camera;
+
+        light->Cleanup();
+        delete light;
+
         delete renderTarget;
         delete swapchain;
         delete renderer;
@@ -104,16 +112,17 @@ public:
         //(pitch < 25.0f ? (yaw < 45.0f ? yaw : pitch) : roll) += 0.05f;
 
         static float yaw2{0.0f};
-        yaw2 -= 0.05f;
-        yaw += 0.01f;
+        yaw2 -= 0.5f;
+        yaw += 0.1f;
         cubeActor->SetRelativeRotation(Rotator::FromEulerDegrees(pitch, roll, yaw));
         //camera->SetRelativeRotation(Rotator::FromEulerDegrees(pitch, roll, yaw));
         tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,yaw2));        
         try
         {
             //renderer->RenderToSwapchain(swapchain, world, camera, renderEngine->GetDeviceManager()->GetGraphicsQueue(), surface->GetPresentQueue());
-            renderer->RenderToShadowMap(renderTarget, world, camera, renderEngine->GetDeviceManager()->GetGraphicsQueue());
             
+            //return;
+            renderer->RenderToShadowMap(renderTarget, world, light, renderEngine->GetDeviceManager()->GetGraphicsQueue());
             //** 
             // Après le rendu de la shadow map
             int w = renderTarget->GetWidth();
@@ -122,7 +131,6 @@ public:
             // Pour D32_SFLOAT (4 bytes par pixel)
             std::vector<float> depthData(w * h);
             renderTarget->CopyToCpuBuffer(depthData.data(), w * h * sizeof(float));
-
             // Création de l'image wxWidgets
             wxImage img(w, h);
             unsigned char* imgData = img.GetData();
@@ -132,9 +140,11 @@ public:
             {
                 for (int x = 0; x < w; x++) 
                 {
-                    float depth = depthData[y * w + x];
+                    float depth = depthData[y * w + x ];
                     // Normalisation (inversée car les valeurs proches sont plus petites)
                     unsigned char gray = static_cast<unsigned char>((1.0f - depth) * 255);
+
+                    gray = depth < 1.0f ? 0 : 255;
                     
                     // Remplir les 3 canaux (R,G,B) avec la même valeur
                     int idx = (y * w + x) * 3;
@@ -158,6 +168,7 @@ public:
 public:
     VulkanRenderEngine *renderEngine;
     CameraComponent* camera;
+    LightComponent* light;
     Actor* cubeActor;
     Cube* cube;
     Cube* tinyCube;

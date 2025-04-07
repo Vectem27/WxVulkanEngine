@@ -13,7 +13,7 @@ public:
     void CreateShadowMapPipeline(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo);
     virtual VkPipeline GetBasePipeline() const override { return basePipeline; }
     virtual VkPipeline GetShadowMapPipeline() const { return shadowMapPipeline; };
-    virtual void Bind(VkCommandBuffer commandBuffer) const override;
+    virtual void Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const override;
 
 private:
     VulkanPipelineManager* pipelineManager;

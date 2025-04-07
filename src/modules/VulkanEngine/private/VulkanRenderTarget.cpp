@@ -40,23 +40,30 @@ void VulkanRenderTarget::CreateFramebuffer(VkRenderPass renderPass)
     }
 }
 
-void VulkanRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) {
+void VulkanRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) 
+{
     VkDevice device = renderEngine->GetDevice();
     
-    // 1. Création du staging buffer (réutilisable)
+    // 1. Vérification de la taille requise
+    const size_t requiredSize = width * height * sizeof(uint32_t); // D24S8 = 4 bytes par pixel
+    if (size < requiredSize) {
+        throw std::runtime_error("Buffer destination trop petit pour les données de profondeur");
+    }
+
+    // 2. Création/Récupération du staging buffer
     static VkBuffer stagingBuffer = VK_NULL_HANDLE;
     static VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
     
-    if (stagingBuffer == VK_NULL_HANDLE) {
+    if (stagingBuffer == VK_NULL_HANDLE) 
+    {
         VkBufferCreateInfo bufferInfo{};
         bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferInfo.size = size;
+        bufferInfo.size = requiredSize;
         bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
         bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
         
-        if (vkCreateBuffer(device, &bufferInfo, nullptr, &stagingBuffer) != VK_SUCCESS) {
-            throw std::runtime_error("Failed to create staging buffer!");
-        }
+        if (vkCreateBuffer(device, &bufferInfo, nullptr, &stagingBuffer) != VK_SUCCESS) 
+            throw std::runtime_error("Échec de la création du staging buffer");
         
         VkMemoryRequirements memReqs;
         vkGetBufferMemoryRequirements(device, stagingBuffer, &memReqs);
@@ -68,32 +75,36 @@ void VulkanRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) {
             memReqs.memoryTypeBits, 
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
         
-        if (vkAllocateMemory(device, &allocInfo, nullptr, &stagingMemory) != VK_SUCCESS) {
+        if (vkAllocateMemory(device, &allocInfo, nullptr, &stagingMemory) != VK_SUCCESS) 
+        {
             vkDestroyBuffer(device, stagingBuffer, nullptr);
-            throw std::runtime_error("Failed to allocate staging memory!");
+            throw std::runtime_error("Échec de l'allocation de la mémoire staging");
         }
         
         vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0);
     }
 
-    // 2. Création d'un command buffer temporaire
+    // 3. Création d'un command buffer temporaire
     VkCommandBuffer cmd;
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 1;
+    VkCommandBufferAllocateInfo cmdAllocInfo{};
+    cmdAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cmdAllocInfo.commandPool = commandPool;
+    cmdAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    cmdAllocInfo.commandBufferCount = 1;
     
-    if (vkAllocateCommandBuffers(device, &allocInfo, &cmd) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate command buffer!");
+    if (vkAllocateCommandBuffers(device, &cmdAllocInfo, &cmd) != VK_SUCCESS) {
+        throw std::runtime_error("Échec de l'allocation du command buffer");
     }
 
-    // 3. Enregistrement des commandes
+    // 4. Enregistrement des commandes
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     
-    vkBeginCommandBuffer(cmd, &beginInfo);
+    if (vkBeginCommandBuffer(cmd, &beginInfo) != VK_SUCCESS) {
+        vkFreeCommandBuffers(device, commandPool, 1, &cmd);
+        throw std::runtime_error("Échec du début de l'enregistrement du command buffer");
+    }
     
     // Transition pour la copie
     VkImageMemoryBarrier barrier{};
@@ -125,7 +136,7 @@ void VulkanRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) {
     VkBufferImageCopy region{};
     region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
     region.imageSubresource.layerCount = 1;
-    region.imageExtent = {width, height, 1};
+    region.imageExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height), 1};
     
     vkCmdCopyImageToBuffer(
         cmd,
@@ -152,26 +163,62 @@ void VulkanRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) {
         1, &barrier
     );
     
-    vkEndCommandBuffer(cmd);
+    if (vkEndCommandBuffer(cmd) != VK_SUCCESS) {
+        vkFreeCommandBuffers(device, commandPool, 1, &cmd);
+        throw std::runtime_error("Échec de la finalisation du command buffer");
+    }
     
-    // 4. Soumission
+    // 5. Soumission et attente
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &cmd;
     
     VkQueue queue = renderEngine->GetDeviceManager()->GetGraphicsQueue();
-    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(queue);
+    VkFence fence;
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     
-    // 5. Copie vers la mémoire CPU
-    void* mapped;
-    vkMapMemory(device, stagingMemory, 0, size, 0, &mapped);
-    memcpy(dst, mapped, size);
-    vkUnmapMemory(device, stagingMemory);
+    if (vkCreateFence(device, &fenceInfo, nullptr, &fence) != VK_SUCCESS) {
+        vkFreeCommandBuffers(device, commandPool, 1, &cmd);
+        throw std::runtime_error("Échec de la création de la fence");
+    }
     
-    // 6. Nettoyage
+    if (vkQueueSubmit(queue, 1, &submitInfo, fence) != VK_SUCCESS) {
+        vkDestroyFence(device, fence, nullptr);
+        vkFreeCommandBuffers(device, commandPool, 1, &cmd);
+        throw std::runtime_error("Échec de la soumission de la queue");
+    }
+    
+    if (vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX) != VK_SUCCESS) {
+        vkDestroyFence(device, fence, nullptr);
+        vkFreeCommandBuffers(device, commandPool, 1, &cmd);
+        throw std::runtime_error("Échec de l'attente de la fence");
+    }
+    
+    vkDestroyFence(device, fence, nullptr);
     vkFreeCommandBuffers(device, commandPool, 1, &cmd);
+    
+    // 6. Extraction des données de profondeur (D24_UNORM_S8_UINT)
+    void* mapped;
+    if (vkMapMemory(device, stagingMemory, 0, requiredSize, 0, &mapped) != VK_SUCCESS) {
+        throw std::runtime_error("Échec du mappage de la mémoire");
+    }
+    
+    const uint32_t* srcData = static_cast<const uint32_t*>(mapped);
+    float* dstData = static_cast<float*>(dst);
+    
+    // Conversion des valeurs de profondeur 24bits en float [0..1]
+    constexpr uint32_t depthMask = 0x00FFFFFF; // Masque pour les 24 bits de profondeur
+    constexpr float inv24Max = 1.0f / static_cast<float>(depthMask);
+    
+    for (size_t i = 0; i < width * height; ++i) {
+        uint32_t packedValue = srcData[i];
+        uint32_t depth24 = packedValue & depthMask;
+        dstData[i] = static_cast<float>(depth24) * inv24Max;
+    }
+    
+    vkUnmapMemory(device, stagingMemory);
 }
 
 void VulkanRenderTarget::CreateImage()
@@ -256,6 +303,17 @@ void VulkanRenderTarget::CreateCommandBuffer()
     allocInfo.commandBufferCount = 1;
 
     if (vkAllocateCommandBuffers(renderEngine->GetDevice(), &allocInfo, &commandBuffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to allocate command buffers!");
+    }
+
+    allocInfo={};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+
+    if (vkAllocateCommandBuffers(renderEngine->GetDevice(), &allocInfo, &transferCommandBuffer) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }

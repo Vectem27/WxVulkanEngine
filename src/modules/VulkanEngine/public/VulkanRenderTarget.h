@@ -14,6 +14,7 @@ public:
     VkImageView GetImageView() const { return imageView; }
     VkRenderPass GetRenderPass() const {return renderPass; }
     const VkCommandBuffer& GetCommandBuffer() const { return commandBuffer; }
+    const VkCommandBuffer& GetTransferCommandBuffer() const { return transferCommandBuffer; }
 
     void CreateFramebuffer(VkRenderPass renderPass);
 
@@ -43,6 +44,7 @@ private:
     // Commands
     VkCommandPool commandPool{VK_NULL_HANDLE};
     VkCommandBuffer commandBuffer{VK_NULL_HANDLE};
+    VkCommandBuffer transferCommandBuffer{VK_NULL_HANDLE};
 };
 
 #endif // VULKANRENDERTARGET_H
