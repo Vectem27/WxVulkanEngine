@@ -107,7 +107,7 @@ void VulkanCamera::SetFarPlan(float farPlan)
 void VulkanCamera::SetCameraTransform(Transform transform)
 {
     auto r = transform.rotation.ToEuler(ERS_ZYX);
-    transform.rotation = Rotator::FromEuler(r.x, -r.y, -r.z, ERS_XYZ);
+    transform.rotation = Rotator::FromEuler(-r.x, -r.y, -r.z, ERS_XYZ);
 
     union Mat
     {
@@ -127,9 +127,6 @@ void VulkanCamera::SetCameraTransform(Transform transform)
     mat.glmMat = glm::lookAt(pos, pos + forward, -up);
 
     viewData.view = mat.mat;
-
-    //mat.mat = transform.GetTransformMatrix(true);
-    //viewData.view = glm::inverse(mat.glmMat);
 
     UpdateViewMatrix();
 }

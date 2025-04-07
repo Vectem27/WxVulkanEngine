@@ -4,6 +4,7 @@
 #include <cmath>
 #include "Matrix.hpp"
 
+
 inline float ToRadians(float degrees) { return degrees * 3.14159265358979323846f / 180.0f; }
 inline float ToDegree(float radians) { return radians * 180.0f / 3.14159265358979323846f; }
 
@@ -76,10 +77,8 @@ public:
     Matrix4<T> GetRotationMatrix() const;
 
     static const Quaternion FromEuler(T pitch, T roll, T yaw, EulerRotationSequence ers = ERS_DEFAULT);
-    static inline const Quaternion FromEulerDegrees(T pitch, T roll, T yaw, EulerRotationSequence ers = ERS_DEFAULT)
-    {
-        return FromEuler(ToRadians(pitch),ToRadians(roll),ToRadians(yaw),ers);
-    }
+    static const Quaternion FromEulerDegrees(T pitch, T roll, T yaw, EulerRotationSequence ers = ERS_DEFAULT);
+    
     static const Quaternion FromAxisAngle(const Vector3<T>& axis, T angle);
 
 private:
@@ -92,17 +91,17 @@ private:
         switch (ers)
         {
         case ERS_XYZ:
-            return Vector3<T>(b, -c, a);
+            return Vector3<T>(-b, -c, a);
         case ERS_XZY: 
-            return Vector3<T>(a, -c, b);
+            return Vector3<T>(-a, -c, b);
         case ERS_YXZ: 
-            return Vector3<T>(c, -b, a);
+            return Vector3<T>(-c, -b, a);
         case ERS_YZX: 
-            return Vector3<T>(c, -a, b);
+            return Vector3<T>(-c, -a, b);
         case ERS_ZXY: 
-            return Vector3<T>(a, -b, c);
+            return Vector3<T>(-a, -b, c);
         case ERS_ZYX: 
-            return Vector3<T>(b, -a, c);
+            return Vector3<T>(-b, -a, c);
         }     
 
         return Vector3<T>();

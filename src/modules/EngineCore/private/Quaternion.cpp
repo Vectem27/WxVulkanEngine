@@ -7,7 +7,8 @@
 
 #include "Quaternion.hpp"
 #include <cmath>
-
+#include "Converter.hpp"
+#include <iostream>
 /**
  * Assigns a quaternion to the current quaternion
  */
@@ -270,6 +271,12 @@ const Quaternion<T> Quaternion<T>::FromEuler(T pitch, T roll, T yaw, EulerRotati
     default:
         throw std::runtime_error("Invalid euler rotation sequence");
     }
+}
+
+template <typename T>
+const Quaternion<T> Quaternion<T>::FromEulerDegrees(T pitch, T roll, T yaw, EulerRotationSequence ers)
+{
+    return FromEuler(ToRadians(pitch),ToRadians(roll),ToRadians(yaw),ers);
 }
 
 /**

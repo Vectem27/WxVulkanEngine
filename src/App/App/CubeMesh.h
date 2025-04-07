@@ -6,6 +6,7 @@
 #include <vector>
 #include "Pipeline/IVulkanMaterial.h"
 #include "VulkanRenderEngine.h"
+#include "VulkanLight.h"
 
 class CubeMesh : public Mesh
 {
@@ -21,13 +22,13 @@ public:
         // Les vertices du carré avec des couleurs différentes pour chaque coin
         vertices = 
         {
-            {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, 0.0f}},  // Vertex 1 (red)
-            {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},  // Vertex 2 (green)
-            {{-0.5f,  0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},  // Vertex 3 (blue)
-            {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 0.0f}},  // Vertex 4 (yellow)
-            {{-0.5f, -0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}},  // Vertex 5 (purple)
-            {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.0f, 1.0f}},  // Vertex 6 (cyan)
-            {{-0.5f,  0.5f,  0.5f}, {0.0f, 1.0f, 1.0f}},  // Vertex 7 (gray)
+            {{-0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}},  // Vertex 1 (red)
+            {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.5f, 0.5f}},  // Vertex 2 (green)
+            {{-0.5f,  0.5f, -0.5f}, {0.5f, 1.0f, 0.5f}},  // Vertex 3 (blue)
+            {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 0.5f}},  // Vertex 4 (yellow)
+            {{-0.5f, -0.5f,  0.5f}, {0.5f, 0.5f, 1.0f}},  // Vertex 5 (purple)
+            {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.5f, 1.0f}},  // Vertex 6 (cyan)
+            {{-0.5f,  0.5f,  0.5f}, {0.5f, 1.0f, 1.0f}},  // Vertex 7 (gray)
             {{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}},  // Vertex 8 (white)
         };
 
@@ -63,6 +64,8 @@ public:
         vkMapMemory(GetVulkanRenderEngine()->GetDevice(), indexBufferMemory, 0, indexBufferSize, 0, &indexData);
         memcpy(indexData, indices.data(), (size_t)indexBufferSize);
         vkUnmapMemory(GetVulkanRenderEngine()->GetDevice(), indexBufferMemory);
+
+        light.InitVulkanLight(vulkanRenderEngine);
     }
     
     virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) const override
@@ -72,6 +75,7 @@ public:
 
 
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanRenderEngine()->GetPipelineManager()->GetPipelineLayout(), 1, 1, &GetVulkanMeshDescriptorSet(), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanRenderEngine()->GetPipelineManager()->GetPipelineLayout(), 2, 1, &light.GetLightDescriptorSet(), 0, nullptr);
 
         VkDeviceSize offset = 0;
 
@@ -84,6 +88,8 @@ public:
     {
         this->material = material;
     }
+public:
+    VulkanLight light;
 private:
 
     VkBuffer vertexBuffer;

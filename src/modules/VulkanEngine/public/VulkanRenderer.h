@@ -21,7 +21,7 @@ public:
         VulkanCamera* camera, VkQueue graphicsQueue, VkQueue presentQueue);
 
     bool RenderToShadowMap( VulkanRenderTarget* renderTarget ,IRenderable* renderObject, 
-        VulkanLight* light, VkQueue graphicsQueue);
+        VulkanCamera* light, VkQueue graphicsQueue);
 
 protected:
     VulkanRenderEngine* renderEngine{nullptr};

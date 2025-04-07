@@ -1,59 +1,54 @@
 #include "VulkanFrame.h"
 
+enum
+{
+    ID_Slider1 = 1001,
+    ID_Slider2 = 1002,
+};
+
 wxBEGIN_EVENT_TABLE(wxVulkanFrame, wxFrame)
     EVT_BUTTON(wxID_ANY, wxVulkanFrame::OnButtonClick) // Ajoutez cette ligne
+    EVT_SLIDER(ID_Slider1, wxVulkanFrame::OnSliderChanged) // Ajoutez cette ligne
+    EVT_SLIDER(ID_Slider2, wxVulkanFrame::OnSlider2Changed) // Ajoutez cette ligne
 wxEND_EVENT_TABLE()
 
 wxVulkanFrame::wxVulkanFrame(const wxString &title)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(720, 480))
 {
-    wxPanel* mainPanel = new wxPanel(this);
+    mainPanel = new wxPanel(this);
     
     // Création d'un panneau pour le rendu
-    renderPanel = new RenderPanel(mainPanel); // Ajuster la position et la taille
-    renderPanel->SetBackgroundStyle(wxBG_STYLE_CUSTOM);
+    renderSurface = new RenderSurface(mainPanel); // Ajuster la position et la taille
+    renderSurface->SetBackgroundStyle(wxBG_STYLE_CUSTOM);
     
+    testPanel = new wxPanel(mainPanel);
+    SetWindowLongPtr(testPanel->GetHWND(), GWL_STYLE, GetWindowLongPtr(testPanel->GetHWND(), GWL_STYLE) | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
+    testPanel->Raise();
+
     wxButton *button = new wxButton(mainPanel, wxID_ANY, "Test", wxPoint(10, 10), wxSize(90, 30));
     button->Bind(wxEVT_BUTTON, &wxVulkanFrame::OnButtonClick, this);
     button->Raise();
-    
+
+    wxSlider *slider = new wxSlider(mainPanel, ID_Slider1, 0, -180, 180, wxPoint(10, 40), wxSize(90, -1));
+    slider->Bind(wxEVT_SLIDER, &wxVulkanFrame::OnSliderChanged, this);
+    slider->Raise();
+
+    wxSlider *slider2 = new wxSlider(mainPanel, ID_Slider2, 0, -180, 180, wxPoint(10, 80), wxSize(90, -1));
+    slider2->Bind(wxEVT_SLIDER, &wxVulkanFrame::OnSlider2Changed, this);
+    slider2->Raise();
+
+
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-    sizer->Add(renderPanel, 1, wxEXPAND);
+    sizer->Add(renderSurface, 3, wxEXPAND);
+    sizer->Add(testPanel, 1, wxEXPAND);
     mainPanel->SetSizer(sizer);
-}
-
-void wxVulkanFrame::Cleanup()
-{
-    renderPanel->Cleanup();
-}
-
-void wxVulkanFrame::Render()
-{
-    renderPanel->Render();
 }
 
 void wxVulkanFrame::OnButtonClick(wxCommandEvent &evt)
 {
     try
     {
-//        float red = renderPanel->renderer->getClearColor()[0];
-//        float green = renderPanel->renderer->getClearColor()[1];
-//        float blue = renderPanel->renderer->getClearColor()[2];
-//
-//        if (blue < 1.0f)
-//            blue += 0.1f;
-//        else if (green < 1.0f)
-//            green += 0.1f;
-//        else if (red < 1.0f)
-//            red += 0.1f;
-//        else
-//            wxMessageBox("White screen", "Info", wxICON_INFORMATION);
-//
-//        red = red > 1.0f ? 1.0f : red;
-//        green = green > 1.0f ? 1.0f : green;
-//        blue = blue > 1.0f ? 1.0f : blue;
-//
-//        renderPanel->renderer->setClearColor(red, green, blue, renderPanel->renderer->getClearColor()[3]);
+        
     }
     catch (const std::exception &e)
     {

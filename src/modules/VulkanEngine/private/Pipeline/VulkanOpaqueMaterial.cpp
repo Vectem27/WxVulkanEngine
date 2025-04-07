@@ -217,7 +217,7 @@ void VulkanOpaqueMaterial::CreatePipelines(VkDevice device, VkRenderPass renderP
 void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo)
 {
     // Charge les shaders (remplacez par votre propre système de chargement)
-    auto vertShaderCode = ReadFile(materialInfo.vertexShader);
+    auto vertShaderCode = ReadFile(materialInfo.shadowMapVertexShader);
 
     VkShaderModule vertShaderModule;
 

@@ -30,6 +30,7 @@ public:
     void SetNearPlan(float nearPlan);
     void SetFarPlan(float farPlan);
 
+    ViewProj GetViewData() const { return viewData; }
 protected:
     void SetCameraTransform(Transform transform);
 private: 

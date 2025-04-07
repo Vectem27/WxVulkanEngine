@@ -9,20 +9,30 @@ layout(set = 0, binding = 0) uniform CameraBuffer
 {
     mat4 view;
     mat4 proj;
-} camera_vp;
+} camera;
 
 layout(set = 1, binding = 0) uniform ObjectBuffer
 {
     mat4 model;
 } object;
 
+layout(set = 2, binding = 1) uniform LightBuffer
+{
+    mat4 view;
+    mat4 proj;
+} light;
+
 layout(location = 0) out vec3 fragColor;  // Couleur passée au fragment shader
 layout(location = 1) out vec3 fragNormal; // Couleur passée au fragment shader
 layout(location = 2) out vec2 fragUV;     // Couleur passée au fragment shader
+layout(location = 3) out vec4 fragPosLightSpace;
 
 void main() 
 {
-    vec4 pos = camera_vp.proj * camera_vp.view * object.model * vec4(inPosition, 1.0); // Position en 2D
+    vec4 pos = camera.proj * camera.view * object.model * vec4(inPosition, 1.0); // Position en 2D
     gl_Position = pos;
+    fragUV = inUV;
+    fragNormal = inNormal;
     fragColor = inColor; // Passe la couleur au fragment shader
+    fragPosLightSpace = light.proj * light.view * object.model * vec4(inPosition, 1.0);
 }

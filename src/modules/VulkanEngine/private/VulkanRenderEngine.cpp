@@ -13,7 +13,6 @@ bool VulkanRenderEngine::Init(void *windowHandle)
 
     createInstance();
     deviceManager = new VulkanDeviceManager(instance);
-    surfaceTest = new VulkanSurface(instance, deviceManager, windowHandle);
     CreateRenderPass();
     createDescriptorPool();
     pipelineManager = new VulkanPipelineManager(GetDeviceManager()->GetDevice());
@@ -35,7 +34,6 @@ void VulkanRenderEngine::Shutdown() {
         delete descriptorPoolManager;
 
     delete pipelineManager;
-    delete surfaceTest;
     delete deviceManager;
 
     if (instance != VK_NULL_HANDLE) 

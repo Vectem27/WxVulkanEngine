@@ -4,9 +4,29 @@
 
 VulkanPipelineManager::VulkanPipelineManager(VkDevice device)
 {
+    InitSamplers(device);
     InitDescriptorSetLayouts(device);
     InitPipelineLayouts(device);   
 }
+void VulkanPipelineManager::InitSamplers(VkDevice device)
+{
+    VkSamplerCreateInfo samplerInfo = {};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+    samplerInfo.compareEnable = VK_TRUE;
+    samplerInfo.compareOp = VK_COMPARE_OP_LESS;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 1.0f;
+    
+    vkCreateSampler(device, &samplerInfo, nullptr, &shadowMapSampler);
+}
+
 void VulkanPipelineManager::InitDescriptorSetLayouts(VkDevice device)
 {
     // Layout pour camera_vp (Set 0, Binding 0)

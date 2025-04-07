@@ -139,7 +139,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     return true;
 }
 
-bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRenderable *renderObject, VulkanLight *light, VkQueue graphicsQueue)
+bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRenderable *renderObject, VulkanCamera *light, VkQueue graphicsQueue)
 {
     const auto& commandBuffer = renderTarget->GetCommandBuffer();
 
@@ -167,9 +167,10 @@ bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRender
     
     // Render
     light->Render(renderObject, commandBuffer);
+
     Array<const IRenderable*> scene;
     if (renderObject)
-        renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+        renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
 
     IVulkanMesh* mesh;
     for (const auto& object : scene)
@@ -177,7 +178,7 @@ bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRender
         mesh = reinterpret_cast<IVulkanMesh*>(object->GetRenderMesh());
         if (mesh)
         {
-            mesh->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+            mesh->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
         }
     }
 

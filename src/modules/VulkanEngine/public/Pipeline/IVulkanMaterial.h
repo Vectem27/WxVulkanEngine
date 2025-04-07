@@ -10,6 +10,7 @@ struct MaterialInfo
 {
     std::string vertexShader = "";
     std::string fragmentShader = "";
+    std::string shadowMapVertexShader = "";
 };
 
 class IVulkanMaterial

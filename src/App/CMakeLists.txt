@@ -20,7 +20,7 @@ if(COMPILE_SHADERS)
 	COPY_Shaders("${SHADER_SOURCE_FILES}" ${SHADER_OUTPUT_DIR})
 endif()
 
-add_executable(${PROJECT_NAME} main.cpp App/App.cpp App/VulkanFrame.cpp App/Cube.cpp)
+add_executable(${PROJECT_NAME} main.cpp App/App.cpp App/VulkanFrame.cpp)
 
 set(MINGW_EXTRA_LIBS)
 if(MINGW)

@@ -10,15 +10,16 @@ add_library(VulkanEngine STATIC
     private/VulkanDescriptorPoolManager.cpp
     private/Pipeline/VulkanPipelineManager.cpp
     private/Pipeline/VulkanOpaqueMaterial.cpp
-    private/VulkanLight.cpp
     
     public/IVulkanMesh.h
     #public/IVulkanMaterial.h
+    public/Light/VulkanLight.h
 )
 
 
 target_include_directories(VulkanEngine 
     PUBLIC public
+    PUBLIC public/Light
     INTERFACE interface
     PRIVATE private
 )
