@@ -13,7 +13,7 @@
 
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
-    lightManager(new VulkanLightManager()),
+    lightManager(new VulkanGlobalLightManager()),
     vulkanRenderEngine(new VulkanRenderEngine()),
     camera(new CameraComponent()),
     projLight(new ProjectorLightComponent())

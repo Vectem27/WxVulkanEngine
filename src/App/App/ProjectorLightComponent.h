@@ -1,7 +1,7 @@
 #ifndef PROJECTORLIGHTCOMPONENT_H
 #define PROJECTORLIGHTCOMPONENT_H
 
-#include "VulkanProjectorLight.h"
+#include "VulkanSpotlightLight.h"
 
 class ProjectorLightComponent : public SceneComponent, public VulkanSpotlightLight
 {

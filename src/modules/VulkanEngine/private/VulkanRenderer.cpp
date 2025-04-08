@@ -8,7 +8,7 @@
 #include "VulkanRenderTarget.h"
 #include <array>
 #include "IVulkanMesh.h"
-#include "VulkanLightManager.h"
+#include "VulkanGlobalLightManager.h"
 #include "VulkanProjectorLight.h"
 
 
@@ -17,7 +17,7 @@ VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
 {
 }
 
-bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *renderObject, VulkanCamera *camera, VulkanLightManager* lightManager, VkQueue graphicsQueue, VkQueue presentQueue)
+bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *renderObject, VulkanCamera *camera, VulkanGlobalLightManager* lightManager, VkQueue graphicsQueue, VkQueue presentQueue)
 {
     if (!swapchain)
         throw std::invalid_argument("Swapchain is invalid");

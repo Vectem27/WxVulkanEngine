@@ -14,8 +14,8 @@ add_library(VulkanEngine STATIC
     public/IVulkanMesh.h
     #public/IVulkanMaterial.h
     public/Light/VulkanLight.h
-    private/Light/VulkanProjectorLight.cpp
-    private/Light/VulkanLightManager.cpp
+    private/Light/VulkanSpotLight.cpp
+    private/Light/VulkanGlobalLightManager.cpp
 )
 
 
