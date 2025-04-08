@@ -9,7 +9,7 @@
 #include <array>
 #include "IVulkanMesh.h"
 #include "VulkanGlobalLightManager.h"
-#include "VulkanProjectorLight.h"
+#include "VulkanSpotlightLight.h"
 
 
 VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)

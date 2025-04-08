@@ -8,7 +8,7 @@
 #include "World.h"
 #include "Cube.h"
 #include "CameraComponent.h"
-#include "VulkanLightManager.h"
+#include "VulkanGlobalLightManager.h"
 #include "ProjectorLightComponent.h"
 
 wxVulkanApp::wxVulkanApp()
@@ -84,7 +84,7 @@ void wxVulkanApp::InitVulkan()
 
         renderer = new VulkanRenderer(vulkanRenderEngine);
 
-        projLight->InitVulkanProjectorLight(vulkanRenderEngine);
+        projLight->InitVulkanSpotlightLight(vulkanRenderEngine);
         camera->VulkanCamera::Init(vulkanRenderEngine, swapchain);
 
         cube = new Cube();
