@@ -1,0 +1,9 @@
+#ifndef IVULKANLIGHTMANAGER_H
+#define IVULKANLIGHTMANAGER_H
+
+class IVulkanLightManager
+{
+
+};
+
+#endif // IVULKANLIGHTMANAGER_H
