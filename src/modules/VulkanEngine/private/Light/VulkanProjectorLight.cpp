@@ -7,13 +7,13 @@
 #include "VulkanRenderEngine.h"
 #include "VulkanRenderTarget.h"
 
-VulkanProjectorLight::~VulkanProjectorLight()
+VulkanSpotlightLight::~VulkanSpotlightLight()
 {
     delete camera;
     delete renderTarget;
 }
 
-void VulkanProjectorLight::InitVulkanProjectorLight(VulkanRenderEngine *renderEngine)
+void VulkanSpotlightLight::InitVulkanProjectorLight(VulkanRenderEngine *renderEngine)
 {
     renderTarget = new VulkanRenderTarget(renderEngine, 1024, 1024, renderEngine->GetDepthStencilImageFormat());
     renderTarget->CreateFramebuffer(renderEngine->GetShadowMapRenderPass());
@@ -21,16 +21,16 @@ void VulkanProjectorLight::InitVulkanProjectorLight(VulkanRenderEngine *renderEn
     camera->Init(renderEngine, renderTarget);
     camera->SetFarPlan(100.0f);
     camera->SetNearPlan(0.1f);
-    camera->SetFOV(90.0f);
+    camera->SetFOV(30.0f);
     SetShadowMap(renderTarget->GetImageView(), renderEngine->GetPipelineManager()->GetShadowMapSampler());
 }
 
-ProjectorLightData VulkanProjectorLight::GetProjectorLightData() const
+ProjectorLightData VulkanSpotlightLight::GetProjectorLightData() const
 {
     return data;
 }
 
-void VulkanProjectorLight::SetTransform(Transform transform)
+void VulkanSpotlightLight::SetTransform(Transform transform)
 {
     if (!camera)
         throw std::runtime_error("VulkanProjectorLight : camera is not initialized !");

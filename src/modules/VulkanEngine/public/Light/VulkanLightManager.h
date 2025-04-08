@@ -18,7 +18,7 @@ struct FragmentLightData
 };
 
 class VulkanRenderEngine;
-class VulkanProjectorLight;
+class VulkanSpotlightLight;
 
 class VulkanLightManager
 {
@@ -35,7 +35,7 @@ public:
 
     VulkanRenderEngine* GetRenderEngine() const { return vulkanRenderEngine; }
 public:
-    void AddProjectorLight(const VulkanProjectorLight* light);
+    void AddProjectorLight(const VulkanSpotlightLight* light);
 private:
     void CreateDescriptorPool();
     void CreateDescriptorSets();
@@ -46,7 +46,7 @@ private:
     VkDescriptorPool projectorLightsDescriptorPool;
     VkDescriptorSet projectorLightsDescriptorSet;
 
-    Array<const VulkanProjectorLight*> projectorLights;
+    Array<const VulkanSpotlightLight*> projectorLights;
 };
 
 #endif // VULKANLIGHTMANAGER_H

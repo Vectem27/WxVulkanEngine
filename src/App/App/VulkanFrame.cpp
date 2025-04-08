@@ -40,7 +40,7 @@ wxVulkanFrame::wxVulkanFrame(const wxString &title)
 
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(renderSurface, 3, wxEXPAND);
-    sizer->Add(testPanel, 1, wxEXPAND);
+    //sizer->Add(testPanel, 1, wxEXPAND);
     mainPanel->SetSizer(sizer);
 }
 

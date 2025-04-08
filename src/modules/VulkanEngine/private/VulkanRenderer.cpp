@@ -96,7 +96,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     lightManager->ClearLights();
     for (const auto& object : scene)
     {
-        auto light = dynamic_cast<VulkanProjectorLight*>(object);
+        auto light = dynamic_cast<VulkanSpotlightLight*>(object);
         if(light)
         {
             lightManager->AddProjectorLight(light);
@@ -105,7 +105,12 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
         }
     }
 
-    lightManager->UpdateDescriptorSets();
+    static bool doOnce{true};
+    if (doOnce)
+    {
+        lightManager->UpdateDescriptorSets();
+        doOnce = false;
+    }
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderEngine->GetPipelineManager()->GetPipelineLayout(), 2, 1, &lightManager->GetProjectorLightsDescriptorSet(), 0, nullptr);
 
     

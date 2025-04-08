@@ -124,7 +124,7 @@ void VulkanLightManager::UpdateDescriptorSets()
     lightFragBuffer.Cleanup();
 }
 
-void VulkanLightManager::AddProjectorLight(const VulkanProjectorLight *light)
+void VulkanLightManager::AddProjectorLight(const VulkanSpotlightLight *light)
 {
     if (light)
         projectorLights.Add(light);

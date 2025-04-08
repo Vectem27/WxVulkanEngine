@@ -29,13 +29,11 @@ private:
 private:
     class VulkanRenderEngine *vulkanRenderEngine;
     class CameraComponent* camera;
-    class CameraComponent* light;
     class Actor* cubeActor;
     class Cube* cube;
     class Cube* tinyCube;
     class Cube* floor;
     class VulkanOpaqueMaterial* material;
-    class VulkanRenderTarget* renderTarget;
 
     class VulkanRenderer* renderer;
     class VulkanSwapchain* swapchain;

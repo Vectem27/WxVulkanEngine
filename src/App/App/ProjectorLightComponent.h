@@ -3,13 +3,13 @@
 
 #include "VulkanProjectorLight.h"
 
-class ProjectorLightComponent : public SceneComponent, public VulkanProjectorLight
+class ProjectorLightComponent : public SceneComponent, public VulkanSpotlightLight
 {
 public:
     virtual void UpdateWorldTransform() override
     {
         SceneComponent::UpdateWorldTransform();
-        VulkanProjectorLight::SetTransform(GetWorldTransform());
+        VulkanSpotlightLight::SetTransform(GetWorldTransform());
     }
     
     virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override

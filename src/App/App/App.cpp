@@ -16,7 +16,6 @@ wxVulkanApp::wxVulkanApp()
     lightManager(new VulkanLightManager()),
     vulkanRenderEngine(new VulkanRenderEngine()),
     camera(new CameraComponent()),
-    light(new CameraComponent()),
     projLight(new ProjectorLightComponent())
 
 {
@@ -83,14 +82,10 @@ void wxVulkanApp::InitVulkan()
         swapchain = new VulkanSwapchain(vulkanRenderEngine, frame->renderSurface->GetVulkanSurface());
         swapchain->Create(vulkanRenderEngine->GetDefaultRenderPass());
 
-        renderTarget = new VulkanRenderTarget(vulkanRenderEngine, 1024, 1024, vulkanRenderEngine->GetDepthStencilImageFormat());
-        renderTarget->CreateFramebuffer(vulkanRenderEngine->GetShadowMapRenderPass());
-
         renderer = new VulkanRenderer(vulkanRenderEngine);
 
         projLight->InitVulkanProjectorLight(vulkanRenderEngine);
         camera->VulkanCamera::Init(vulkanRenderEngine, swapchain);
-        light->CameraComponent::Init(vulkanRenderEngine, renderTarget);
 
         cube = new Cube();
         cube->Init(vulkanRenderEngine);
@@ -126,18 +121,11 @@ void wxVulkanApp::InitVulkan()
         world->SpawnActor<Actor>()->AddChild(floor);
         world->SpawnActor<Actor>()->AddChild(camera);
         Actor* li = world->SpawnActor<Actor>();
-        li->AddChild(light);
         li->AddChild(projLight);
 
 
         camera->SetRelativeTransform(Transform({-5,-2,2}, Rotator::FromEulerDegrees(-10,0,45), {1,1,1}));
-        li->SetRelativeTransform(Transform({-6,6,8}, Rotator::FromEulerDegrees(-45,0,-45), {1,1,1}));
-        light->SetFOV(90);
-        light->SetFarPlan(100);
-        //projLight->SetShadowMap(
-        //    renderTarget->GetImageView(), 
-        //    vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler()
-        //);
+        li->SetRelativeTransform(Transform({-6,6,4}, Rotator::FromEulerDegrees(-30,0,-45), {1,1,1}));
     }
     catch(const std::exception& e)
     {
@@ -173,7 +161,7 @@ void wxVulkanApp::RenderVulkan()
         if (counter % 5 != 0)
             return;
             
-        //** 
+        /** 
         // Après le rendu de la shadow map
         int w = renderTarget->GetWidth();
         int h = renderTarget->GetHeight();
@@ -208,7 +196,7 @@ void wxVulkanApp::RenderVulkan()
         wxBitmap bmp(img);
         bmp.Rescale(bmp, wxSize(96,96));
         wxClientDC dc(frame->testPanel);
-        dc.DrawBitmap(bmp, 0, 0, false);//*/
+        dc.DrawBitmap(bmp, 0, 0, false);*/
     }
     catch (const std::exception &e)
     {
@@ -223,10 +211,6 @@ void wxVulkanApp::ShutdownVulkan()
     camera->Cleanup();
     delete camera;
 
-    light->Cleanup();
-    delete light;
-
-    delete renderTarget;
     delete swapchain;
     delete renderer;
     delete world;

@@ -26,10 +26,10 @@ struct ProjectorLightData
     Array<ShadowMapInfo> shadowMapsInfo;
 };
 
-class VulkanProjectorLight
+class VulkanSpotlightLight
 {
 public:
-    ~VulkanProjectorLight();
+    ~VulkanSpotlightLight();
     void InitVulkanProjectorLight(VulkanRenderEngine* renderEngine);
 public:
     ProjectorLightData GetProjectorLightData() const;
