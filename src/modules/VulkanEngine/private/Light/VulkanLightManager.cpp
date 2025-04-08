@@ -67,7 +67,7 @@ void VulkanLightManager::UpdateDescriptorSets()
 
     lightBuffer.Cleanup();
 
-    
+
 
     if (projectorLights.GetSize() <= 0)
         throw std::runtime_error("Projector lights empty");
@@ -97,7 +97,8 @@ void VulkanLightManager::UpdateDescriptorSets()
 
 void VulkanLightManager::AddProjectorLight(const VulkanProjectorLight *light)
 {
-    projectorLights.Add(light);
+    if (light)
+        projectorLights.Add(light);
 }
 
 void VulkanLightManager::CreateDescriptorPool()

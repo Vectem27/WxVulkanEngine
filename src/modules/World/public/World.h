@@ -36,7 +36,7 @@ public:
     // Presistent
     virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return false; }
 
-    virtual void CollectAllRenderChilds(Array<const IRenderable*>& childs, ERenderPassType pass) const override
+    virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override
     {
         for (const auto& actor : GetActors())
             actor->CollectAllRenderChilds(childs, pass);

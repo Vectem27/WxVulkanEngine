@@ -8,14 +8,27 @@
 #include "VulkanRenderTarget.h"
 #include <array>
 #include "IVulkanMesh.h"
+#include "VulkanLightManager.h"
+#include "VulkanProjectorLight.h"
+
 
 VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
     : renderEngine(renderEngine)
 {
 }
 
-bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *renderObject, VulkanCamera *camera, VkQueue graphicsQueue, VkQueue presentQueue)
+bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *renderObject, VulkanCamera *camera, VulkanLightManager* lightManager, VkQueue graphicsQueue, VkQueue presentQueue)
 {
+    if (!swapchain)
+        throw std::invalid_argument("Swapchain is invalid");
+
+    if (!renderObject)
+        throw std::invalid_argument("Render object is invalid");
+
+    if (!camera)
+        throw std::invalid_argument("Camera is invalid");
+
+
     uint32_t imageIndex;
     VkSemaphore imageAvailableSemaphore = swapchain->GetImageAvailableSemaphore();
     auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), swapchain->GetSwapchain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -74,10 +87,28 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     // Render
     camera->Render(renderObject, commandBuffer);
 
-    Array<const IRenderable*> scene;
+    Array<IRenderable*> scene;
     if (renderObject)
         renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
 
+
+    // Setup lights
+    lightManager->ClearLights();
+    for (const auto& object : scene)
+    {
+        auto light = dynamic_cast<VulkanProjectorLight*>(object);
+        if(light)
+        {
+            lightManager->AddProjectorLight(light);
+            RenderToShadowMap(light->renderTarget, renderObject, light->camera, graphicsQueue);
+
+        }
+    }
+
+    lightManager->UpdateDescriptorSets();
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderEngine->GetPipelineManager()->GetPipelineLayout(), 2, 1, &lightManager->GetProjectorLightsDescriptorSet(), 0, nullptr);
+
+    
     IVulkanMesh* mesh;
     for (const auto& object : scene)
     {
@@ -141,6 +172,15 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
 bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRenderable *renderObject, VulkanCamera *light, VkQueue graphicsQueue)
 {
+    if (!renderTarget)
+        throw std::invalid_argument("Light render target is invalid");
+
+    if (!renderObject)
+        throw std::invalid_argument("Render object is invalid");
+
+    if (!light)
+        throw std::invalid_argument("Light camera is invalid");
+
     const auto& commandBuffer = renderTarget->GetCommandBuffer();
 
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
@@ -168,7 +208,7 @@ bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRender
     // Render
     light->Render(renderObject, commandBuffer);
 
-    Array<const IRenderable*> scene;
+    Array<IRenderable*> scene;
     if (renderObject)
         renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
 

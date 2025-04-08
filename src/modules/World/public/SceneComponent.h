@@ -25,7 +25,7 @@ public: // IWorldContextObject Interface
 public: // IRenderable
     virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return false; }
 
-    virtual void CollectAllRenderChilds(Array<const IRenderable*>& childs, ERenderPassType pass) const override
+    virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override
     {
         if (ShouldRenderInPass(pass))
             childs.Add(this);

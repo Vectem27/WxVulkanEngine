@@ -31,7 +31,7 @@ public:
     void SetFarPlan(float farPlan);
 
     ViewProj GetViewData() const { return viewData; }
-protected:
+public:
     void SetCameraTransform(Transform transform);
 private: 
     class VulkanRenderEngine* renderEngine;

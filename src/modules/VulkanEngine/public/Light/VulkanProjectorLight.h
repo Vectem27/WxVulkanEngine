@@ -4,6 +4,10 @@
 #include "EngineCore.hpp"
 #include <vulkan/vulkan.h>
 
+class VulkanCamera;
+class VulkanRenderEngine;
+class VulkanRenderTarget;
+
 struct ShadowMapInfo
 {
     VkImageView imageView;
@@ -25,6 +29,9 @@ struct ProjectorLightData
 class VulkanProjectorLight
 {
 public:
+    ~VulkanProjectorLight();
+    void InitVulkanProjectorLight(VulkanRenderEngine* renderEngine);
+public:
     ProjectorLightData GetProjectorLightData() const;
 
     void SetTransform(Transform transform);
@@ -39,6 +46,9 @@ public:
     
 private:
     ProjectorLightData data{};
+public:
+    VulkanCamera* camera;
+    VulkanRenderTarget* renderTarget;
 };
 
 #endif // VULKANPROJECTORLIGHT_H

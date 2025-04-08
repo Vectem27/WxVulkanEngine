@@ -6,8 +6,6 @@
 #include <vector>
 #include "Pipeline/IVulkanMaterial.h"
 #include "VulkanRenderEngine.h"
-#include "VulkanLightManager.h"
-#include "VulkanProjectorLight.h"
 
 class CubeMesh : public Mesh
 {
@@ -66,20 +64,14 @@ public:
         memcpy(indexData, indices.data(), (size_t)indexBufferSize);
         vkUnmapMemory(GetVulkanRenderEngine()->GetDevice(), indexBufferMemory);
 
-        lightManager.InitVulkanLightManager(vulkanRenderEngine);
     }
     
-    virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) const override
+    virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) override
     {
         if (material)
             material->Bind(commandBuffer, pass);
 
-        lightManager.ClearLights();
-        lightManager.AddProjectorLight(&light);
-        lightManager.UpdateDescriptorSets();
-
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanRenderEngine()->GetPipelineManager()->GetPipelineLayout(), 1, 1, &GetVulkanMeshDescriptorSet(), 0, nullptr);
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanRenderEngine()->GetPipelineManager()->GetPipelineLayout(), 2, 1, &lightManager.GetProjectorLightsDescriptorSet(), 0, nullptr);
 
         VkDeviceSize offset = 0;
 
@@ -92,9 +84,6 @@ public:
     {
         this->material = material;
     }
-public:
-    VulkanProjectorLight light;
-    mutable VulkanLightManager lightManager;
 private:
 
     VkBuffer vertexBuffer;

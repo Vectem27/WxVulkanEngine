@@ -16,12 +16,10 @@ public: // IRenderable Interface
 
     virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return true; }
 
-    virtual void CollectAllRenderChilds(Array<const IRenderable*>& childs, ERenderPassType pass) const override
+    virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override
     {
         childs.Add(this);
-        for (const auto& child : GetChilds())
-            child->CollectAllRenderChilds(childs, pass);
-            
+        SceneComponent::CollectAllRenderChilds(childs, pass);
     }
     virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
 

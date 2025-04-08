@@ -8,13 +8,23 @@
 #include "World.h"
 #include "Cube.h"
 #include "CameraComponent.h"
+#include "VulkanLightManager.h"
+#include "ProjectorLightComponent.h"
 
+wxVulkanApp::wxVulkanApp()
+    : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
+    lightManager(new VulkanLightManager()),
+    vulkanRenderEngine(new VulkanRenderEngine()),
+    camera(new CameraComponent()),
+    light(new CameraComponent()),
+    projLight(new ProjectorLightComponent())
 
-
+{
+    
+}
 
 bool wxVulkanApp::OnInit()
 {
-    frame = new wxVulkanFrame("Vulkan avec wxWidgets");
     frame->Show(true);
     
     Bind(wxEVT_IDLE, &wxVulkanApp::onIdle, this);
@@ -62,10 +72,11 @@ void wxVulkanApp::InitVulkan()
 {
     try
     {
-        vulkanRenderEngine = new VulkanRenderEngine();
         vulkanRenderEngine->Init(nullptr);
         
         frame->renderSurface->InitVulkanSurface(vulkanRenderEngine);
+        lightManager->InitVulkanLightManager(vulkanRenderEngine);
+
 
         if (!frame->renderSurface->IsVulkanInitialized())
             throw std::runtime_error("Render surface not initialized");
@@ -77,8 +88,7 @@ void wxVulkanApp::InitVulkan()
 
         renderer = new VulkanRenderer(vulkanRenderEngine);
 
-        camera = new CameraComponent();
-        light = new CameraComponent();
+        projLight->InitVulkanProjectorLight(vulkanRenderEngine);
         camera->VulkanCamera::Init(vulkanRenderEngine, swapchain);
         light->CameraComponent::Init(vulkanRenderEngine, renderTarget);
 
@@ -115,12 +125,19 @@ void wxVulkanApp::InitVulkan()
         cubeActor->AddChild(tinyCube);
         world->SpawnActor<Actor>()->AddChild(floor);
         world->SpawnActor<Actor>()->AddChild(camera);
-        world->SpawnActor<Actor>()->AddChild(light);
+        Actor* li = world->SpawnActor<Actor>();
+        li->AddChild(light);
+        li->AddChild(projLight);
+
 
         camera->SetRelativeTransform(Transform({-5,-2,2}, Rotator::FromEulerDegrees(-10,0,45), {1,1,1}));
-        light->SetRelativeTransform(Transform({-6,6,8}, Rotator::FromEulerDegrees(-45,0,-45), {1,1,1}));
+        li->SetRelativeTransform(Transform({-6,6,8}, Rotator::FromEulerDegrees(-45,0,-45), {1,1,1}));
         light->SetFOV(90);
         light->SetFarPlan(100);
+        //projLight->SetShadowMap(
+        //    renderTarget->GetImageView(), 
+        //    vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler()
+        //);
     }
     catch(const std::exception& e)
     {
@@ -147,42 +164,9 @@ void wxVulkanApp::RenderVulkan()
     tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,yaw2));        
     try
     {
-        Array<Cube*> meshes{cube, tinyCube, floor};
-        for(auto mesh : meshes)
-        {
-            reinterpret_cast<CubeMesh*>(mesh->GetRenderMesh())->light.SetShadowMap(
-                renderTarget->GetImageView(), 
-                vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler() 
-            );
-            
-            //reinterpret_cast<CubeMesh*>(mesh->GetRenderMesh())->light.SetTransform(
-            //    light->GetWorldTransform()
-            //);
-            //Temps
-            reinterpret_cast<CubeMesh*>(mesh->GetRenderMesh())->light.SetViewProj(
-                light->GetViewData().view * light->GetViewData().proj
-            );
-        }
-
-        renderer->RenderToShadowMap(renderTarget, world, light, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue());
-/*
-        reinterpret_cast<CubeMesh*>(cube->GetRenderMesh())->light.SetShadowMap(
-            renderTarget->GetImageView(), 
-            vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler(), 
-            light->GetViewData());
-        reinterpret_cast<CubeMesh*>(tinyCube->GetRenderMesh())->light.SetShadowMap(
-            renderTarget->GetImageView(), 
-            vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler(), 
-            light->GetViewData());
-        reinterpret_cast<CubeMesh*>(floor->GetRenderMesh())->light.SetShadowMap(
-            renderTarget->GetImageView(), 
-            vulkanRenderEngine->GetPipelineManager()->GetShadowMapSampler(), 
-            light->GetViewData());
-*/
-        
-        
+     
         if(frame->renderSurface->IsVulkanInitialized())
-            renderer->RenderToSwapchain(swapchain, world, camera, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue(), frame->renderSurface->GetVulkanSurface()->GetPresentQueue());
+            renderer->RenderToSwapchain(swapchain, world, camera, lightManager, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue(), frame->renderSurface->GetVulkanSurface()->GetPresentQueue());
         
         return;
         ++counter;
@@ -246,6 +230,7 @@ void wxVulkanApp::ShutdownVulkan()
     delete swapchain;
     delete renderer;
     delete world;
+    delete lightManager;
 
     if (vulkanRenderEngine)
     {

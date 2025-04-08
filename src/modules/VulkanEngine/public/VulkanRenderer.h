@@ -9,6 +9,7 @@ class VulkanSwapchain;
 class VulkanCamera;
 class VulkanLight;
 class IRenderable;
+class VulkanLightManager;
 
 
 class VulkanRenderer
@@ -18,7 +19,7 @@ public:
     ~VulkanRenderer() = default;
 
     bool RenderToSwapchain( VulkanSwapchain* swapchain , IRenderable* renderObject, 
-        VulkanCamera* camera, VkQueue graphicsQueue, VkQueue presentQueue);
+        VulkanCamera* camera, VulkanLightManager* lightManager, VkQueue graphicsQueue, VkQueue presentQueue);
 
     bool RenderToShadowMap( VulkanRenderTarget* renderTarget ,IRenderable* renderObject, 
         VulkanCamera* light, VkQueue graphicsQueue);

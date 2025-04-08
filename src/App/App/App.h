@@ -9,7 +9,8 @@
 
 class wxVulkanApp : public wxApp
 {
-
+public: 
+    wxVulkanApp();
 public:
     virtual bool OnInit();
     void onIdle(wxIdleEvent &evt);
@@ -39,6 +40,8 @@ private:
     class VulkanRenderer* renderer;
     class VulkanSwapchain* swapchain;
     class World* world;
+    class VulkanLightManager* lightManager;
+    class ProjectorLightComponent* projLight;
 };
 
 #endif
