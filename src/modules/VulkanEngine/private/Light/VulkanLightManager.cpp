@@ -29,28 +29,36 @@ void VulkanLightManager::UpdateDescriptorSets()
         return;
     }
 
-    Array<LightData> lights;
+    Array<VertexLightData> vertexLights;
+    Array<FragmentLightData> fragLights;
     for(const auto& light : projectorLights)
     {
         if(!light)
             continue;
-        LightData data;
-        data.viewProj = light->GetProjectorLightData().viewProj;
-        lights.Add(data);
+        VertexLightData vdata;
+        FragmentLightData fdata;
+        vdata.viewProj = light->GetProjectorLightData().viewProj;
+        fdata.pos = light->GetProjectorLightData().position;
+        fdata.direction = light->GetProjectorLightData().direction;
+        fdata.length = light->GetProjectorLightData().length;
+        fdata.angle = light->GetProjectorLightData().angle;
+        vertexLights.Add(vdata);
+        fragLights.Add(fdata);
     }
 
     std::vector<VkWriteDescriptorSet> descriptorWrites;
 
-    size_t lightBufferSize = lights.GetSize() * sizeof(LightData);
-    UniformBuffer lightBuffer;
-    lightBuffer.Create(GetRenderEngine()->GetDevice(), GetRenderEngine()->GetPhysicalDevice(), lightBufferSize);
+    /* VERTEX */
+    UniformBuffer lightVertexBuffer;
+    size_t lightVertexBufferSize = vertexLights.GetSize() * sizeof(VertexLightData);
+    lightVertexBuffer.Create(GetRenderEngine()->GetDevice(), GetRenderEngine()->GetPhysicalDevice(), lightVertexBufferSize);
 
-    lightBuffer.Update(lights.GetData());
+    lightVertexBuffer.Update(vertexLights.GetData());
 
     VkDescriptorBufferInfo bufferInfo = {};
-    bufferInfo.buffer = lightBuffer.GetBuffer();
+    bufferInfo.buffer = lightVertexBuffer.GetBuffer();
     bufferInfo.offset = 0;
-    bufferInfo.range = lightBufferSize;
+    bufferInfo.range = lightVertexBufferSize;
 
     VkWriteDescriptorSet writeDescriptorSet = {};
     writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -63,11 +71,29 @@ void VulkanLightManager::UpdateDescriptorSets()
 
     descriptorWrites.push_back(writeDescriptorSet);
 
-    vkUpdateDescriptorSets(GetRenderEngine()->GetDevice(), 1, &writeDescriptorSet, 0, nullptr);
+    /* FRAGMENT */
+    UniformBuffer lightFragBuffer;
+    size_t lightFragBufferSize = fragLights.GetSize() * sizeof(FragmentLightData);
+    lightFragBuffer.Create(GetRenderEngine()->GetDevice(), GetRenderEngine()->GetPhysicalDevice(), lightFragBufferSize);
 
-    lightBuffer.Cleanup();
+    lightFragBuffer.Update(fragLights.GetData());
 
+    VkDescriptorBufferInfo bufferInfo2 = {};
+    bufferInfo2.buffer = lightFragBuffer.GetBuffer();
+    bufferInfo2.offset = 0;
+    bufferInfo2.range = lightFragBufferSize;
 
+    VkWriteDescriptorSet writeDescriptorSet2 = {};
+    writeDescriptorSet2.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet2.dstSet = projectorLightsDescriptorSet;
+    writeDescriptorSet2.dstBinding = 2;  // Binding des lumières
+    writeDescriptorSet2.dstArrayElement = 0;
+    writeDescriptorSet2.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    writeDescriptorSet2.pBufferInfo = &bufferInfo2;
+    writeDescriptorSet2.descriptorCount = 1;
+
+    descriptorWrites.push_back(writeDescriptorSet2);
+    /* SHADOW MAPS */
 
     if (projectorLights.GetSize() <= 0)
         throw std::runtime_error("Projector lights empty");
@@ -93,6 +119,9 @@ void VulkanLightManager::UpdateDescriptorSets()
     descriptorWrites.push_back(desc1);
 
     vkUpdateDescriptorSets(GetRenderEngine()->GetDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+
+    lightVertexBuffer.Cleanup();
+    lightFragBuffer.Cleanup();
 }
 
 void VulkanLightManager::AddProjectorLight(const VulkanProjectorLight *light)

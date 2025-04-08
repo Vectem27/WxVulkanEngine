@@ -4,9 +4,17 @@
 #include <vulkan/vulkan.h>
 #include "EngineCore.hpp"
 
-struct LightData
+struct VertexLightData
 {
     alignas(16) Matrix4f viewProj;
+};
+
+struct FragmentLightData
+{
+    alignas(16) Vector3f pos;
+    alignas(16) Vector3f direction;
+    alignas(4) float length;
+    alignas(4) float angle;
 };
 
 class VulkanRenderEngine;

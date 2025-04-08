@@ -19,7 +19,7 @@ void VulkanProjectorLight::InitVulkanProjectorLight(VulkanRenderEngine *renderEn
     renderTarget->CreateFramebuffer(renderEngine->GetShadowMapRenderPass());
     camera = new VulkanCamera();
     camera->Init(renderEngine, renderTarget);
-    camera->SetFarPlan(50.0f);
+    camera->SetFarPlan(100.0f);
     camera->SetNearPlan(0.1f);
     camera->SetFOV(90.0f);
     SetShadowMap(renderTarget->GetImageView(), renderEngine->GetPipelineManager()->GetShadowMapSampler());
@@ -37,5 +37,8 @@ void VulkanProjectorLight::SetTransform(Transform transform)
     camera->SetCameraTransform(transform);
 
     data.viewProj = camera->GetViewData().view * camera->GetViewData().proj;
-
+    data.position = transform.position;
+    data.direction = transform.rotation.Rotate({1.0f, 0.0f, 0.0f});
+    data.length = 100;
+    data.angle = ToRadians(30.0f);
 }

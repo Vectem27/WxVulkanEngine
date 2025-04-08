@@ -35,10 +35,6 @@ public:
     ProjectorLightData GetProjectorLightData() const;
 
     void SetTransform(Transform transform);
-    void SetViewProj(Matrix4f mat)
-    {
-        data.viewProj = mat;
-    }
     void SetShadowMap(VkImageView shadowMapView, VkSampler shadowMapSampler)
     {
         data.shadowMapsInfo.Insert({shadowMapView, shadowMapSampler}, 0, true);
