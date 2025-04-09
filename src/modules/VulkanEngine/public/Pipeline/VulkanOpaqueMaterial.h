@@ -16,9 +16,9 @@ public:
     virtual void Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const override;
 
 private:
-    VulkanPipelineManager* pipelineManager;
-    VkPipeline basePipeline;
-    VkPipeline shadowMapPipeline;
+    VulkanPipelineManager* pipelineManager{nullptr};
+    VkPipeline basePipeline{VK_NULL_HANDLE};
+    VkPipeline shadowMapPipeline{VK_NULL_HANDLE};
 };
 
 #endif // VULKANOPAQUEMATERIAL_H

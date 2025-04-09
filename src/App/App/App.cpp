@@ -108,6 +108,8 @@ void wxVulkanApp::InitVulkan()
         matInfo.fragmentShader = "shaders/shader.frag";
         matInfo.vertexShader = "shaders/shader.vert";
         matInfo.shadowMapVertexShader = "shaders/shadowMap.vert";
+        matInfo.lightingFragmentShader = "shaders/lighting.vert";
+        matInfo.lightingVertexShader= "shaders/lighting.vert";
         material->CreatePipelines(
             vulkanRenderEngine->GetDevice(), 
             VulkanRenderPassManager::GetInstance()->GetGeometryPass(), 
@@ -119,7 +121,6 @@ void wxVulkanApp::InitVulkan()
             VulkanRenderPassManager::GetInstance()->GetShadowPass(), 
             matInfo
         );
-
 
         cube->SetMaterial(material);
         tinyCube->SetMaterial(material);

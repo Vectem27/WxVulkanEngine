@@ -17,6 +17,9 @@ enum class BufferType
 struct ImageData
 {
     BufferType type;
+    VkFormat format;
+    VkImageUsageFlags usageFlags;
+    VkImageAspectFlags aspectFlags;
     std::vector<VkImage> images;
     std::vector<VkDeviceMemory> imageMemorys;
     std::vector<VkImageView> imageViews;
@@ -65,7 +68,7 @@ struct SwapchainSupportDetails
 
 class VulkanSwapchain : public IRenderTarget
 {
-    BufferType viewBufferType{BufferType::BASECOLOR};
+    BufferType viewBufferType{BufferType::LIGHTING};
 
     std::vector<ImageData> imagesData;
     ImageData& GetImagesData(BufferType type)
@@ -93,6 +96,7 @@ public:
     VkExtent2D GetExtent() const { return swapchainExtent; }
 
     const VkFramebuffer& GetFrameBuffer(uint32_t index) const { return framebuffers[index]; }
+    const VkFramebuffer& GetLightingFrameBuffer(uint32_t index) const { return lightingFramebuffers[index]; }
     const VkCommandBuffer& GetCommandBuffer(uint32_t index) const { return commandBuffers[index]; }
 
     const VkFence& GetInFlightFence() const {return inFlightFence; }
@@ -124,6 +128,8 @@ private:
 
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
     std::vector<VkFramebuffer> framebuffers;
+    
+    std::vector<VkFramebuffer> lightingFramebuffers;
 
     VkExtent2D swapchainExtent;
     

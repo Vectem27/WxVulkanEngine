@@ -6,7 +6,8 @@ VulkanPipelineManager::VulkanPipelineManager(VkDevice device)
 {
     InitSamplers(device);
     InitDescriptorSetLayouts(device);
-    InitPipelineLayouts(device);   
+    InitPipelineLayouts(device);
+    InitLightingPipelineLayouts(device);   
 }
 void VulkanPipelineManager::InitSamplers(VkDevice device)
 {
@@ -117,4 +118,22 @@ void VulkanPipelineManager::InitPipelineLayouts(VkDevice device)
     {
         throw std::runtime_error("Failed to create pipeline layout !");
     }
+}
+
+void VulkanPipelineManager::InitLightingPipelineLayouts(VkDevice device)
+{
+    std::vector<VkDescriptorSetLayout> descSetLayouts 
+    {
+        cameraDescriptorLayout,   // Set 0: Camera VP
+        objectDescriptorLayout,   // Set 1: Object transforms
+    };
+
+    // Création du pipeline layout (aucun uniform ou push constant ici)
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipelineLayoutInfo.setLayoutCount = descSetLayouts.size();
+    pipelineLayoutInfo.pSetLayouts = descSetLayouts.data(); // Ajouté
+
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create pipeline layout !");
 }

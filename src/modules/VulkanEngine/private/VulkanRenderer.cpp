@@ -43,6 +43,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     VkCommandBuffer commandBuffer = swapchain->GetCommandBuffer(imageIndex);
     VkFramebuffer frameBuffer = swapchain->GetFrameBuffer(imageIndex);
+    VkFramebuffer lightingFrameBuffer = swapchain->GetLightingFrameBuffer(imageIndex);
     VkFence inFlightFence = swapchain->GetInFlightFence();
     VkSemaphore renderFinishedSemaphore = swapchain->GetRenderFinishedSemaphore();
 
@@ -129,6 +130,39 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
+
+    
+    /* LIGHTING PASS*/
+
+    // Débute le render pass
+    VkRenderPassBeginInfo lightingRenderPassInfo{};
+    lightingRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    lightingRenderPassInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass();
+    lightingRenderPassInfo.framebuffer = lightingFrameBuffer;
+    lightingRenderPassInfo.renderArea.offset = {0, 0};
+    lightingRenderPassInfo.renderArea.extent = {swapchain->GetExtent().width, swapchain->GetExtent().height};
+
+    // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
+    std::array<VkClearValue, 1> ligtingClearValues{};
+    ligtingClearValues[0].color = {0.0f, 1.0f, 0.0f, 1.0f};
+
+    lightingRenderPassInfo.clearValueCount = ligtingClearValues.size();
+    lightingRenderPassInfo.pClearValues = ligtingClearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffer, &lightingRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    // Render
+    //camera->Render(renderObject, commandBuffer);
+    //for (const auto& object : scene)
+    //{
+    //    mesh = reinterpret_cast<IVulkanMesh*>(object->GetRenderMesh());
+    //    if (mesh)
+    //        mesh->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_LIGHTING);
+    //}
+
+    // Termine le render pass
+    vkCmdEndRenderPass(commandBuffer);
+
 
     // Termine l'enregistrement du command buffer
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)

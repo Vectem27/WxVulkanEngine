@@ -18,6 +18,7 @@ public: // DescriptionSetLayouts Getters
 
 public: // PipelineLayouts Getters
     VkPipelineLayout GetPipelineLayout() const { return pipelineLayout; }
+    VkPipelineLayout GetLightingPipelineLayout() const { return lightingPipelineLayout; }
 
 private:
     VkSampler shadowMapSampler;
@@ -29,11 +30,13 @@ private: // DescriptionSetLayouts
 
 private: // PipelineLayouts
     VkPipelineLayout pipelineLayout{VK_NULL_HANDLE};
+    VkPipelineLayout lightingPipelineLayout{VK_NULL_HANDLE};
 
 private:
     void InitSamplers(VkDevice device);
     void InitDescriptorSetLayouts(VkDevice device);
     void InitPipelineLayouts(VkDevice device);
+    void InitLightingPipelineLayouts(VkDevice device);
 };
 
 #endif // VULKANPIPELINEMANAGER_H

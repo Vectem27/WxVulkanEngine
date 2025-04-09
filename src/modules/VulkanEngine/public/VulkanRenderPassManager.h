@@ -11,6 +11,7 @@ struct PassesInfo
     VkFormat depthStencilFormat{VK_FORMAT_D24_UNORM_S8_UINT};
 
     VkFormat shadowMapFormat{VK_FORMAT_D24_UNORM_S8_UINT};
+    VkFormat hdrFormat{VK_FORMAT_R16G16B16A16_SFLOAT};
 };
 
 class VulkanRenderPassManager
@@ -24,6 +25,7 @@ public:
     VkFormat GetColorFormat() const { return passesInfo.colorFormat; }
     VkFormat GetDepthStencilFormat() const { return passesInfo.depthStencilFormat; }
     VkFormat GetShadowMapFormat() const { return passesInfo.shadowMapFormat; }
+    VkFormat GetHDRFormat() const { return passesInfo.hdrFormat; }
 
     VkRenderPass GetGeometryPass() const { return geometryPass; }
     VkRenderPass GetShadowPass() const { return shadowPass; }

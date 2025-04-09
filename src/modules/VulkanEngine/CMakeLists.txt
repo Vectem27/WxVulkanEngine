@@ -12,6 +12,8 @@ add_library(VulkanEngine STATIC
     private/VulkanRenderImageManager.cpp
     private/Pipeline/VulkanPipelineManager.cpp
     private/Pipeline/VulkanOpaqueMaterial.cpp
+
+    private/Pipeline/VulkanSpotlightLightPipeline.cpp
     
     public/IVulkanMesh.h
     #public/IVulkanMaterial.h
@@ -29,6 +31,9 @@ target_include_directories(VulkanEngine
 
     PUBLIC public/Light
     PRIVATE private/Light
+
+    PUBLIC public/Pipeline
+    PRIVATE private/Pipeline
 )
 
 target_include_directories(VulkanEngine PUBLIC ${Vulkan_INCLUDE_DIRS})

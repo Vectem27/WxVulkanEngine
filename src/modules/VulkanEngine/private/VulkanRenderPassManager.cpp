@@ -152,66 +152,47 @@ void VulkanRenderPassManager::InitShadowPass(VkDevice device)
 
 void VulkanRenderPassManager::InitLightingPass(VkDevice device)
 {
-    if (lightingPass != VK_NULL_HANDLE)
+    if (GetLightingPass() != VK_NULL_HANDLE) 
     {
         vkDestroyRenderPass(device, lightingPass, nullptr);
         lightingPass = VK_NULL_HANDLE;
     }
 
-    // Attachement de couleur : résultat final (éclairage)
+    // Attachement de couleur pour le résultat de l'éclairage
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = GetColorFormat();
+    colorAttachment.format = GetHDRFormat();
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;  // On efface le framebuffer
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // On conserve le résultat
     colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Ou SHADER_READ_ONLY_OPTIMAL si besoin pour le post-processing
 
     VkAttachmentReference colorAttachmentRef{};
     colorAttachmentRef.attachment = 0;
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    // Input attachment : depth du G-buffer
-    VkAttachmentDescription depthInputAttachment{};
-    depthInputAttachment.format = GetDepthStencilFormat();
-    depthInputAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthInputAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-    depthInputAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthInputAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthInputAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthInputAttachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthInputAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-    VkAttachmentReference depthInputRef{};
-    depthInputRef.attachment = 1;
-    depthInputRef.layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
+    // Configuration de la subpass
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.inputAttachmentCount = 1;
-    subpass.pInputAttachments = &depthInputRef;
+    subpass.pDepthStencilAttachment = nullptr; // Pas de profondeur
 
+    // Dépendance avec la geometry pass (si nécessaire)
     VkSubpassDependency dependency{};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
     dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    std::vector<VkAttachmentDescription> attachments = {
-        colorAttachment,
-        depthInputAttachment
-    };
 
     VkRenderPassCreateInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-    renderPassInfo.pAttachments = attachments.data();
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachment;
     renderPassInfo.subpassCount = 1;
     renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = 1;
@@ -250,6 +231,8 @@ void VulkanRenderPassManager::Cleanup()
         vkDestroyRenderPass(device, geometryPass, nullptr);
         geometryPass = VK_NULL_HANDLE;
     }
+
+    
 }
 
 

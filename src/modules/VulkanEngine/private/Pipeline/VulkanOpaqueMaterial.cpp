@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include "VulkanRenderPassManager.h"
 
 std::vector<char> ReadFile(const std::string &filename)
 {
