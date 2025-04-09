@@ -163,12 +163,20 @@ void VulkanOpaqueMaterial::CreatePipelines(VkDevice device, VkRenderPass renderP
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_FALSE;
+    
+    VkPipelineColorBlendAttachmentState normalBlendAttachment{};
+    normalBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT;
+    normalBlendAttachment.blendEnable = VK_FALSE;
+
+    std::vector<VkPipelineColorBlendAttachmentState>blendAttachment{
+        colorBlendAttachment, normalBlendAttachment
+    };
 
     VkPipelineColorBlendStateCreateInfo colorBlending{};
     colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     colorBlending.logicOpEnable = VK_FALSE;
-    colorBlending.attachmentCount = 1;
-    colorBlending.pAttachments = &colorBlendAttachment;
+    colorBlending.attachmentCount = blendAttachment.size();
+    colorBlending.pAttachments = blendAttachment.data();
 
     // Configuration du depth/stencil state
     VkPipelineDepthStencilStateCreateInfo depthStencil{};

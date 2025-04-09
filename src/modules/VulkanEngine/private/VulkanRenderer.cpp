@@ -10,7 +10,7 @@
 #include "IVulkanMesh.h"
 #include "VulkanGlobalLightManager.h"
 #include "VulkanSpotlightLight.h"
-
+#include "VulkanRenderPassManager.h"
 
 VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
     : renderEngine(renderEngine)
@@ -69,15 +69,16 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     // Débute le render pass
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderEngine->GetDefaultRenderPass();
+    renderPassInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetGeometryPass();
     renderPassInfo.framebuffer = frameBuffer;
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = {swapchain->GetExtent().width, swapchain->GetExtent().height};
 
     // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
-    std::array<VkClearValue, 2> clearValues{};
+    std::array<VkClearValue, 3> clearValues{};
     clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f}; // Couleur de fond
     clearValues[1].depthStencil = {1.0f, 0}; // Valeur de profondeur initiale (1.0 = loin)
+    clearValues[2].color = {0.0f, 0.0f, 0.0f, 1.0f}; // Couleur de fond
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
@@ -160,19 +161,16 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
     presentInfo.swapchainCount = 1;
+    
     VkSwapchainKHR swapChains[] = {swapchain->GetSwapchain()};
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
     res = vkQueuePresentKHR(presentQueue, &presentInfo);
     if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) 
-    {
         swapchain->Recreate();
-    } 
     else if (res != VK_SUCCESS) 
-    {
         throw std::runtime_error("failed to present swap chain image!");
-    }
 
     return true;
 }
@@ -204,7 +202,7 @@ bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRender
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderEngine->GetShadowMapRenderPass(); // Utilisez le bon render pass
+    renderPassInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetShadowPass(); // Utilisez le bon render pass
     renderPassInfo.framebuffer = renderTarget->GetFramebuffer();
     renderPassInfo.renderArea.extent = {renderTarget->GetWidth(), renderTarget->GetHeight()};
     renderPassInfo.clearValueCount = 1;

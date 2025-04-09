@@ -32,12 +32,8 @@ public:
     VkDevice GetDevice() const { return deviceManager->GetDevice(); }
     VkPhysicalDevice GetPhysicalDevice() const { return deviceManager->GetPhysicalDevice(); }
 
-    VkFormat GetSwapChainImageFormat() const { return swapChainImageFormat;}
-    VkFormat GetDepthStencilImageFormat() const { return depthStencilImageFormat;}
     VkQueue GetPresentQueue() const { return surfaceTest->GetPresentQueue(); }
     VkQueue GetGraphicsQueue() const { return deviceManager->GetGraphicsQueue(); }
-    VkRenderPass GetDefaultRenderPass() const { return defaultRenderPass; }
-    VkRenderPass GetShadowMapRenderPass() const { return shadowMapRenderPass; }
     
     VulkanSurface* GetSurfaceTest() const { return surfaceTest; }
     VulkanDeviceManager* GetDeviceManager() const { return deviceManager; }
@@ -48,13 +44,6 @@ private:
     VkInstance instance{ VK_NULL_HANDLE };
     VulkanDeviceManager* deviceManager{ nullptr };
     VulkanSurface* surfaceTest{ nullptr };
-
-    // Rendering
-    VkFormat swapChainImageFormat;
-    VkFormat depthStencilImageFormat; 
-
-    VkRenderPass defaultRenderPass{VK_NULL_HANDLE};
-    VkRenderPass shadowMapRenderPass{VK_NULL_HANDLE};
     
     VulkanDescriptorPoolManager* descriptorPoolManager;
 
@@ -62,7 +51,6 @@ private:
 private:
     void createInstance();
     void createDescriptorPool();
-    void CreateRenderPass();
 public:
     void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
         VkBufferCreateInfo bufferCreateInfo = {};

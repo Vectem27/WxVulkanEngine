@@ -6,6 +6,7 @@
 #include "VulkanCamera.h"
 #include "VulkanRenderEngine.h"
 #include "VulkanRenderTarget.h"
+#include "VulkanRenderPassManager.h"
 
 const VulkanLightType VulkanSpotlightLight::lightType{"SPOTLIGHT"};
 
@@ -17,8 +18,11 @@ VulkanSpotlightLight::~VulkanSpotlightLight()
 
 void VulkanSpotlightLight::InitVulkanSpotlightLight(VulkanRenderEngine *renderEngine)
 {
-    renderTarget = new VulkanRenderTarget(renderEngine, 1024, 1024, renderEngine->GetDepthStencilImageFormat());
-    renderTarget->CreateFramebuffer(renderEngine->GetShadowMapRenderPass());
+    renderTarget = new VulkanRenderTarget(renderEngine, 1024, 1024, VulkanRenderPassManager::GetInstance()->GetShadowMapFormat());
+    renderTarget->CreateFramebuffer(
+        VulkanRenderPassManager::GetInstance()->GetShadowPass()
+    );
+
     camera = new VulkanCamera();
     camera->Init(renderEngine, renderTarget);
     camera->SetFarPlan(100.0f);

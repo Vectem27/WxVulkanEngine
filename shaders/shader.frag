@@ -30,6 +30,7 @@ layout(set = 2, binding = 1) uniform LightBuffer
 layout(location = 0) in PixelInfo data;
 
 layout(location = 0) out vec4 outColor;
+layout(location = 1) out vec4 outNormal;
 
 float calculateShadow(vec4 lightSpacePos, float diffuse, sampler2DShadow shadowMap) 
 {
@@ -50,7 +51,7 @@ void main()
 {
     float light = 0.0;
     int numSpotlightLights = lightData.num;
-    for (int i = 0; i < numSpotlightLights; i++)
+    for (int i = 0; i < 1; i++)
     {
         vec4 lightSpacePos = lightData.light[i].viewProj * vec4(data.worldPosition, 1.0f);
         float diffuse = max(dot(normalize(data.worldNormal), normalize(lightData.light[i].pos - data.worldPosition)), 0.0);
@@ -70,5 +71,5 @@ void main()
 
     vec3 lighting = min((0.2 + light), 1.0) * data.color;
     outColor = vec4(lighting, 1.0);
-
+    outNormal = vec4(data.worldNormal * 0.5 + 0.5, 1.0f);
 }

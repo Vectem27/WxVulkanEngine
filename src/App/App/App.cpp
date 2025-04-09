@@ -12,6 +12,8 @@
 #include "ProjectorLightComponent.h"
 #include "LightManagers/VulkanSpotlightLightManager.h"
 
+#include "VulkanRenderPassManager.h"
+
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
     lightManager(new VulkanGlobalLightManager()),
@@ -85,7 +87,9 @@ void wxVulkanApp::InitVulkan()
         if (!frame->renderSurface->IsVulkanInitialized())
             throw std::runtime_error("Render surface not initialized");
         swapchain = new VulkanSwapchain(vulkanRenderEngine, frame->renderSurface->GetVulkanSurface());
-        swapchain->Create(vulkanRenderEngine->GetDefaultRenderPass());
+        swapchain->Create(
+            VulkanRenderPassManager::GetInstance()->GetGeometryPass()
+        );
 
         renderer = new VulkanRenderer(vulkanRenderEngine);
 
@@ -104,9 +108,17 @@ void wxVulkanApp::InitVulkan()
         matInfo.fragmentShader = "shaders/shader.frag";
         matInfo.vertexShader = "shaders/shader.vert";
         matInfo.shadowMapVertexShader = "shaders/shadowMap.vert";
-        material->CreatePipelines(vulkanRenderEngine->GetDevice(), vulkanRenderEngine->GetDefaultRenderPass(), matInfo);
+        material->CreatePipelines(
+            vulkanRenderEngine->GetDevice(), 
+            VulkanRenderPassManager::GetInstance()->GetGeometryPass(), 
+            matInfo
+        );
 
-        material->CreateShadowMapPipeline(vulkanRenderEngine->GetDevice(), vulkanRenderEngine->GetShadowMapRenderPass(), matInfo);
+        material->CreateShadowMapPipeline(
+            vulkanRenderEngine->GetDevice(), 
+            VulkanRenderPassManager::GetInstance()->GetShadowPass(), 
+            matInfo
+        );
 
 
         cube->SetMaterial(material);
