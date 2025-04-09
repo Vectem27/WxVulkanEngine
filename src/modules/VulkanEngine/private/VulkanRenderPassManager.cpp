@@ -158,38 +158,43 @@ void VulkanRenderPassManager::InitLightingPass(VkDevice device)
         lightingPass = VK_NULL_HANDLE;
     }
 
-    // Attachement de couleur pour le résultat de l'éclairage
-    VkAttachmentDescription colorAttachment{};
+    // Attachement pour la sortie couleur (éclairage final)
+    VkAttachmentDescription colorAttachment = {};
     colorAttachment.format = GetHDRFormat();
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;  // On efface le framebuffer
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE; // On conserve le résultat
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Ou SHADER_READ_ONLY_OPTIMAL si besoin pour le post-processing
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;  // Ou SHADER_READ_ONLY si post-processing
 
-    VkAttachmentReference colorAttachmentRef{};
+    // Référence d'attachement pour la couleur
+    VkAttachmentReference colorAttachmentRef = {};
     colorAttachmentRef.attachment = 0;
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    // Configuration de la subpass
-    VkSubpassDescription subpass{};
+    // Subpass description
+    VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = nullptr; // Pas de profondeur
+    
+    // Pas besoin de depth/stencil car on utilise le G-Buffer existant
+    // et on fait du full-screen quad avec depth test désactivé
 
-    // Dépendance avec la geometry pass (si nécessaire)
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    // Dépendance avec la passe précédente (remplissage du G-Buffer)
+    VkSubpassDependency dependency = {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+    };
 
-    VkRenderPassCreateInfo renderPassInfo{};
+    // Création de la render pass
+    VkRenderPassCreateInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     renderPassInfo.attachmentCount = 1;
     renderPassInfo.pAttachments = &colorAttachment;
@@ -232,7 +237,7 @@ void VulkanRenderPassManager::Cleanup()
         geometryPass = VK_NULL_HANDLE;
     }
 
-    
+
 }
 
 

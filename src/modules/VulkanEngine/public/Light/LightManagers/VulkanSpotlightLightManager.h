@@ -15,7 +15,7 @@
 
 class VulkanRenderEngine;
 class VulkanSpotlightLight;
-
+class VulkanSpotlightLightPipeline;
 
 
 class VulkanSpotlightLightManager : public IVulkanLightManager
@@ -66,6 +66,8 @@ private:
     Array<const VulkanSpotlightLight*> lights;
 
     UniformBuffer lightDataBuffer;
+
+    
 };
 
 #endif // VULKANSPOTLIGHTLIGHTMANAGER_H

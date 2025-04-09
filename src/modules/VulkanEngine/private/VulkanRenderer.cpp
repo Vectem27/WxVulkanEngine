@@ -12,9 +12,15 @@
 #include "VulkanSpotlightLight.h"
 #include "VulkanRenderPassManager.h"
 
+//Temp
+#include "VulkanSpotlightLightPipeline.h"
+
 VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
     : renderEngine(renderEngine)
 {
+    spotlightLightPipeline = new VulkanSpotlightLightPipeline();
+    spotlightLightPipeline->InitPipeline(renderEngine->GetDevice(), renderEngine->GetPipelineManager(),
+        "shaders/lighting.vert", "shaders/lighting.frag");
 }
 
 bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *renderObject, VulkanCamera *camera, VulkanGlobalLightManager* lightManager, VkQueue graphicsQueue, VkQueue presentQueue)
@@ -84,12 +90,13 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
+    Array<IRenderable*> scene;
+
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     // Render
     camera->Render(renderObject, commandBuffer);
 
-    Array<IRenderable*> scene;
     if (renderObject)
         renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
 
@@ -130,7 +137,6 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
-
     
     /* LIGHTING PASS*/
 
@@ -144,21 +150,33 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
     std::array<VkClearValue, 1> ligtingClearValues{};
-    ligtingClearValues[0].color = {0.0f, 1.0f, 0.0f, 1.0f};
+    ligtingClearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
 
     lightingRenderPassInfo.clearValueCount = ligtingClearValues.size();
     lightingRenderPassInfo.pClearValues = ligtingClearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &lightingRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    // Render
-    //camera->Render(renderObject, commandBuffer);
-    //for (const auto& object : scene)
-    //{
-    //    mesh = reinterpret_cast<IVulkanMesh*>(object->GetRenderMesh());
-    //    if (mesh)
-    //        mesh->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_LIGHTING);
-    //}
+    camera->Render(renderObject, commandBuffer);
+
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapchain->GetExtent().width;
+    viewport.height = (float)swapchain->GetExtent().height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = swapchain->GetExtent();
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    spotlightLightPipeline->Bind(commandBuffer);
+
+    vkCmdDraw(commandBuffer, 4, 1, 0, 0);
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);

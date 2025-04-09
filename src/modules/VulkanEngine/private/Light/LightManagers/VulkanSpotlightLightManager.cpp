@@ -4,6 +4,7 @@
 
 #include "VulkanSpotlightLight.h"
 #include "VulkanRenderEngine.h"
+#include "VulkanSpotlightLightPipeline.h"
 
 void VulkanSpotlightLightManager::InitLightManager(VulkanRenderEngine *vulkanRenderEngine)
 {
@@ -20,6 +21,7 @@ void VulkanSpotlightLightManager::InitLightManager(VulkanRenderEngine *vulkanRen
         sizeof(LightData) * GetMaxNumOfLights() + 16
     );
 
+    
     isInitialized = true;
 }
 

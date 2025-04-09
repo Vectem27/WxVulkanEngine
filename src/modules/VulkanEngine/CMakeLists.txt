@@ -10,6 +10,7 @@ add_library(VulkanEngine STATIC
     private/VulkanDescriptorPoolManager.cpp
     private/VulkanRenderPassManager.cpp
     private/VulkanRenderImageManager.cpp
+    private/Pipeline/PipelineUtils.h
     private/Pipeline/VulkanPipelineManager.cpp
     private/Pipeline/VulkanOpaqueMaterial.cpp
 

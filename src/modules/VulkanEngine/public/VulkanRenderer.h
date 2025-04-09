@@ -26,6 +26,8 @@ public:
 
 protected:
     VulkanRenderEngine* renderEngine{nullptr};
+
+    class VulkanSpotlightLightPipeline* spotlightLightPipeline;
 };
 
 #endif // VULKANRENDERER_H

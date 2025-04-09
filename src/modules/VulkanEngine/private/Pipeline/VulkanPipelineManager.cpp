@@ -1,6 +1,7 @@
 #include "Pipeline/VulkanPipelineManager.h"
 #include <stdexcept>
 #include <vector>
+#include <array>
 
 VulkanPipelineManager::VulkanPipelineManager(VkDevice device)
 {
@@ -94,9 +95,59 @@ void VulkanPipelineManager::InitDescriptorSetLayouts(VkDevice device)
     layoutInfo.pBindings = shadowBindings.data();
     
     if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &shadowMapDescriptorLayout) != VK_SUCCESS)
-    {
         throw std::runtime_error("Failed to create shadow map descriptor set layout!");
-    }
+
+
+
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {};
+
+    // Position (World Space)
+    bindings[0].binding = 0;
+    bindings[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[0].descriptorCount = 1;
+    bindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    // Normals
+    bindings[1].binding = 1;
+    bindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[1].descriptorCount = 1;
+    bindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    // Albedo + Specular
+    bindings[2].binding = 2;
+    bindings[2].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    bindings[2].descriptorCount = 1;
+    bindings[2].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    layoutInfo = {};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = bindings.size();
+    layoutInfo.pBindings = bindings.data();
+
+    if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &gBufferDescriptorLayout) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create shadow map descriptor set layout!");
+
+
+    std::array<VkDescriptorSetLayoutBinding, 2> lightingBindings = {};
+    // Lights UBO
+    lightingBindings[0].binding = 0;
+    lightingBindings[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    lightingBindings[0].descriptorCount = 1;
+    lightingBindings[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    // Shadow Map (optionnel)
+    lightingBindings[1].binding = 1;
+    lightingBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    lightingBindings[1].descriptorCount = 1;
+    lightingBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    layoutInfo = {};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = static_cast<uint32_t>(lightingBindings.size());
+    layoutInfo.pBindings = lightingBindings.data();
+
+    if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &lightingDescriptorLayout) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create shadow map descriptor set layout!");
+
 }
 
 void VulkanPipelineManager::InitPipelineLayouts(VkDevice device)
@@ -122,18 +173,16 @@ void VulkanPipelineManager::InitPipelineLayouts(VkDevice device)
 
 void VulkanPipelineManager::InitLightingPipelineLayouts(VkDevice device)
 {
-    std::vector<VkDescriptorSetLayout> descSetLayouts 
-    {
-        cameraDescriptorLayout,   // Set 0: Camera VP
-        objectDescriptorLayout,   // Set 1: Object transforms
+    std::array<VkDescriptorSetLayout, 2> descriptorSetLayouts = {
+        gBufferDescriptorLayout,
+        lightingDescriptorLayout
     };
 
-    // Création du pipeline layout (aucun uniform ou push constant ici)
-    VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+    VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = descSetLayouts.size();
-    pipelineLayoutInfo.pSetLayouts = descSetLayouts.data(); // Ajouté
+    pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+    pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 
-    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
-        throw std::runtime_error("Failed to create pipeline layout !");
+    if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &lightingPipelineLayout) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create lighting pipeline layout !");
 }
