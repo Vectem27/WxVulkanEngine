@@ -16,6 +16,7 @@ add_library(VulkanEngine STATIC
     public/Light/VulkanLight.h
     private/Light/VulkanSpotlightLight.cpp
     private/Light/VulkanGlobalLightManager.cpp
+    private/Light/LightManagers/VulkanSpotlightLightManager.cpp
 )
 
 

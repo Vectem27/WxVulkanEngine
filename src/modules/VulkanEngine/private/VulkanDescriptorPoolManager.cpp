@@ -28,6 +28,9 @@ VkDescriptorPool VulkanDescriptorPoolManager::CreateNewDescriptorPool()
 
     std::vector<VkDescriptorPoolSize> poolSizes = {
         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10}, // 10 uniform buffers
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 10}, // 10 uniform buffers
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10}, // 10 uniform buffers
+        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 10}, // 10 uniform buffers
         {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 10},  // 10 sampled images
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10}  // 10 combined image samplers
     };

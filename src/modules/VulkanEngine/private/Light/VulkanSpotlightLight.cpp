@@ -7,6 +7,8 @@
 #include "VulkanRenderEngine.h"
 #include "VulkanRenderTarget.h"
 
+const VulkanLightType VulkanSpotlightLight::lightType{"SPOTLIGHT"};
+
 VulkanSpotlightLight::~VulkanSpotlightLight()
 {
     delete camera;

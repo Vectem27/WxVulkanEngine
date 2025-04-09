@@ -2,6 +2,7 @@
 #define VULKANPROJECTORLIGHT_H
 
 #include "EngineCore.hpp"
+#include "IVulkanLight.h"
 #include <vulkan/vulkan.h>
 
 class VulkanCamera;
@@ -26,11 +27,15 @@ struct ProjectorLightData
     Array<ShadowMapInfo> shadowMapsInfo;
 };
 
-class VulkanSpotlightLight
+class VulkanSpotlightLight : public IVulkanLight
 {
 public:
     ~VulkanSpotlightLight();
     void InitVulkanSpotlightLight(VulkanRenderEngine* renderEngine);
+
+public: // IVulkanLight Interface
+    virtual VulkanLightType GetLightType() const override { return lightType; }
+
 public:
     ProjectorLightData GetSpotlightLightData() const;
 
@@ -45,6 +50,8 @@ private:
 public:
     VulkanCamera* camera;
     VulkanRenderTarget* renderTarget;
+
+    static const VulkanLightType lightType;
 };
 
 #endif // VULKANPROJECTORLIGHT_H

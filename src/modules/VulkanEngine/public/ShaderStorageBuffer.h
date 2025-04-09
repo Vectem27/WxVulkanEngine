@@ -51,7 +51,8 @@ public:
     }
 
     VkBuffer GetBuffer() const { return buffer; }
-
+    VkDeviceSize GetBufferSize() const { return bufferSize; }
+    
 private:
     VkDevice device;
     VkBuffer buffer;
@@ -71,7 +72,7 @@ private:
             }
         }
 
-        throw std::runtime_error("Échec de la recherche du type de mémoire.");
+        throw std::runtime_error("Failed to find storage buffer memory type");
     }
 };
 

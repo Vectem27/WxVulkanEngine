@@ -3,19 +3,25 @@
 
 #include <string>
 
-struct LightType
+struct VulkanLightType
 {
     std::string type;
 
-    bool operator==(const LightType& other) const
+    bool operator==(const VulkanLightType& other) const
     {
         return type == other.type;
+    }
+
+    bool operator!=(const VulkanLightType& other) const
+    {
+        return type != other.type;
     }
 };
 
 class IVulkanLight
 {
-    virtual LightType GetLightType() const = 0;
+public:
+    virtual VulkanLightType GetLightType() const = 0;
 };
 
 #endif // IVULKANLIGHT_H

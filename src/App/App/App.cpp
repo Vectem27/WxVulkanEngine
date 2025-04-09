@@ -10,6 +10,7 @@
 #include "CameraComponent.h"
 #include "VulkanGlobalLightManager.h"
 #include "ProjectorLightComponent.h"
+#include "LightManagers/VulkanSpotlightLightManager.h"
 
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
@@ -74,8 +75,12 @@ void wxVulkanApp::InitVulkan()
         vulkanRenderEngine->Init(nullptr);
         
         frame->renderSurface->InitVulkanSurface(vulkanRenderEngine);
-        lightManager->InitVulkanLightManager(vulkanRenderEngine);
-
+        
+        lightManager->InitLightManager(vulkanRenderEngine);
+        auto manager = new VulkanSpotlightLightManager(10);
+        manager->InitLightManager(vulkanRenderEngine);
+        if (!lightManager->AddLightManager(VulkanSpotlightLight::lightType, manager))
+            throw std::runtime_error("Failed to add spotlight light manager");
 
         if (!frame->renderSurface->IsVulkanInitialized())
             throw std::runtime_error("Render surface not initialized");

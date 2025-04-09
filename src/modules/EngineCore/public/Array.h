@@ -63,6 +63,9 @@ public:
     iterator begin() { return iterator(data); }
     iterator end() { return iterator(data + size); }
 
+    iterator begin() const { return iterator(data); }
+    iterator end() const { return iterator(data + size); }
+
     inline T& operator[](unsigned long index)
     {
         if (index < GetSize())

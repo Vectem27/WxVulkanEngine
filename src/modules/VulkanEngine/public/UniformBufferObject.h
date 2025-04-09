@@ -51,6 +51,7 @@ public:
     }
 
     VkBuffer GetBuffer() const { return buffer; }
+    VkDeviceSize GetBufferSize() const { return bufferSize; }
 
 private:
     VkDevice device;
