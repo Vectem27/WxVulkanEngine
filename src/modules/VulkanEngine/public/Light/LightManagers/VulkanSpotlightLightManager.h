@@ -10,44 +10,31 @@
 #include "ShaderStorageBuffer.h"
 #include "UniformBufferObject.h"
 
-struct VertexShaderLightData
-{
-    alignas(16) Matrix4f viewProj;
-};
 
-struct FragmentShaderLightData
-{
-    alignas(16) Vector3f pos;
-    alignas(16) Vector3f direction;
-    alignas(4) float length;
-    alignas(4) float angle;
-};
 
-struct BufferData
-{
-    alignas(4) unsigned int numLights;
-    void* data;
-};
-
-struct LightsBuffer
-{
-    UniformBuffer vert;
-    UniformBuffer frag;
-};
 
 class VulkanRenderEngine;
 class VulkanSpotlightLight;
 
+
+
 class VulkanSpotlightLightManager : public IVulkanLightManager
 {
+    struct alignas(16) LightData
+    {
+        alignas(16) Matrix4f viewProj;
+        alignas(16) Vector3f pos;
+        alignas(16) Vector3f direction;
+        alignas(4) float length;
+        alignas(4) float angle;
+    };
 public:
     VulkanSpotlightLightManager(unsigned short maxNumOfLights) 
         : maxNumOfLights(maxNumOfLights) {}
 
     ~VulkanSpotlightLightManager()
     {
-        lightsBuffer.frag.Cleanup();
-        lightsBuffer.vert.Cleanup();
+        lightDataBuffer.Cleanup();
     }
 
 public: // IVulkanLightManager Interface
@@ -78,7 +65,7 @@ private:
 
     Array<const VulkanSpotlightLight*> lights;
 
-    LightsBuffer lightsBuffer;
+    UniformBuffer lightDataBuffer;
 };
 
 #endif // VULKANSPOTLIGHTLIGHTMANAGER_H

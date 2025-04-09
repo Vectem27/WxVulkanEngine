@@ -75,24 +75,16 @@ void VulkanPipelineManager::InitDescriptorSetLayouts(VkDevice device)
     shadowMapBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT; // Utilisé dans le fragment shader
     shadowMapBinding.pImmutableSamplers = nullptr;
 
-    // Binding pour la matrice lumière (Set 2, Binding 1)
-    VkDescriptorSetLayoutBinding lightVertexBufferBinding{};
-    lightVertexBufferBinding.binding = 1;
-    lightVertexBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    lightVertexBufferBinding.descriptorCount = 1;
-    lightVertexBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; // Utilisé dans le vertex shader
-    lightVertexBufferBinding.pImmutableSamplers = nullptr;
-
     // Binding pour la matrice lumière (Set 2, Binding 2)
     VkDescriptorSetLayoutBinding lightFrangmentBufferBinding{};
-    lightFrangmentBufferBinding.binding = 2;
+    lightFrangmentBufferBinding.binding = 1;
     lightFrangmentBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     lightFrangmentBufferBinding.descriptorCount = 1;
     lightFrangmentBufferBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT; // Utilisé dans le fragment shader
     lightFrangmentBufferBinding.pImmutableSamplers = nullptr;
 
     std::vector<VkDescriptorSetLayoutBinding> shadowBindings = {
-        shadowMapBinding, lightVertexBufferBinding, lightFrangmentBufferBinding
+        shadowMapBinding, lightFrangmentBufferBinding
     };
 
     layoutInfo = {};

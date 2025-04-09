@@ -8,6 +8,7 @@ add_library(VulkanEngine STATIC
     private/VulkanDeviceManager.cpp 
     private/VulkanSurface.cpp
     private/VulkanDescriptorPoolManager.cpp
+    private/VulkanRenderPassManager.cpp
     private/Pipeline/VulkanPipelineManager.cpp
     private/Pipeline/VulkanOpaqueMaterial.cpp
     

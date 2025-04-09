@@ -44,6 +44,14 @@ public:
         vkUnmapMemory(device, bufferMemory);
     }
 
+    void Update(void* data, VkDeviceSize offset, size_t size)
+    {
+        void* mappedData;
+        vkMapMemory(device, bufferMemory, offset, size, 0, &mappedData);
+        memcpy(mappedData, data, size);
+        vkUnmapMemory(device, bufferMemory);
+    }
+
     void Cleanup()
     {
         vkDestroyBuffer(device, buffer, nullptr);

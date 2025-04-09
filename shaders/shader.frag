@@ -2,15 +2,11 @@
 
 struct BaseLightData
 {
+    mat4 viewProj;
     vec3 pos;
     vec3 dir;
     float len;
     float angle;
-};
-
-struct InLightData
-{
-    vec4 lightSpacePos;
 };
 
 struct PixelInfo
@@ -22,20 +18,20 @@ struct PixelInfo
     vec3 worldNormal;
 };
 
-layout(set = 2, binding = 0) uniform sampler2DShadow shadowMap;
+layout(set = 2, binding = 0) uniform sampler2DShadow shadowMaps[16];
 
-layout(set = 2, binding = 2) uniform LightBuffer
+layout(set = 2, binding = 1) uniform LightBuffer
 {
-    BaseLightData light;
+    int num;
+    BaseLightData light[16];
 } lightData;
 
 
 layout(location = 0) in PixelInfo data;
-layout(location = 10) in InLightData inLightPixelData;
 
 layout(location = 0) out vec4 outColor;
 
-float calculateShadow(vec4 lightSpacePos, float diffuse) 
+float calculateShadow(vec4 lightSpacePos, float diffuse, sampler2DShadow shadowMap) 
 {
     vec3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
     projCoords.xy = projCoords.xy * 0.5 + 0.5;
@@ -52,17 +48,27 @@ float calculateShadow(vec4 lightSpacePos, float diffuse)
 
 void main() 
 {
-    float diffuse = max(dot(normalize(data.worldNormal), normalize(lightData.light.pos - data.worldPosition)), 0.0);
-    float light = calculateShadow(inLightPixelData.lightSpacePos, diffuse);
+    float light = 0.0;
+    int numSpotlightLights = lightData.num;
+    for (int i = 0; i < numSpotlightLights; i++)
+    {
+        vec4 lightSpacePos = lightData.light[i].viewProj * vec4(data.worldPosition, 1.0f);
+        float diffuse = max(dot(normalize(data.worldNormal), normalize(lightData.light[i].pos - data.worldPosition)), 0.0);
+        float currentLight = calculateShadow(lightSpacePos, diffuse, shadowMaps[i]);
 
-    if (distance(vec3(inLightPixelData.lightSpacePos), lightData.light.pos) > lightData.light.len) 
-        light = 0.0f;
+        if (distance(data.worldPosition, lightData.light[i].pos) > lightData.light[i].len) 
+            currentLight = 0.0f;
 
-    float angle = acos(dot(normalize(-lightData.light.dir), normalize(lightData.light.pos - data.worldPosition)));
-    if ( angle > lightData.light.angle / 2)
-        light = 0.0f;
+        float angle = acos(dot(normalize(-lightData.light[i].dir), normalize(lightData.light[i].pos - data.worldPosition)));
+        if (angle > lightData.light[i].angle / 2)
+            currentLight = 0.0f;
 
-    vec3 lighting = min((0.2 + light), 1) * data.color;
+        light += currentLight;
+    }
+
+
+
+    vec3 lighting = min((0.2 + light), 1.0) * data.color;
     outColor = vec4(lighting, 1.0);
 
 }
