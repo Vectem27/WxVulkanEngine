@@ -6,12 +6,13 @@
 #include <vector>
 #include <stdexcept>
 
-enum class BufferType
+enum BufferType
 {
     BASECOLOR,
     DEPTHSTENCIL,
     NORMAL,
-    LIGHTING
+    LIGHTING,
+    POSITION,
 };
 
 struct ImageData
@@ -76,6 +77,7 @@ class VulkanSwapchain : public IRenderTarget
         for (auto& data : imagesData)
             if (data.type == type)  
                 return data;
+        printf("%u : ", type);
         throw std::runtime_error("Unknown swapchain image type");
     }
 

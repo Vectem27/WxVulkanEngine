@@ -25,8 +25,15 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT
     });
+
     imagesData.push_back({
         BufferType::LIGHTING, VulkanRenderPassManager::GetInstance()->GetHDRFormat(),
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT
+    });
+
+    imagesData.push_back({
+        BufferType::POSITION, VulkanRenderPassManager::GetInstance()->GetHDRFormat(),
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT
     });
@@ -168,13 +175,14 @@ void VulkanSwapchain::CreateFramebuffer()
         {
             GetImagesData(BufferType::BASECOLOR).imageViews[i], 
             GetImagesData(BufferType::DEPTHSTENCIL).imageViews[i],
-            GetImagesData(BufferType::NORMAL).imageViews[i]
+            GetImagesData(BufferType::NORMAL).imageViews[i],
+            GetImagesData(BufferType::POSITION).imageViews[i]
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        framebufferInfo.attachmentCount = attachments.size();
         framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = GetExtent().width;
         framebufferInfo.height = GetExtent().height;

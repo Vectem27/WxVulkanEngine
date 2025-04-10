@@ -27,10 +27,6 @@ void VulkanRenderPassManager::InitGeometryPass(VkDevice device)
     colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
     // Attachement de profondeur
     VkAttachmentDescription depthAttachment{};
     depthAttachment.format = GetDepthStencilFormat();
@@ -56,22 +52,27 @@ void VulkanRenderPassManager::InitGeometryPass(VkDevice device)
     normalAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     normalAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    VkAttachmentReference normalAttachmentRef{};
-    normalAttachmentRef.attachment = 2;
-    normalAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+    VkAttachmentDescription posAttachment{};
+    posAttachment.format = GetHDRFormat();
+    posAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    posAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    posAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    posAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    posAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    posAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    posAttachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     /* BIND ATTACHEMENT AND SUBPASS*/
-
-    std::vector<VkAttachmentReference> colorAttachments  = {
-        colorAttachmentRef, 
-        normalAttachmentRef
+    std::vector<VkAttachmentReference> colorReferences = {
+        { 0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, // Albedo
+        { 2, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }, // Normales
+        { 3, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL }  // Positions
     };
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = static_cast<uint32_t>(colorAttachments.size());
-    subpass.pColorAttachments = colorAttachments.data();
+    subpass.colorAttachmentCount = colorReferences.size();
+    subpass.pColorAttachments = colorReferences.data();
     subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
     VkSubpassDependency dependency{};
@@ -85,7 +86,8 @@ void VulkanRenderPassManager::InitGeometryPass(VkDevice device)
     std::vector<VkAttachmentDescription> attachments = {
         colorAttachment, 
         depthAttachment, 
-        normalAttachment
+        normalAttachment,
+        posAttachment
     };
 
     VkRenderPassCreateInfo renderPassInfo{};

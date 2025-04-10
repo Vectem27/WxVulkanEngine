@@ -31,6 +31,7 @@ layout(location = 0) in PixelInfo data;
 
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outPos;
 
 float calculateShadow(vec4 lightSpacePos, float diffuse, sampler2DShadow shadowMap) 
 {
@@ -72,4 +73,5 @@ void main()
     vec3 lighting = min((0.2 + light), 1.0) * data.color;
     outColor = vec4(lighting, 1.0);
     outNormal = vec4(data.worldNormal * 0.5 + 0.5, 1.0f);
+    outPos = vec4(data.worldPosition, 1.0f);
 }

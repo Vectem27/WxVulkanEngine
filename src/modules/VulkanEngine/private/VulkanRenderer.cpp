@@ -82,10 +82,11 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     renderPassInfo.renderArea.extent = {swapchain->GetExtent().width, swapchain->GetExtent().height};
 
     // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
-    std::array<VkClearValue, 3> clearValues{};
-    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f}; // Couleur de fond
-    clearValues[1].depthStencil = {1.0f, 0}; // Valeur de profondeur initiale (1.0 = loin)
-    clearValues[2].color = {0.0f, 0.0f, 0.0f, 1.0f}; // Couleur de fond
+    std::array<VkClearValue, 4> clearValues{};
+    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};  // Base color
+    clearValues[1].depthStencil = {1.0f, 0}; // Depth stencil (1.0 = far)
+    clearValues[2].color = {0.0f, 0.0f, 0.0f, 1.0f};  // world normal
+    clearValues[3].color = {0.0f, 0.0f, 0.0f, 1.0f};  // world position
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
