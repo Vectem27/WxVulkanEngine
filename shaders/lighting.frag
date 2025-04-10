@@ -10,22 +10,21 @@ struct BaseLightData
     vec3 color;
     float intensity;
     float penumbraAngle; // Angle de transition douce
+    uint shadowMapIndex;
 };
 
 // G-Buffer inputs
 layout(set = 0, binding = 0) uniform sampler2D gPosition;
 layout(set = 0, binding = 1) uniform sampler2D gNormal;
-layout(set = 0, binding = 2) uniform sampler2D gBaseColor;
 
 // Lighting data
 layout(set = 1, binding = 0) uniform LightUBO 
 {
-    int num;
-    BaseLightData lights[16];
+    BaseLightData light;
 } lightBuffer;
 
 // Shadow map
-layout(set = 1, binding = 1) uniform sampler2DShadow shadowMap;
+layout(set = 1, binding = 1) uniform sampler2DShadow shadowMap[16];
 
 layout(location = 0) in vec2 inUV;
 layout(location = 0) out vec4 outColor;
@@ -45,7 +44,10 @@ float calculateSpotEffect(vec3 lightDir, vec3 lightToFrag, float spotAngle, floa
 }
 
 float calculateShadow(vec4 lightSpacePos, float NoL, sampler2DShadow shadowMap) 
-{
+{   
+    if (NoL <= 0.0001)
+        return 0.0f;
+
     // Perspective divide
     vec3 projCoords = lightSpacePos.xyz / lightSpacePos.w;
     
@@ -57,7 +59,7 @@ float calculateShadow(vec4 lightSpacePos, float NoL, sampler2DShadow shadowMap)
         return 0.0;
 
     // Calculate bias (based on surface slope)
-    float bias = max(0.0005 * (0.5 - NoL), 0.0001);
+    float bias = max(0.00025 * (1.0 - NoL), 0.00001);
     
     // Sample shadow map with PCF
     float shadow = 0.0;
@@ -80,16 +82,15 @@ void main()
     // Sample G-Buffer
     vec3 worldPosition = texture(gPosition, inUV).rgb;
     vec3 worldNormal = normalize(texture(gNormal, inUV).rgb);
-    vec3 baseColor = texture(gBaseColor, inUV).rgb;
     
     // Get first light
-    BaseLightData light = lightBuffer.lights[0];
+    BaseLightData light = lightBuffer.light;
     
     // Light vector
     vec3 L = light.pos - worldPosition;
     float dist = length(L);
     L = normalize(L);
-    
+
     // Diffuse lighting
     float NoL = max(dot(worldNormal, L), 0.0);
     
@@ -109,15 +110,15 @@ void main()
             
             // Calculate shadow
             vec4 lightSpacePos = light.viewProj * vec4(worldPosition, 1.0);
-            float shadow = calculateShadow(lightSpacePos, NoL, shadowMap);
+            float shadow = calculateShadow(lightSpacePos, NoL, shadowMap[light.shadowMapIndex]);
             
             // Combine all factors
-            lighting = baseColor * light.color * NoL * shadow * light.intensity * spotEffect;
+            lighting = light.color * NoL * shadow * light.intensity * spotEffect;
         }
     }
     
     // Ambient term
-    vec3 ambient = vec3(0.1) * baseColor;
+    vec3 ambient = vec3(0.1);
     
     // Final color
     vec3 color = ambient + lighting;

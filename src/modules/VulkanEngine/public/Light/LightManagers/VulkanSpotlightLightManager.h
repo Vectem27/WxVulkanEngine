@@ -20,16 +20,17 @@ class VulkanSpotlightLightPipeline;
 
 class VulkanSpotlightLightManager : public IVulkanLightManager
 {
-    struct alignas(16) LightData
+    struct alignas(256) LightData
     {
         alignas(16) Matrix4f viewProj;
         alignas(16) Vector3f pos;
         alignas(16) Vector3f direction;
-        alignas(4)   float length;
-        alignas(4)   float angle;
+        alignas(4)  float length;
+        alignas(4)  float angle;
         alignas(16) Vector3f color;
         alignas(4)  float intensity;
-        alignas(4)  float penumbraAngle; // Angle de transition douce
+        alignas(4)  float softAngle; // Angle de transition douce
+        alignas(4)  unsigned int shadowMapIndex;
     };
 public:
     VulkanSpotlightLightManager(unsigned short maxNumOfLights) 

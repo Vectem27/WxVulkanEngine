@@ -40,6 +40,4 @@ void main()
 
     mat3 normalMatrix = transpose(inverse(mat3(object.model)));  // Inverse transposée de la matrice modèle
     fragInfo.worldNormal = normalize(normalMatrix * inNormal);    // Transformation de la normale en espace monde
-
-    //fragInfo.color = normalize(outLightData.dir) * 0.5f + 0.5f;
 }

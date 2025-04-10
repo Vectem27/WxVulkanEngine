@@ -15,10 +15,10 @@ add_library(VulkanEngine STATIC
     private/Pipeline/VulkanOpaqueMaterial.cpp
 
     private/Pipeline/VulkanSpotlightLightPipeline.cpp
+    private/Pipeline/VulkanPostprocessPipeline.cpp
     
     public/IVulkanMesh.h
     #public/IVulkanMaterial.h
-    public/Light/VulkanLight.h
     private/Light/VulkanSpotlightLight.cpp
     private/Light/VulkanGlobalLightManager.cpp
     private/Light/LightManagers/VulkanSpotlightLightManager.cpp

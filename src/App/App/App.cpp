@@ -33,18 +33,18 @@ bool wxVulkanApp::OnInit()
     InitVulkan();
 
     frame->SetSliderChangeCallback([this](int yaw){
-        if (camera)
+        if (cameraActor)
         {
-            auto rot = camera->GetRelativeTransform().rotation.ToEulerDegrees();
-            camera->SetRelativeRotation(Rotator::FromEulerDegrees(rot.x, rot.y, static_cast<float>(yaw)));
+            auto rot = cameraActor->GetRelativeTransform().rotation.ToEulerDegrees();
+            cameraActor->SetRelativeRotation(Rotator::FromEulerDegrees(rot.x, rot.y, static_cast<float>(yaw)));
         }
     });
 
     frame->SetSlider2ChangeCallback([this](int pitch){
-        if (camera)
+        if (cameraActor)
         {
-            auto rot = camera->GetRelativeTransform().rotation.ToEulerDegrees();
-            camera->SetRelativeRotation(Rotator::FromEulerDegrees(static_cast<float>(pitch), rot.y, rot.z));
+            auto rot = cameraActor->GetRelativeTransform().rotation.ToEulerDegrees();
+            cameraActor->SetRelativeRotation(Rotator::FromEulerDegrees(static_cast<float>(pitch), rot.y, rot.z));
         }
     });
 
@@ -94,6 +94,8 @@ void wxVulkanApp::InitVulkan()
         renderer = new VulkanRenderer(vulkanRenderEngine);
 
         projLight->InitVulkanSpotlightLight(vulkanRenderEngine);
+        auto projLight2 = new ProjectorLightComponent();
+        projLight2->InitVulkanSpotlightLight(vulkanRenderEngine);
         camera->VulkanCamera::Init(vulkanRenderEngine, swapchain);
 
         cube = new Cube();
@@ -137,13 +139,18 @@ void wxVulkanApp::InitVulkan()
         cubeActor->AddChild(cube);
         cubeActor->AddChild(tinyCube);
         world->SpawnActor<Actor>()->AddChild(floor);
-        world->SpawnActor<Actor>()->AddChild(camera);
+        cameraActor = world->SpawnActor<Actor>();
+        cameraActor->AddChild(camera);
         Actor* li = world->SpawnActor<Actor>();
+        Actor* li2 = world->SpawnActor<Actor>();
         li->AddChild(projLight);
-
+        projLight->SetLightSoftAngle(ToRadians(5.0f));
+        li2->AddChild(projLight2);
+        projLight2->SetLightColor({0.2f, 0.8f, 0.5f});
 
         camera->SetRelativeTransform(Transform({-5,-2,2}, Rotator::FromEulerDegrees(-10,0,45), {1,1,1}));
         li->SetRelativeTransform(Transform({-6,6,4}, Rotator::FromEulerDegrees(-30,0,-45), {1,1,1}));
+        li2->SetRelativeTransform(Transform({-3,3,8}, Rotator::FromEulerDegrees(-80,0,45), {1,1,1}));
     }
     catch(const std::exception& e)
     {

@@ -1,6 +1,7 @@
 #include "LightManagers/VulkanSpotlightLightManager.h"
 
 #include <vector>
+#include <array>
 
 #include "VulkanSpotlightLight.h"
 #include "VulkanRenderEngine.h"
@@ -18,7 +19,7 @@ void VulkanSpotlightLightManager::InitLightManager(VulkanRenderEngine *vulkanRen
     lightDataBuffer.Create(
         vulkanRenderEngine->GetDevice(),
         vulkanRenderEngine->GetPhysicalDevice(),
-        sizeof(LightData) * GetMaxNumOfLights() + 16
+        sizeof(LightData) * GetMaxNumOfLights()
     );
 
     
@@ -41,78 +42,74 @@ void VulkanSpotlightLightManager::Update()
     if (!IsInitialized())
         throw std::runtime_error("Vulkan spotlight light manager is not initialized");
 
-    Array<LightData> fragLights;
+    int num = 0; //fragLights.GetSize();
     for(const auto& light : lights)
     {
         if(!light) continue;
 
         LightData fdata;
-        fdata.viewProj = light->GetSpotlightLightData().viewProj;
-        fdata.pos = light->GetSpotlightLightData().position;
-        fdata.direction = light->GetSpotlightLightData().direction;
-        fdata.length = light->GetSpotlightLightData().length;
-        fdata.angle = light->GetSpotlightLightData().angle;
-        fdata.color = {1.0f, 1.0f, 1.0f};
-        fdata.intensity = 2.0f;
-        fdata.penumbraAngle = ToRadians(5.0f);
-        fragLights.Add(fdata);
+        fdata.viewProj = light->GetLightViewProj();
+        fdata.pos = light->GetLightPosition();
+        fdata.direction = light->GetLightDirection();
+        fdata.length = light->GetLightLength();
+        fdata.angle = light->GetLightAngle();
+        fdata.color = light->GetLightColor();
+        fdata.intensity = light->GetLightIntensity();
+        fdata.softAngle = light->GetLightSoftAngle();
+        fdata.shadowMapIndex = num;
+
+        lightDataBuffer.Update(&fdata, sizeof(LightData) * num, sizeof(LightData));
+        ++num;
     }
 
     std::vector<VkWriteDescriptorSet> descriptorWrites;
-
-    
-    /* FRAGMENT */
-    int num = 1; //fragLights.GetSize();
-    lightDataBuffer.Update(&num, 0, 4);
-    lightDataBuffer.Update(fragLights.GetData(), 16, fragLights.GetSize() * sizeof(LightData));
-
     VkDescriptorBufferInfo bufferInfo = {};
     bufferInfo.buffer = lightDataBuffer.GetBuffer();
     bufferInfo.offset = 0;
     bufferInfo.range = lightDataBuffer.GetBufferSize();
 
-    VkWriteDescriptorSet writeDescriptorSet = {};
-    writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    writeDescriptorSet.dstSet = descriptorSet;
-    writeDescriptorSet.dstBinding = 0;  // Binding des lumières
-    writeDescriptorSet.dstArrayElement = 0;
-    writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    writeDescriptorSet.pBufferInfo = &bufferInfo;
-    writeDescriptorSet.descriptorCount = 1;
+    descriptorWrites.push_back((VkWriteDescriptorSet){
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = 0,  
+        .dstArrayElement = 0,
+        .descriptorCount = 1,
+        .descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+        .pBufferInfo = &bufferInfo,
+    });
 
-    descriptorWrites.push_back(writeDescriptorSet);
     /* SHADOW MAPS */
+    std::vector<VkDescriptorImageInfo> imageInfo;
+    for (size_t i = 0; i < lights.GetSize(); i++)
+    {
+        imageInfo.push_back({
+            .sampler = GetRenderEngine()->GetPipelineManager()->GetShadowMapSampler(),
+            .imageView = lights[i]->GetSpotlightLightData().shadowMapView,
+            .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
+        });
+    }
 
-    if (lights.GetSize() <= 0)
-        throw std::runtime_error("Projector lights empty");
-
-    if (lights[0]->GetSpotlightLightData().shadowMapsInfo.GetSize() <= 0)
-        throw std::runtime_error("Projector lights empty shadow maps info");
-
-    VkDescriptorImageInfo imageInfo{};
-    imageInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-    imageInfo.imageView = lights[0]->GetSpotlightLightData().shadowMapsInfo[0].imageView;
-    imageInfo.sampler = lights[0]->GetSpotlightLightData().shadowMapsInfo[0].sampler;
-    
-    VkWriteDescriptorSet desc{};
-    desc.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    desc.dstSet = descriptorSet;
-    desc.dstBinding = 1;
-    desc.dstArrayElement = 0;
-    desc.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    desc.descriptorCount = 1;
-    desc.pImageInfo = &imageInfo;
-
-    descriptorWrites.push_back(desc);
-
+    descriptorWrites.push_back((VkWriteDescriptorSet){
+        .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+        .dstSet = descriptorSet,
+        .dstBinding = 1,
+        .dstArrayElement = 0,
+        .descriptorCount = static_cast<uint32_t>(imageInfo.size()),
+        .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+        .pImageInfo = imageInfo.data(),
+    });
 
     vkUpdateDescriptorSets(GetRenderEngine()->GetDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
-
 }
 
 void VulkanSpotlightLightManager::Bind(VkCommandBuffer commandBuffer) const
 {
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetRenderEngine()->GetPipelineManager()->GetLightingPipelineLayout(), 1, 1, &descriptorSet, 0, nullptr);
+    for (size_t i = 0; i < GetLightCount(); i++)
+    {
+        uint32_t offset = i * sizeof(LightData);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetRenderEngine()->GetPipelineManager()->GetLightingPipelineLayout(), 1, 1, &descriptorSet, 1, &offset);
+        vkCmdDraw(commandBuffer, 4, 1, 0, 0);
+    }
 }
 
 void VulkanSpotlightLightManager::CreateDescriptorPool() 

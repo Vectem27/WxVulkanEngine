@@ -30,17 +30,16 @@ public:
     VkRenderPass GetGeometryPass() const { return geometryPass; }
     VkRenderPass GetShadowPass() const { return shadowPass; }
     VkRenderPass GetLightingPass() const { return lightingPass; }
+    VkRenderPass GetPostprocessPass() const { return postprocessPass; }
 
     void InitRenderPasses(VkDevice device, PassesInfo infos);
     void Cleanup();
-
-    void CreateDepthStencilImage(VkImage &depthImage, VkDeviceMemory& depthImageMemory) const;
-    void CreateDepthStencilImageView(VkImageView &depthImageView, VkImage &depthImage) const;
 
 private:
     void InitGeometryPass(VkDevice device);
     void InitShadowPass(VkDevice device);
     void InitLightingPass(VkDevice device);
+    void InitPostprocessPass(VkDevice device);
 
     static bool FormatContainStencil(VkFormat format);
 private:
@@ -49,6 +48,7 @@ private:
     VkRenderPass geometryPass{VK_NULL_HANDLE};
     VkRenderPass shadowPass{VK_NULL_HANDLE};
     VkRenderPass lightingPass{VK_NULL_HANDLE};
+    VkRenderPass postprocessPass{VK_NULL_HANDLE};
 
     PassesInfo passesInfo;
     

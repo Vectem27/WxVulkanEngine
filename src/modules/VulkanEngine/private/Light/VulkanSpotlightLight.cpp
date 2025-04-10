@@ -25,10 +25,9 @@ void VulkanSpotlightLight::InitVulkanSpotlightLight(VulkanRenderEngine *renderEn
 
     camera = new VulkanCamera();
     camera->Init(renderEngine, renderTarget);
-    camera->SetFarPlan(100.0f);
     camera->SetNearPlan(0.1f);
-    camera->SetFOV(35.0f);
-    SetShadowMap(renderTarget->GetImageView(), renderEngine->GetPipelineManager()->GetShadowMapSampler());
+    UpdateCameraProperties();
+    SetShadowMap(renderTarget->GetImageView());
 }
 
 ProjectorLightData VulkanSpotlightLight::GetSpotlightLightData() const
@@ -45,6 +44,10 @@ void VulkanSpotlightLight::SetTransform(Transform transform)
     data.viewProj = camera->GetViewData().view * camera->GetViewData().proj;
     data.position = transform.position;
     data.direction = transform.rotation.Rotate({1.0f, 0.0f, 0.0f});
-    data.length = 100;
-    data.angle = ToRadians(30.0f);
+}
+
+void VulkanSpotlightLight::UpdateCameraProperties()
+{
+    camera->SetFOV(ToDegree(data.angle + data.softAngle));
+    camera->SetFarPlan(data.length);
 }

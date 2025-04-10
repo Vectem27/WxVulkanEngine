@@ -209,6 +209,63 @@ void VulkanRenderPassManager::InitLightingPass(VkDevice device)
         throw std::runtime_error("Failed to create lighting pass!");
 }
 
+void VulkanRenderPassManager::InitPostprocessPass(VkDevice device)
+{
+    if (GetPostprocessPass() != VK_NULL_HANDLE) 
+    {
+        vkDestroyRenderPass(device, postprocessPass, nullptr);
+        postprocessPass = VK_NULL_HANDLE;
+    }
+
+    // Attachement pour la sortie couleur (éclairage final)
+    VkAttachmentDescription colorAttachment = {};
+    colorAttachment.format = GetColorFormat();
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;  // On efface le framebuffer
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;  // Ou SHADER_READ_ONLY si post-processing
+
+    // Référence d'attachement pour la couleur
+    VkAttachmentReference colorAttachmentRef = {};
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // Subpass description
+    VkSubpassDescription subpass = {};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentRef;
+    
+    // Pas besoin de depth/stencil car on utilise le G-Buffer existant
+    // et on fait du full-screen quad avec depth test désactivé
+
+    // Dépendance avec la passe précédente (remplissage du G-Buffer)
+    VkSubpassDependency dependency = {
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT
+    };
+
+    // Création de la render pass
+    VkRenderPassCreateInfo renderPassInfo = {};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachment;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
+
+    if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &postprocessPass) != VK_SUCCESS)
+        throw std::runtime_error("Failed to create lighting pass!");
+}
+
 bool VulkanRenderPassManager::FormatContainStencil(VkFormat format)
 {
     const std::vector<VkFormat> stencilFormats = 
@@ -254,4 +311,5 @@ void VulkanRenderPassManager::InitRenderPasses(VkDevice device, PassesInfo infos
     InitGeometryPass(device);
     InitShadowPass(device);
     InitLightingPass(device);
+    InitPostprocessPass(device);
 }

@@ -1,4 +1,4 @@
-#include "VulkanSpotlightLightPipeline.h"
+#include "VulkanPostprocessPipeline.h"
 
 
 #include "PipelineUtils.h"
@@ -10,7 +10,7 @@
 
 #include <array>
 
-void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineManager* pipelineManager, 
+void VulkanPostprocessPipeline::InitPipeline(VkDevice device, VulkanPipelineManager* pipelineManager, 
     std::string vertexShaderFile, std::string fragmentShaderFile)
 {
     // 1. Chargement des shaders
@@ -36,7 +36,7 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
             .module = fragShaderModule,
             .pName = "main"
         }
-    }; 
+    };
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -114,13 +114,13 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
 
     // 9. Configuration du blending
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {
-        .blendEnable = VK_TRUE,
-        .srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstColorBlendFactor = VK_BLEND_FACTOR_ONE,
-        .colorBlendOp = VK_BLEND_OP_ADD,
-        .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-        .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
-        .alphaBlendOp = VK_BLEND_OP_ADD,
+        .blendEnable = VK_FALSE,
+        //.srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        //.dstColorBlendFactor = VK_BLEND_FACTOR_ONE,
+        //.colorBlendOp = VK_BLEND_OP_ADD,
+        //.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+        //.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+        //.alphaBlendOp = VK_BLEND_OP_ADD,
         .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | 
         VK_COLOR_COMPONENT_G_BIT | 
         VK_COLOR_COMPONENT_B_BIT | 
@@ -148,8 +148,8 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
         .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicState,
-        .layout = pipelineManager->GetLightingPipelineLayout(),
-        .renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass(),
+        .layout = pipelineManager->GetPostprocessPipelineLayout(),
+        .renderPass = VulkanRenderPassManager::GetInstance()->GetPostprocessPass(),
         .subpass = 0, // N'oubliez pas de spécifier le subpass!
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
@@ -165,7 +165,7 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
     vkDestroyShaderModule(device, fragShaderModule, nullptr);
 }
 
-void VulkanSpotlightLightPipeline::Bind(VkCommandBuffer commandBuffer) const
+void VulkanPostprocessPipeline::Bind(VkCommandBuffer commandBuffer) const
 {
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetPipeline());
 }

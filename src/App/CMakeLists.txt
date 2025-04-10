@@ -12,8 +12,9 @@ set(SHADER_SOURCE_FILES
 	${SHADER_SOURCE_DIR}/shader.vert
 	${SHADER_SOURCE_DIR}/shader.frag
 	${SHADER_SOURCE_DIR}/shadowmap.vert
-	${SHADER_SOURCE_DIR}/lighting.vert
+	${SHADER_SOURCE_DIR}/fullScreen.vert
 	${SHADER_SOURCE_DIR}/lighting.frag
+	${SHADER_SOURCE_DIR}/postprocess.frag
 )
 
 set(SHADER_OUTPUT_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)

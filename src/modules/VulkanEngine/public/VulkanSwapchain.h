@@ -13,6 +13,7 @@ enum BufferType
     NORMAL,
     LIGHTING,
     POSITION,
+    POSTPROCESS,
 };
 
 struct ImageData
@@ -69,7 +70,7 @@ struct SwapchainSupportDetails
 
 class VulkanSwapchain : public IRenderTarget
 {
-    BufferType viewBufferType{BufferType::LIGHTING};
+    BufferType viewBufferType{BufferType::POSTPROCESS};
 
     std::vector<ImageData> imagesData;
     ImageData& GetImagesData(BufferType type)
@@ -99,6 +100,7 @@ public:
 
     const VkFramebuffer& GetFrameBuffer(uint32_t index) const { return framebuffers[index]; }
     const VkFramebuffer& GetLightingFrameBuffer(uint32_t index) const { return lightingFramebuffers[index]; }
+    const VkFramebuffer& GetPostprocessFrameBuffer(uint32_t index) const { return postprocessFramebuffers[index]; }
     const VkCommandBuffer& GetCommandBuffer(uint32_t index) const { return commandBuffers[index]; }
 
     const VkFence& GetInFlightFence() const {return inFlightFence; }
@@ -110,6 +112,8 @@ public:
     void UpdateGBufferDescriptorSet(uint32_t index);
     VkDescriptorSet& GetGBufferDescriptorSet() { return gBufferDescriptorSet; }
 
+    void UpdatePostprocessDescriptorSet(uint32_t index);
+    VkDescriptorSet& GetPostprocessDescriptorSet() { return postprocessDescriptorSet; }
 private:
     void CreateCommandPool(uint32_t graphicsQueueFamilyIndex);
     void CreateCommandBuffers();    
@@ -130,8 +134,10 @@ private:
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
     std::vector<VkFramebuffer> framebuffers;
     std::vector<VkFramebuffer> lightingFramebuffers;
+    std::vector<VkFramebuffer> postprocessFramebuffers;
 
     VkDescriptorSet gBufferDescriptorSet{VK_NULL_HANDLE};
+    VkDescriptorSet postprocessDescriptorSet{VK_NULL_HANDLE};
 
     VkExtent2D swapchainExtent;
     

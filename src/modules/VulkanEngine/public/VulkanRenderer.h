@@ -28,6 +28,7 @@ protected:
     VulkanRenderEngine* renderEngine{nullptr};
 
     class VulkanSpotlightLightPipeline* spotlightLightPipeline;
+    class VulkanPostprocessPipeline* postprocessPipeline;
 };
 
 #endif // VULKANRENDERER_H

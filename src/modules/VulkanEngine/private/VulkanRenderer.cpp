@@ -3,7 +3,6 @@
 #include "VulkanRenderEngine.h"
 #include "IRenderable.h"
 #include "VulkanCamera.h"
-#include "VulkanLight.h"
 #include "VulkanSwapchain.h"
 #include "VulkanRenderTarget.h"
 #include <array>
@@ -14,13 +13,18 @@
 
 //Temp
 #include "VulkanSpotlightLightPipeline.h"
+#include "VulkanPostprocessPipeline.h"
 
 VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
     : renderEngine(renderEngine)
 {
     spotlightLightPipeline = new VulkanSpotlightLightPipeline();
     spotlightLightPipeline->InitPipeline(renderEngine->GetDevice(), renderEngine->GetPipelineManager(),
-        "shaders/lighting.vert", "shaders/lighting.frag");
+        "shaders/fullScreen.vert", "shaders/lighting.frag");
+
+    postprocessPipeline = new VulkanPostprocessPipeline();
+    postprocessPipeline->InitPipeline(renderEngine->GetDevice(), renderEngine->GetPipelineManager(),
+        "shaders/fullScreen.vert", "shaders/postprocess.frag");
 }
 
 bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *renderObject, VulkanCamera *camera, VulkanGlobalLightManager* lightManager, VkQueue graphicsQueue, VkQueue presentQueue)
@@ -50,8 +54,26 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     VkCommandBuffer commandBuffer = swapchain->GetCommandBuffer(imageIndex);
     VkFramebuffer frameBuffer = swapchain->GetFrameBuffer(imageIndex);
     VkFramebuffer lightingFrameBuffer = swapchain->GetLightingFrameBuffer(imageIndex);
+    VkFramebuffer postprocessFrameBuffer = swapchain->GetPostprocessFrameBuffer(imageIndex);
     VkFence inFlightFence = swapchain->GetInFlightFence();
     VkSemaphore renderFinishedSemaphore = swapchain->GetRenderFinishedSemaphore();
+
+    // Setup lights
+    Array<IRenderable*> scene;
+    if (renderObject)
+        renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+
+    lightManager->ClearLights();
+    for (const auto& object : scene)
+    {
+        auto light = dynamic_cast<VulkanSpotlightLight*>(object);
+        if(light)
+        {
+            lightManager->AddLight(light);
+            RenderToShadowMap(light->renderTarget, renderObject, light->camera, graphicsQueue);
+
+        }
+    }
 
     vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
@@ -90,31 +112,13 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
-    Array<IRenderable*> scene;
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     // Render
     camera->Render(renderObject, commandBuffer);
 
-    if (renderObject)
-        renderObject->CollectAllRenderChilds(scene, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
-
-
-    // Setup lights
-    lightManager->ClearLights();
-    for (const auto& object : scene)
-    {
-        auto light = dynamic_cast<VulkanSpotlightLight*>(object);
-        if(light)
-        {
-            lightManager->AddLight(light);
-            RenderToShadowMap(light->renderTarget, renderObject, light->camera, graphicsQueue);
-
-        }
-    }
-
-
+    
     static bool doOnce{true};
     if (doOnce)
     {
@@ -215,6 +219,57 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     lightManager->Bind(commandBuffer);
 
+    // Termine le render pass
+    vkCmdEndRenderPass(commandBuffer);
+
+
+    // Termine l'enregistrement du command buffer
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+        throw std::runtime_error("failed to end command buffer!");
+
+    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
+        throw std::runtime_error("failed to submit draw command buffer!");
+    
+
+
+    vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
+
+    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
+        throw std::runtime_error("failed to reset command buffer!");
+
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+        throw std::runtime_error("failed to begin command buffer!");
+
+    // Débute le render pass
+    VkRenderPassBeginInfo postprocessRenderPassInfo{};
+    postprocessRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    postprocessRenderPassInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetPostprocessPass();
+    postprocessRenderPassInfo.framebuffer = postprocessFrameBuffer;
+    postprocessRenderPassInfo.renderArea.offset = {0, 0};
+    postprocessRenderPassInfo.renderArea.extent = {swapchain->GetExtent().width, swapchain->GetExtent().height};
+    // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
+    std::array<VkClearValue, 1> postprocessClearValues{};
+    postprocessClearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+    
+    postprocessRenderPassInfo.clearValueCount = postprocessClearValues.size();
+    postprocessRenderPassInfo.pClearValues = postprocessClearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffer, &postprocessRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    postprocessPipeline->Bind(commandBuffer);
+
+    swapchain->UpdatePostprocessDescriptorSet(imageIndex);
+    vkCmdBindDescriptorSets(
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+        renderEngine->GetPipelineManager()->GetPostprocessPipelineLayout(),
+        0, 1, &swapchain->GetPostprocessDescriptorSet(), 0, nullptr
+    );
+
     vkCmdDraw(commandBuffer, 4, 1, 0, 0);
 
     // Termine le render pass
@@ -227,7 +282,6 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
         throw std::runtime_error("failed to submit draw command buffer!");
-    
 
 
     VkPresentInfoKHR presentInfo{};

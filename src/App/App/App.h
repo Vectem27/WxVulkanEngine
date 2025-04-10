@@ -30,6 +30,7 @@ private:
     class VulkanRenderEngine *vulkanRenderEngine;
     class CameraComponent* camera;
     class Actor* cubeActor;
+    class Actor* cameraActor;
     class Cube* cube;
     class Cube* tinyCube;
     class Cube* floor;

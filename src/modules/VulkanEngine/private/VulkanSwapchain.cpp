@@ -38,9 +38,20 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
         VK_IMAGE_ASPECT_COLOR_BIT
     });
 
+    imagesData.push_back({
+        BufferType::POSTPROCESS, VulkanRenderPassManager::GetInstance()->GetColorFormat(),
+        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        VK_IMAGE_ASPECT_COLOR_BIT
+    });
+
     renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(
         &renderEngine->GetPipelineManager()->GetgBufferDescriptorSetLayout(),
         1, &gBufferDescriptorSet
+    );
+
+    renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(
+        &renderEngine->GetPipelineManager()->GetPostprocessDescriptorSetLayout(),
+        1, &postprocessDescriptorSet
     );
 
     CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
@@ -172,6 +183,7 @@ void VulkanSwapchain::CreateFramebuffer()
 {
     framebuffers.resize(imageCount);
     lightingFramebuffers.resize(imageCount);
+    postprocessFramebuffers.resize(imageCount);
     for (size_t i = 0; i < imageCount; i++)
     {
         std::vector<VkImageView> attachments = 
@@ -211,6 +223,25 @@ void VulkanSwapchain::CreateFramebuffer()
         framebufferInfo.layers = 1;
 
         if (vkCreateFramebuffer(renderEngine->GetDevice(), &framebufferInfo, nullptr, &lightingFramebuffers[i]) != VK_SUCCESS)
+            throw std::runtime_error("Failed to create swapchain framebuffer!");
+
+
+        /* POST PROCESS*/
+        std::vector<VkImageView> postprocessAttachments = 
+        {
+            GetImagesData(BufferType::POSTPROCESS).imageViews[i]
+        };
+
+        framebufferInfo={};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetPostprocessPass();
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(postprocessAttachments.size());
+        framebufferInfo.pAttachments = postprocessAttachments.data();
+        framebufferInfo.width = GetExtent().width;
+        framebufferInfo.height = GetExtent().height;
+        framebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(renderEngine->GetDevice(), &framebufferInfo, nullptr, &postprocessFramebuffers[i]) != VK_SUCCESS)
             throw std::runtime_error("Failed to create swapchain framebuffer!");
     }
 }
@@ -285,6 +316,45 @@ void VulkanSwapchain::UpdateGBufferDescriptorSet(uint32_t index)
     };
 
     vkUpdateDescriptorSets(renderEngine->GetDevice(), 3, descriptorWrites, 0, nullptr);
+}
+
+void VulkanSwapchain::UpdatePostprocessDescriptorSet(uint32_t index)
+{
+    VkDescriptorImageInfo colorInfo = {
+        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[index], // Vue de votre texture de position
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkDescriptorImageInfo lightingInfo = {
+        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .imageView = GetImagesData(BufferType::LIGHTING).imageViews[index], // Vue de votre texture de position
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    // Configurez les écritures pour le descriptor set
+    VkWriteDescriptorSet descriptorWrites[2] = {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = postprocessDescriptorSet,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &colorInfo
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = postprocessDescriptorSet,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &lightingInfo
+        }
+    };
+
+    vkUpdateDescriptorSets(renderEngine->GetDevice(), 2, descriptorWrites, 0, nullptr);
 }
 
 void VulkanSwapchain::CreateCommandPool(uint32_t graphicsQueueFamilyIndex)
