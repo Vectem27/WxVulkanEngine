@@ -10,18 +10,21 @@ public:
 
 public:
     const VkSampler GetShadowMapSampler() const { return shadowMapSampler; }
+    const VkSampler GetGBufferSampler() const { return gBufferSampler; }
 
 public: // DescriptionSetLayouts Getters
     const VkDescriptorSetLayout& GetCameraDescriptorSetLayout() const { return cameraDescriptorLayout; }
     const VkDescriptorSetLayout& GetObjectDescriptorSetLayout() const { return objectDescriptorLayout; }
     const VkDescriptorSetLayout& GetShadowMapDescriptorSetLayout() const { return shadowMapDescriptorLayout; }
-    const VkDescriptorSetLayout& GetLightDescriptorSetLayout() const { return shadowMapDescriptorLayout; }
+    const VkDescriptorSetLayout& GetLightDescriptorSetLayout() const { return lightingDescriptorLayout; }
+    const VkDescriptorSetLayout& GetgBufferDescriptorSetLayout() const { return gBufferDescriptorLayout; }
 public: // PipelineLayouts Getters
     VkPipelineLayout GetPipelineLayout() const { return pipelineLayout; }
     VkPipelineLayout GetLightingPipelineLayout() const { return lightingPipelineLayout; }
 
 private:
     VkSampler shadowMapSampler;
+    VkSampler gBufferSampler;
 
 private: // DescriptionSetLayouts
     VkDescriptorSetLayout cameraDescriptorLayout{VK_NULL_HANDLE};

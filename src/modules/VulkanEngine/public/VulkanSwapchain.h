@@ -107,7 +107,8 @@ public:
 
     int32_t GetImageCount() const { return imageCount; }
 
-
+    void UpdateGBufferDescriptorSet(uint32_t index);
+    VkDescriptorSet& GetGBufferDescriptorSet() { return gBufferDescriptorSet; }
 
 private:
     void CreateCommandPool(uint32_t graphicsQueueFamilyIndex);
@@ -124,14 +125,13 @@ private:
     class VulkanRenderEngine* renderEngine;
     class VulkanSurface* surface;
 
-    VkRenderPass renderPass;
-
     uint32_t width{ 720 }, height{ 480 }, imageCount{ 0 };
 
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
     std::vector<VkFramebuffer> framebuffers;
-    
     std::vector<VkFramebuffer> lightingFramebuffers;
+
+    VkDescriptorSet gBufferDescriptorSet{VK_NULL_HANDLE};
 
     VkExtent2D swapchainExtent;
     

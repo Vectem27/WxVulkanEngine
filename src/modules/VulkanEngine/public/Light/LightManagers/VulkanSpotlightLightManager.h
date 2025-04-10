@@ -25,8 +25,11 @@ class VulkanSpotlightLightManager : public IVulkanLightManager
         alignas(16) Matrix4f viewProj;
         alignas(16) Vector3f pos;
         alignas(16) Vector3f direction;
-        alignas(4) float length;
-        alignas(4) float angle;
+        alignas(4)   float length;
+        alignas(4)   float angle;
+        alignas(16) Vector3f color;
+        alignas(4)  float intensity;
+        alignas(4)  float penumbraAngle; // Angle de transition douce
     };
 public:
     VulkanSpotlightLightManager(unsigned short maxNumOfLights) 

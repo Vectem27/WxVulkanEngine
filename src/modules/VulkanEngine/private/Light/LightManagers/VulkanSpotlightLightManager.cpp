@@ -52,6 +52,9 @@ void VulkanSpotlightLightManager::Update()
         fdata.direction = light->GetSpotlightLightData().direction;
         fdata.length = light->GetSpotlightLightData().length;
         fdata.angle = light->GetSpotlightLightData().angle;
+        fdata.color = {1.0f, 1.0f, 1.0f};
+        fdata.intensity = 2.0f;
+        fdata.penumbraAngle = ToRadians(5.0f);
         fragLights.Add(fdata);
     }
 
@@ -71,7 +74,7 @@ void VulkanSpotlightLightManager::Update()
     VkWriteDescriptorSet writeDescriptorSet = {};
     writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSet.dstSet = descriptorSet;
-    writeDescriptorSet.dstBinding = 1;  // Binding des lumières
+    writeDescriptorSet.dstBinding = 0;  // Binding des lumières
     writeDescriptorSet.dstArrayElement = 0;
     writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     writeDescriptorSet.pBufferInfo = &bufferInfo;
@@ -94,7 +97,7 @@ void VulkanSpotlightLightManager::Update()
     VkWriteDescriptorSet desc{};
     desc.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     desc.dstSet = descriptorSet;
-    desc.dstBinding = 0;
+    desc.dstBinding = 1;
     desc.dstArrayElement = 0;
     desc.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     desc.descriptorCount = 1;
@@ -109,7 +112,7 @@ void VulkanSpotlightLightManager::Update()
 
 void VulkanSpotlightLightManager::Bind(VkCommandBuffer commandBuffer) const
 {
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetRenderEngine()->GetPipelineManager()->GetPipelineLayout(), 2, 1, &descriptorSet, 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetRenderEngine()->GetPipelineManager()->GetLightingPipelineLayout(), 1, 1, &descriptorSet, 0, nullptr);
 }
 
 void VulkanSpotlightLightManager::CreateDescriptorPool() 
@@ -124,7 +127,7 @@ void VulkanSpotlightLightManager::CreateDescriptorPool()
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
     poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = 1;
+    poolInfo.maxSets = 2;
 
     if (vkCreateDescriptorPool(GetRenderEngine()->GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
         throw std::runtime_error("Failed to create spotlight manager descriptor pool");
@@ -135,7 +138,7 @@ void VulkanSpotlightLightManager::CreateDescriptorSets()
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &GetRenderEngine()->GetPipelineManager()->GetShadowMapDescriptorSetLayout();
+    allocInfo.pSetLayouts = &GetRenderEngine()->GetPipelineManager()->GetLightDescriptorSetLayout();
     allocInfo.pNext = nullptr;
     allocInfo.descriptorPool = descriptorPool;
 

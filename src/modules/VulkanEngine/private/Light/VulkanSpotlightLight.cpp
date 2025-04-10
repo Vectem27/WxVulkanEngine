@@ -27,7 +27,7 @@ void VulkanSpotlightLight::InitVulkanSpotlightLight(VulkanRenderEngine *renderEn
     camera->Init(renderEngine, renderTarget);
     camera->SetFarPlan(100.0f);
     camera->SetNearPlan(0.1f);
-    camera->SetFOV(30.0f);
+    camera->SetFOV(35.0f);
     SetShadowMap(renderTarget->GetImageView(), renderEngine->GetPipelineManager()->GetShadowMapSampler());
 }
 

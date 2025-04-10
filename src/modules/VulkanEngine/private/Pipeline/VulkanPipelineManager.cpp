@@ -27,6 +27,18 @@ void VulkanPipelineManager::InitSamplers(VkDevice device)
     samplerInfo.maxLod = 1.0f;
 
     vkCreateSampler(device, &samplerInfo, nullptr, &shadowMapSampler);
+
+    samplerInfo = {};
+    samplerInfo = {
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_NEAREST,
+        .minFilter = VK_FILTER_NEAREST,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+    };
+    
+    vkCreateSampler(device, &samplerInfo, nullptr, &gBufferSampler);
 }
 
 void VulkanPipelineManager::InitDescriptorSetLayouts(VkDevice device)

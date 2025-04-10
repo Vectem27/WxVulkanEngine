@@ -53,7 +53,6 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     VkFence inFlightFence = swapchain->GetInFlightFence();
     VkSemaphore renderFinishedSemaphore = swapchain->GetRenderFinishedSemaphore();
 
-
     vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
 
@@ -71,7 +70,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     {
         throw std::runtime_error("failed to begin command buffer!");
     }
-   
+
 
     // Débute le render pass
     VkRenderPassBeginInfo renderPassInfo{};
@@ -123,9 +122,6 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
         doOnce = false;
     }
 
-    lightManager->Bind(commandBuffer);
-
-    
     IVulkanMesh* mesh;
     for (const auto& object : scene)
     {
@@ -138,50 +134,6 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
-    
-    /* LIGHTING PASS*/
-
-    // Débute le render pass
-    VkRenderPassBeginInfo lightingRenderPassInfo{};
-    lightingRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    lightingRenderPassInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass();
-    lightingRenderPassInfo.framebuffer = lightingFrameBuffer;
-    lightingRenderPassInfo.renderArea.offset = {0, 0};
-    lightingRenderPassInfo.renderArea.extent = {swapchain->GetExtent().width, swapchain->GetExtent().height};
-
-    // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
-    std::array<VkClearValue, 1> ligtingClearValues{};
-    ligtingClearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
-
-    lightingRenderPassInfo.clearValueCount = ligtingClearValues.size();
-    lightingRenderPassInfo.pClearValues = ligtingClearValues.data();
-
-    vkCmdBeginRenderPass(commandBuffer, &lightingRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-    camera->Render(renderObject, commandBuffer);
-
-
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = (float)swapchain->GetExtent().width;
-    viewport.height = (float)swapchain->GetExtent().height;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = swapchain->GetExtent();
-    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-    spotlightLightPipeline->Bind(commandBuffer);
-
-    vkCmdDraw(commandBuffer, 4, 1, 0, 0);
-
-    // Termine le render pass
-    vkCmdEndRenderPass(commandBuffer);
-
 
     // Termine l'enregistrement du command buffer
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
@@ -208,6 +160,75 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     {
         throw std::runtime_error("failed to submit draw command buffer!");
     }
+
+
+    
+    vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
+
+    if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
+        throw std::runtime_error("failed to reset command buffer!");
+
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+        throw std::runtime_error("failed to begin command buffer!");
+
+    // Débute le render pass
+    VkRenderPassBeginInfo lightingRenderPassInfo{};
+    lightingRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    lightingRenderPassInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass();
+    lightingRenderPassInfo.framebuffer = lightingFrameBuffer;
+    lightingRenderPassInfo.renderArea.offset = {0, 0};
+    lightingRenderPassInfo.renderArea.extent = {swapchain->GetExtent().width, swapchain->GetExtent().height};
+
+    // Couleur de fond (noir) et valeur de profondeur initiale (1.0)
+    std::array<VkClearValue, 1> ligtingClearValues{};
+    ligtingClearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+
+    lightingRenderPassInfo.clearValueCount = ligtingClearValues.size();
+    lightingRenderPassInfo.pClearValues = ligtingClearValues.data();
+
+    vkCmdBeginRenderPass(commandBuffer, &lightingRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = (float)swapchain->GetExtent().width;
+    viewport.height = (float)swapchain->GetExtent().height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = swapchain->GetExtent();
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    spotlightLightPipeline->Bind(commandBuffer);
+
+    swapchain->UpdateGBufferDescriptorSet(imageIndex);
+    vkCmdBindDescriptorSets(
+        commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
+        renderEngine->GetPipelineManager()->GetLightingPipelineLayout(),
+        0, 1, &swapchain->GetGBufferDescriptorSet(), 0, nullptr
+    );
+
+    lightManager->Bind(commandBuffer);
+
+    vkCmdDraw(commandBuffer, 4, 1, 0, 0);
+
+    // Termine le render pass
+    vkCmdEndRenderPass(commandBuffer);
+
+
+    // Termine l'enregistrement du command buffer
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+        throw std::runtime_error("failed to end command buffer!");
+
+    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
+        throw std::runtime_error("failed to submit draw command buffer!");
+    
+
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

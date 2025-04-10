@@ -38,6 +38,11 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
         VK_IMAGE_ASPECT_COLOR_BIT
     });
 
+    renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(
+        &renderEngine->GetPipelineManager()->GetgBufferDescriptorSetLayout(),
+        1, &gBufferDescriptorSet
+    );
+
     CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
     CreateSync();
     CreateSwapchain();
@@ -46,7 +51,6 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
 
 void VulkanSwapchain::Create(VkRenderPass renderPass)
 {
-    this->renderPass = renderPass;
     CreateSwapchain();
     CreateFramebuffer();
     CreateCommandBuffers();
@@ -62,7 +66,6 @@ void VulkanSwapchain::SetRenderPass(VkRenderPass renderPass)
     }
     else
     {
-        this->renderPass = renderPass;
         Recreate();
     }
     
@@ -181,7 +184,7 @@ void VulkanSwapchain::CreateFramebuffer()
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetGeometryPass();
         framebufferInfo.attachmentCount = attachments.size();
         framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = GetExtent().width;
@@ -227,6 +230,61 @@ void VulkanSwapchain::CreateSync()
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // La fence est initialement signalée
     if (vkCreateFence(renderEngine->GetDevice(), &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS)
         throw std::runtime_error("Failed to create inFlight fence!");
+}
+
+void VulkanSwapchain::UpdateGBufferDescriptorSet(uint32_t index)
+{
+    // Préparez les informations d'image pour chaque attachement
+    VkDescriptorImageInfo positionInfo = {
+        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .imageView = GetImagesData(BufferType::POSITION).imageViews[index], // Vue de votre texture de position
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkDescriptorImageInfo normalInfo = {
+        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .imageView = GetImagesData(BufferType::NORMAL).imageViews[index], // Vue de votre texture de normales
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    VkDescriptorImageInfo baseColorInfo = {
+        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[index], // Vue de votre texture d'albedo
+        .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+    };
+
+    // Configurez les écritures pour le descriptor set
+    VkWriteDescriptorSet descriptorWrites[3] = {
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = gBufferDescriptorSet,
+            .dstBinding = 0,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &positionInfo
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = gBufferDescriptorSet,
+            .dstBinding = 1,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &normalInfo
+        },
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = gBufferDescriptorSet,
+            .dstBinding = 2,
+            .dstArrayElement = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &baseColorInfo
+        }
+    };
+
+    vkUpdateDescriptorSets(renderEngine->GetDevice(), 3, descriptorWrites, 0, nullptr);
 }
 
 void VulkanSwapchain::CreateCommandPool(uint32_t graphicsQueueFamilyIndex)
@@ -284,28 +342,18 @@ void VulkanSwapchain::Cleanup()
 VulkanSwapchain::~VulkanSwapchain()
 {
     Cleanup();
-    
+
     // Détruire les sémaphores et la fence
-    if (imageAvailableSemaphore != VK_NULL_HANDLE) {
+    if (imageAvailableSemaphore != VK_NULL_HANDLE) 
         vkDestroySemaphore(renderEngine->GetDevice(), imageAvailableSemaphore, nullptr);
-        imageAvailableSemaphore = VK_NULL_HANDLE;
-    }
 
     if (renderFinishedSemaphore != VK_NULL_HANDLE) 
-    {
         vkDestroySemaphore(renderEngine->GetDevice(), renderFinishedSemaphore, nullptr);
-        renderFinishedSemaphore = VK_NULL_HANDLE;
-    }
 
     if (inFlightFence != VK_NULL_HANDLE) 
-    {
         vkDestroyFence(renderEngine->GetDevice(), inFlightFence, nullptr);
-        inFlightFence = VK_NULL_HANDLE;
-    }
 
-    if (commandPool != VK_NULL_HANDLE) {
+    if (commandPool != VK_NULL_HANDLE) 
         vkDestroyCommandPool(renderEngine->GetDevice(), commandPool, nullptr);
-        commandPool = VK_NULL_HANDLE;
-    }
 }
 
