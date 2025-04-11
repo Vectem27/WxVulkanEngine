@@ -5,8 +5,14 @@
 
 class VulkanPipelineManager
 {
+    VulkanPipelineManager();
+
 public:
-    VulkanPipelineManager(VkDevice device);
+    static VulkanPipelineManager& GetInstance()
+    {
+        static VulkanPipelineManager instance;
+        return instance;
+    }
 
 public:
     const VkSampler GetShadowMapSampler() const { return shadowMapSampler; }

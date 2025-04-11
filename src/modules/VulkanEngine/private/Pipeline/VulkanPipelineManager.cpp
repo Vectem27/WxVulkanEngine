@@ -4,8 +4,12 @@
 #include <array>
 #include "VulkanPipelineManager.h"
 
-VulkanPipelineManager::VulkanPipelineManager(VkDevice device)
+#include "VulkanDeviceManager.h"
+
+VulkanPipelineManager::VulkanPipelineManager()
 {
+    VkDevice device = GetVulkanDeviceManager().GetDeviceChecked();
+
     InitSamplers(device);
     InitDescriptorSetLayouts(device);
     InitPipelineLayouts(device);
