@@ -10,5 +10,5 @@ public:
     virtual void InitVulkanMaterial(class VulkanRenderEngine* vulkanRenderEngine) = 0;
     virtual void BindVulkanMaterial(VkCommandBuffer commandBuffer, ERenderPassType pass) const = 0;
 };
-
+ 
 #endif // IVULKANMATERIAL_H

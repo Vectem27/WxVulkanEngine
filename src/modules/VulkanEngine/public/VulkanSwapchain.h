@@ -1,10 +1,13 @@
 #ifndef VULKANSWAPCHAIN_H
 #define VULKANSWAPCHAIN_H
 
-#include <vulkan/vulkan.h>
-#include "IRenderTarget.h"
 #include <vector>
 #include <stdexcept>
+
+#include <vulkan/vulkan.h>
+
+#include "IRenderTarget.h"
+#include "IVulkanRenderTarget.h"
 
 enum BufferType
 {
@@ -68,7 +71,7 @@ struct SwapchainSupportDetails
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class VulkanSwapchain : public IRenderTarget
+class VulkanSwapchain : public IRenderTarget, public IVulkanRenderTarget
 {
     BufferType viewBufferType{BufferType::POSTPROCESS};
 
@@ -90,10 +93,16 @@ public:
     virtual uint32_t GetWidth() const override { return GetExtent().width; }
     virtual uint32_t GetHeight() const override { return GetExtent().height; }
 
+    virtual void StartRendering() override;
+    virtual VkFramebuffer GetGeometryFrameBuffer() const override { return 0; }
+    virtual VkFramebuffer GetLightingFrameBuffer() const override { return 0; }
+    virtual VkFramebuffer GetPostprocessFrameBuffer() const override { return 0; }
+
 public:
     void Create(VkRenderPass renderPass);
     void SetRenderPass(VkRenderPass renderPass);
     void Recreate();
+    void Present();
 
     VkSwapchainKHR GetSwapchain() const { return swapchain; }
     VkExtent2D GetExtent() const { return swapchainExtent; }
@@ -129,7 +138,7 @@ private:
     class VulkanRenderEngine* renderEngine;
     class VulkanSurface* surface;
 
-    uint32_t width{ 720 }, height{ 480 }, imageCount{ 0 };
+    uint32_t width{ 720 }, height{ 480 }, imageCount{ 0 }, renderingImageIndex{0};
 
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
     std::vector<VkFramebuffer> framebuffers;

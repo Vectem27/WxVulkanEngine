@@ -96,6 +96,32 @@ void VulkanSwapchain::Recreate()
     CreateCommandBuffers();
 }
 
+void VulkanSwapchain::Present()
+{
+    
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = &GetRenderFinishedSemaphore();
+    presentInfo.swapchainCount = 1;
+    
+    VkSwapchainKHR swapChains[] = {GetSwapchain()};
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &renderingImageIndex;
+
+    VkResult res = vkQueuePresentKHR(surface->GetPresentQueue(), &presentInfo);
+    if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) 
+    {
+        Recreate();
+        Present();
+    }
+    else if (res != VK_SUCCESS) 
+    {
+        Log(Error, "Vulkan", "Failed to present swapchain, result code : %d", res);
+        throw std::runtime_error("Failed to present swapchain");
+    }
+}
+
 void VulkanSwapchain::CreateSwapchain()
 {
     VkSurfaceCapabilitiesKHR capabilities;
@@ -430,3 +456,17 @@ VulkanSwapchain::~VulkanSwapchain()
         vkDestroyCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), commandPool, nullptr);
 }
 
+void VulkanSwapchain::StartRendering()
+{
+    auto res = vkAcquireNextImageKHR(GetVulkanDeviceManager().GetDeviceChecked(), GetSwapchain(), UINT64_MAX, GetImageAvailableSemaphore(), VK_NULL_HANDLE, &renderingImageIndex);
+    if (res == VK_ERROR_OUT_OF_DATE_KHR) 
+    {
+        Recreate();
+        StartRendering();
+    } 
+    else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) 
+    {
+        Log(Error, "Vulkan", "Failed to acquire next swapchain image, result code : %d", res);
+        throw std::runtime_error("Failed to acquire next swapchain image");
+    }
+}

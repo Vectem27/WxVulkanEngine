@@ -9,12 +9,13 @@
 class VulkanRenderTarget : public IVulkanRenderTarget
 {
     VulkanRenderTarget() = default;
-    virtual ~VulkanRenderTarget() {Cleanup;}
+    virtual ~VulkanRenderTarget() {Cleanup();}
 public:
     void Init(uint32_t width, uint32_t height);
     void Cleanup() noexcept;
 
 public: // IVulkanRenderTarget Interface
+    virtual void StartRendering() = 0;
     virtual uint32_t GetWidth() const override { return width; }
     virtual uint32_t GetHeight() const override { return height; }
 

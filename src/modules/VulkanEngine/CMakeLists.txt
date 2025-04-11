@@ -4,6 +4,8 @@ file(GLOB_RECURSE HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 add_library(VulkanEngine STATIC 
     ${SRC_FILES}
     ${HEADER_FILES}
+
+    public/Material/IVulkanMaterial.h
 )
 
 
@@ -26,6 +28,15 @@ target_include_directories(VulkanEngine
 
     PUBLIC public/Texture
     PRIVATE private/Texture
+
+    PUBLIC public/Material
+    PRIVATE private/Material
+
+    PUBLIC public/Mesh
+    PRIVATE private/Mesh
+
+    PUBLIC public/Rendering
+    PRIVATE private/Rendering
 )
 
 target_include_directories(VulkanEngine PUBLIC ${Vulkan_INCLUDE_DIRS})
