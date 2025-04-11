@@ -1,19 +1,64 @@
 #include "VulkanDeviceManager.h"
 #include <stdexcept>  
 #include <vector>  
+#include "Logger.h"
 
-VulkanDeviceManager::VulkanDeviceManager(VkInstance instance)
+void VulkanDeviceManager::InitDeviceManager(VkInstance instance)
 {
+    if (instance == VK_NULL_HANDLE)
+    {
+        Log(Critical, "Vulkan", "Failed to init device manager, instance is null");
+        throw std::invalid_argument("Failed to init device manager, instance is null");
+    }
+
     PickPhysicalDevice(instance);
     CreateLogicalDevice();
 }
 
-VulkanDeviceManager::~VulkanDeviceManager()
+void VulkanDeviceManager::Shutdown()
 {
     if (device != VK_NULL_HANDLE) 
     {
         vkDestroyDevice(device, nullptr);
     }
+}
+
+VkPhysicalDevice VulkanDeviceManager::GetPhysicalDeviceChecked() const
+{
+    if (physicalDevice == VK_NULL_HANDLE)
+    {
+        Log(Error, "Vulkan", "Trying to access to an invalid physical device");
+        throw std::runtime_error("Trying to access to an invalid physical device");
+    }
+    return physicalDevice;
+}
+
+VkDevice VulkanDeviceManager::GetDeviceChecked() const
+{
+    if (device == VK_NULL_HANDLE)
+    {
+        Log(Error, "Vulkan", "Trying to access to an invalid device");
+        throw std::runtime_error("Trying to access to an invalid device");
+    }
+    return device; 
+}
+
+uint32_t VulkanDeviceManager::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(GetPhysicalDeviceChecked(), &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) && 
+            (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+        {
+            return i;
+        }
+    }
+
+    Log(Error, "Vulkan", "Failed to find memory type");
+    throw std::runtime_error("Failed to find memory type");
 }
 
 void VulkanDeviceManager::PickPhysicalDevice(VkInstance instance)
@@ -23,7 +68,8 @@ void VulkanDeviceManager::PickPhysicalDevice(VkInstance instance)
     
     if (deviceCount == 0) 
     {
-        throw std::runtime_error("Failed to find GPUs with Vulkan support!");
+        Log(Critical, "Vulkan", "Failed to find GPUs with Vulkan support");
+        throw std::runtime_error("Failed to find GPUs with Vulkan support");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -60,8 +106,8 @@ void VulkanDeviceManager::PickPhysicalDevice(VkInstance instance)
             return;
         }
     }
-
-    throw std::runtime_error("Failed to find a suitable GPU!");
+    Log(Critical, "Vulkan", "Failed to find a suitable GPU");
+    throw std::runtime_error("Failed to find a suitable GPU");
 }
 
 void VulkanDeviceManager::CreateLogicalDevice()
@@ -93,7 +139,8 @@ void VulkanDeviceManager::CreateLogicalDevice()
 
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) 
     {
-        throw std::runtime_error("Failed to create logical device!");
+        Log(Critical, "Vulkan", "Failed to create logical device");
+        throw std::runtime_error("Failed to create vulkan logical device");
     }
 
     vkGetDeviceQueue(device, graphicsQueueFamilyIndex, 0, &graphicsQueue);

@@ -3,12 +3,16 @@
 
 #include "ICamera.h"
 #include <vulkan/vulkan.h>
-#include "UniformBufferObject.h"
-#include "Vertex.h"
+#include "VulkanUniformBuffer.h"
 #include "EngineCore.hpp"
 
 class VulkanCamera : public ICamera
 {
+    struct ViewProj
+    {
+        alignas(16) Matrix4f view;
+        alignas(16) Matrix4f proj;
+    };
 public:
     VulkanCamera() {}
     ~VulkanCamera() {}
@@ -40,7 +44,7 @@ private:
     VkDescriptorSet cameraDescriptorSet{VK_NULL_HANDLE};
     VkDescriptorPool cameraDescriptorPool{VK_NULL_HANDLE};
 
-    UniformBuffer viewBuffer;
+    VulkanUniformBuffer viewBuffer;
     ViewProj viewData;
 private: // Create
     void CreateDescriptorPool();

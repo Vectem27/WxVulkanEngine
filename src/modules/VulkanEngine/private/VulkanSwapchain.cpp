@@ -5,6 +5,7 @@
 
 #include "VulkanRenderPassManager.h"
 #include "VulkanRenderImageManager.h"
+#include "VulkanDescriptorPoolBuilder.h"
 
 VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface* surface)
     : renderEngine(renderEngine), surface(surface)
@@ -43,6 +44,8 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT
     });
+
+    VulkanDescriptorPoolBuilder poolBuilder;
 
     renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(
         &renderEngine->GetPipelineManager()->GetgBufferDescriptorSetLayout(),
@@ -84,7 +87,7 @@ void VulkanSwapchain::SetRenderPass(VkRenderPass renderPass)
 
 void VulkanSwapchain::Recreate()
 {
-    vkDeviceWaitIdle(renderEngine->GetDevice());
+    vkDeviceWaitIdle(GetVulkanDeviceManager().GetDeviceChecked());
 
     Cleanup();
 
@@ -96,7 +99,7 @@ void VulkanSwapchain::Recreate()
 void VulkanSwapchain::CreateSwapchain()
 {
     VkSurfaceCapabilitiesKHR capabilities;
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(renderEngine->GetPhysicalDevice(), surface->GetSurface(), &capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(GetVulkanDeviceManager().GetPhysicalDeviceChecked(), surface->GetSurface(), &capabilities);
 
     VkExtent2D extent = capabilities.currentExtent;
     if (extent.width == UINT32_MAX)
@@ -146,15 +149,15 @@ void VulkanSwapchain::CreateSwapchain()
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(renderEngine->GetDevice(), &createInfo, nullptr, &swapchain) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(GetVulkanDeviceManager().GetDeviceChecked(), &createInfo, nullptr, &swapchain) != VK_SUCCESS)
         throw std::runtime_error("Failed to create swap chain!");
 
-    vkGetSwapchainImagesKHR(renderEngine->GetDevice(), swapchain, &imageCount, nullptr);
+    vkGetSwapchainImagesKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, &imageCount, nullptr);
 
     for (auto& imageData : imagesData)
         imageData.Resize(imageCount);
 
-    vkGetSwapchainImagesKHR(renderEngine->GetDevice(), swapchain, &imageCount, GetImagesData(viewBufferType).images.data());
+    vkGetSwapchainImagesKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, &imageCount, GetImagesData(viewBufferType).images.data());
 
     
     for (int i = 0; i < imageCount; ++i)
@@ -203,7 +206,7 @@ void VulkanSwapchain::CreateFramebuffer()
         framebufferInfo.height = GetExtent().height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(renderEngine->GetDevice(), &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
+        if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
             throw std::runtime_error("Failed to create swapchain framebuffer!");
 
 
@@ -222,7 +225,7 @@ void VulkanSwapchain::CreateFramebuffer()
         framebufferInfo.height = GetExtent().height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(renderEngine->GetDevice(), &framebufferInfo, nullptr, &lightingFramebuffers[i]) != VK_SUCCESS)
+        if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &lightingFramebuffers[i]) != VK_SUCCESS)
             throw std::runtime_error("Failed to create swapchain framebuffer!");
 
 
@@ -241,7 +244,7 @@ void VulkanSwapchain::CreateFramebuffer()
         framebufferInfo.height = GetExtent().height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(renderEngine->GetDevice(), &framebufferInfo, nullptr, &postprocessFramebuffers[i]) != VK_SUCCESS)
+        if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &postprocessFramebuffers[i]) != VK_SUCCESS)
             throw std::runtime_error("Failed to create swapchain framebuffer!");
     }
 }
@@ -250,8 +253,8 @@ void VulkanSwapchain::CreateSync()
 {
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    if (vkCreateSemaphore(renderEngine->GetDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
-        vkCreateSemaphore(renderEngine->GetDevice(), &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS)
+    if (vkCreateSemaphore(GetVulkanDeviceManager().GetDeviceChecked(), &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
+        vkCreateSemaphore(GetVulkanDeviceManager().GetDeviceChecked(), &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create semaphores!");
     }
@@ -259,7 +262,7 @@ void VulkanSwapchain::CreateSync()
     VkFenceCreateInfo fenceInfo{};
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT; // La fence est initialement signalée
-    if (vkCreateFence(renderEngine->GetDevice(), &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS)
+    if (vkCreateFence(GetVulkanDeviceManager().GetDeviceChecked(), &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS)
         throw std::runtime_error("Failed to create inFlight fence!");
 }
 
@@ -315,7 +318,7 @@ void VulkanSwapchain::UpdateGBufferDescriptorSet(uint32_t index)
         }
     };
 
-    vkUpdateDescriptorSets(renderEngine->GetDevice(), 3, descriptorWrites, 0, nullptr);
+    vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), 3, descriptorWrites, 0, nullptr);
 }
 
 void VulkanSwapchain::UpdatePostprocessDescriptorSet(uint32_t index)
@@ -354,7 +357,7 @@ void VulkanSwapchain::UpdatePostprocessDescriptorSet(uint32_t index)
         }
     };
 
-    vkUpdateDescriptorSets(renderEngine->GetDevice(), 2, descriptorWrites, 0, nullptr);
+    vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), 2, descriptorWrites, 0, nullptr);
 }
 
 void VulkanSwapchain::CreateCommandPool(uint32_t graphicsQueueFamilyIndex)
@@ -363,7 +366,7 @@ void VulkanSwapchain::CreateCommandPool(uint32_t graphicsQueueFamilyIndex)
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    if (vkCreateCommandPool(renderEngine->GetDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
         throw std::runtime_error("Failed to create swapchain command pool!");
 }
 
@@ -376,7 +379,7 @@ void VulkanSwapchain::CreateCommandBuffers()
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-    if (vkAllocateCommandBuffers(renderEngine->GetDevice(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
         throw std::runtime_error("Failed to allocate swapchain command buffers!");
 }
 
@@ -386,7 +389,7 @@ void VulkanSwapchain::Cleanup()
     for (auto& framebuffer : framebuffers) 
     {
         if (framebuffer != VK_NULL_HANDLE) {
-            vkDestroyFramebuffer(renderEngine->GetDevice(), framebuffer, nullptr);
+            vkDestroyFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), framebuffer, nullptr);
         }
     }
     framebuffers.clear();
@@ -394,17 +397,17 @@ void VulkanSwapchain::Cleanup()
     for (auto& framebuffer : lightingFramebuffers) 
     {
         if (framebuffer != VK_NULL_HANDLE) {
-            vkDestroyFramebuffer(renderEngine->GetDevice(), framebuffer, nullptr);
+            vkDestroyFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), framebuffer, nullptr);
         }
     }
     lightingFramebuffers.clear();
 
     for (auto& imageData : imagesData)
-        imageData.Cleanup(renderEngine->GetDevice(), imageData.type == viewBufferType);
+        imageData.Cleanup(GetVulkanDeviceManager().GetDeviceChecked(), imageData.type == viewBufferType);
 
     if (swapchain != VK_NULL_HANDLE) 
     {
-        vkDestroySwapchainKHR(renderEngine->GetDevice(), swapchain, nullptr);
+        vkDestroySwapchainKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, nullptr);
         swapchain = VK_NULL_HANDLE;
     }
 }
@@ -415,15 +418,15 @@ VulkanSwapchain::~VulkanSwapchain()
 
     // Détruire les sémaphores et la fence
     if (imageAvailableSemaphore != VK_NULL_HANDLE) 
-        vkDestroySemaphore(renderEngine->GetDevice(), imageAvailableSemaphore, nullptr);
+        vkDestroySemaphore(GetVulkanDeviceManager().GetDeviceChecked(), imageAvailableSemaphore, nullptr);
 
     if (renderFinishedSemaphore != VK_NULL_HANDLE) 
-        vkDestroySemaphore(renderEngine->GetDevice(), renderFinishedSemaphore, nullptr);
+        vkDestroySemaphore(GetVulkanDeviceManager().GetDeviceChecked(), renderFinishedSemaphore, nullptr);
 
     if (inFlightFence != VK_NULL_HANDLE) 
-        vkDestroyFence(renderEngine->GetDevice(), inFlightFence, nullptr);
+        vkDestroyFence(GetVulkanDeviceManager().GetDeviceChecked(), inFlightFence, nullptr);
 
     if (commandPool != VK_NULL_HANDLE) 
-        vkDestroyCommandPool(renderEngine->GetDevice(), commandPool, nullptr);
+        vkDestroyCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), commandPool, nullptr);
 }
 

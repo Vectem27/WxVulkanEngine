@@ -4,7 +4,7 @@
 #include "VulkanRenderer.h"
 #include "VulkanSwapchain.h"
 #include "VulkanCamera.h"
-#include "VulkanRenderTarget.h"
+#include "VulkanShadowMapRenderTarget.h"
 #include "World.h"
 #include "Cube.h"
 #include "CameraComponent.h"
@@ -27,6 +27,10 @@ wxVulkanApp::wxVulkanApp()
 
 bool wxVulkanApp::OnInit()
 {
+    Logger::GetLogger().SetVerbosity(5);
+
+    Log(Info, LogDefault, "Application initialization start");
+
     frame->Show(true);
     
     Bind(wxEVT_IDLE, &wxVulkanApp::onIdle, this);
@@ -48,6 +52,8 @@ bool wxVulkanApp::OnInit()
         }
     });
 
+    Log(Info, LogDefault, "Application initialization finished");
+
     return true;
 }
 
@@ -66,7 +72,9 @@ void wxVulkanApp::onIdle(wxIdleEvent &evt)
 
 int wxVulkanApp::OnExit()
 {
+    Log(Info, LogDefault, "Application shutdown");
     ShutdownVulkan();
+    Log(Info, LogDefault, "Application exit");
     return wxApp::OnExit();
 }
 
@@ -113,13 +121,13 @@ void wxVulkanApp::InitVulkan()
         matInfo.lightingFragmentShader = "shaders/lighting.vert";
         matInfo.lightingVertexShader= "shaders/lighting.vert";
         material->CreatePipelines(
-            vulkanRenderEngine->GetDevice(), 
+            GetVulkanDeviceManager().GetDeviceChecked(), 
             VulkanRenderPassManager::GetInstance()->GetGeometryPass(), 
             matInfo
         );
 
         material->CreateShadowMapPipeline(
-            vulkanRenderEngine->GetDevice(), 
+            GetVulkanDeviceManager().GetDeviceChecked(), 
             VulkanRenderPassManager::GetInstance()->GetShadowPass(), 
             matInfo
         );
@@ -147,6 +155,8 @@ void wxVulkanApp::InitVulkan()
         projLight->SetLightSoftAngle(ToRadians(5.0f));
         li2->AddChild(projLight2);
         projLight2->SetLightColor({0.2f, 0.8f, 0.5f});
+        projLight2->SetLightAngle(ToRadians(15.0f));
+        projLight2->SetLightSoftAngle(ToRadians(15.0f));
 
         camera->SetRelativeTransform(Transform({-5,-2,2}, Rotator::FromEulerDegrees(-10,0,45), {1,1,1}));
         li->SetRelativeTransform(Transform({-6,6,4}, Rotator::FromEulerDegrees(-30,0,-45), {1,1,1}));
@@ -233,14 +243,21 @@ void wxVulkanApp::RenderVulkan()
 
 void wxVulkanApp::ShutdownVulkan()
 {
+    Log(Debug, LogDefault, "Shutdown vulkan");
+
+    Log(Trace, LogDefault, "Destroy cameras");
     camera->Cleanup();
     delete camera;
-
-    delete swapchain;
-    delete renderer;
+    Log(Trace, LogDefault, "Destroy world");
     delete world;
+    Log(Trace, LogDefault, "Destroy swapchain");
+    delete swapchain;
+    Log(Trace, LogDefault, "Destroy renderer");
+    delete renderer;
+    Log(Trace, LogDefault, "Destroy light manager");
     delete lightManager;
 
+    Log(Trace, LogDefault, "Shutdown vulkan render engine");
     if (vulkanRenderEngine)
     {
         vulkanRenderEngine->Shutdown();

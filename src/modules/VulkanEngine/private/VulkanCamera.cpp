@@ -28,7 +28,7 @@ bool VulkanCamera::Init(IRenderEngine* renderEngine, class IRenderTarget* render
     if (renderTarget)
         SetRenderTarget(renderTarget);
 
-    viewBuffer.Create( this->renderEngine->GetDevice(), this->renderEngine->GetPhysicalDevice(), sizeof(ViewProj));
+    viewBuffer.Create(sizeof(ViewProj));
 
     SetCameraTransform(Transform());
     UpdateProjectionMatrix();
@@ -70,7 +70,7 @@ void VulkanCamera::Cleanup()
     // Détruire le descriptor pool
     if (cameraDescriptorPool != VK_NULL_HANDLE) 
     {
-        vkDestroyDescriptorPool(renderEngine->GetDevice(), cameraDescriptorPool, nullptr);
+        vkDestroyDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), cameraDescriptorPool, nullptr);
         cameraDescriptorPool = VK_NULL_HANDLE;
     }
 }
@@ -145,7 +145,7 @@ void VulkanCamera::CreateDescriptorPool()
     poolInfo.pPoolSizes = &poolSize;
     poolInfo.maxSets = 10;
 
-    if (vkCreateDescriptorPool(renderEngine->GetDevice(), &poolInfo, nullptr, &cameraDescriptorPool) != VK_SUCCESS)
+    if (vkCreateDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &cameraDescriptorPool) != VK_SUCCESS)
     {
         throw std::runtime_error("Échec de la création du descriptor pool !");
     }
@@ -155,11 +155,9 @@ void VulkanCamera::CreateDescriptors()
 {
     VkDescriptorSetAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    //allocInfo.descriptorPool = renderEngine->GetDescriptorPool();
     allocInfo.descriptorSetCount = 1;
     allocInfo.pSetLayouts = &renderEngine->GetPipelineManager()->GetCameraDescriptorSetLayout();
-
-    //vkAllocateDescriptorSets(renderEngine->GetDevice(), &allocInfo, &cameraDescriptorSet) != VK_SUCCESS
+    
     if (!renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(&renderEngine->GetPipelineManager()->GetCameraDescriptorSetLayout(), 1, &cameraDescriptorSet))
     {
         throw std::runtime_error("Échec de l'allocation du descriptor set !");
@@ -204,7 +202,7 @@ void VulkanCamera::UpdateViewDataBuffer()
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pBufferInfo = &bufferInfo;
 
-    vkUpdateDescriptorSets(renderEngine->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), 1, &descriptorWrite, 0, nullptr);
 }
 
 #undef GLM_ENABLE_EXPERIMENTAL

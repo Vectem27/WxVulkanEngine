@@ -2,7 +2,7 @@
 #define MESH_H
 
 #include "IVulkanMesh.h"
-#include "UniformBufferObject.h"
+#include "VulkanUniformBuffer.h"
 #include "EngineCore.hpp"
 
 class VulkanRenderEngine;
@@ -34,8 +34,8 @@ protected: // Protected vulkan functions
 
     VulkanRenderEngine* GetVulkanRenderEngine() const { return vulkanRenderEngine; }
     
-    UniformBuffer& GetVulkanMeshBuffer() { return vulkanMeshBuffer; }
-    const UniformBuffer& GetVulkanMeshBuffer() const { return vulkanMeshBuffer; }
+    VulkanUniformBuffer& GetVulkanMeshBuffer() { return vulkanMeshBuffer; }
+    const VulkanUniformBuffer& GetVulkanMeshBuffer() const { return vulkanMeshBuffer; }
     VkDescriptorSet& GetVulkanMeshDescriptorSet() { return vulkanMeshDescriptorSet; } 
     const VkDescriptorSet& GetVulkanMeshDescriptorSet() const { return vulkanMeshDescriptorSet; } 
 
@@ -44,7 +44,7 @@ protected: // Protected vulkan functions
 private: // Vulkan variables
     bool isVulkanInitialized{false};
     VulkanRenderEngine* vulkanRenderEngine{nullptr};
-    UniformBuffer vulkanMeshBuffer;
+    VulkanUniformBuffer vulkanMeshBuffer;
     VkDescriptorSet vulkanMeshDescriptorSet{VK_NULL_HANDLE};
 
 };

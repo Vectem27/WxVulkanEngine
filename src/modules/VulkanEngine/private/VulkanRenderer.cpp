@@ -4,7 +4,7 @@
 #include "IRenderable.h"
 #include "VulkanCamera.h"
 #include "VulkanSwapchain.h"
-#include "VulkanRenderTarget.h"
+#include "VulkanShadowMapRenderTarget.h"
 #include <array>
 #include "IVulkanMesh.h"
 #include "VulkanGlobalLightManager.h"
@@ -19,11 +19,11 @@ VulkanRenderer::VulkanRenderer(VulkanRenderEngine *renderEngine)
     : renderEngine(renderEngine)
 {
     spotlightLightPipeline = new VulkanSpotlightLightPipeline();
-    spotlightLightPipeline->InitPipeline(renderEngine->GetDevice(), renderEngine->GetPipelineManager(),
+    spotlightLightPipeline->InitPipeline(GetVulkanDeviceManager().GetDeviceChecked(), renderEngine->GetPipelineManager(),
         "shaders/fullScreen.vert", "shaders/lighting.frag");
 
     postprocessPipeline = new VulkanPostprocessPipeline();
-    postprocessPipeline->InitPipeline(renderEngine->GetDevice(), renderEngine->GetPipelineManager(),
+    postprocessPipeline->InitPipeline(GetVulkanDeviceManager().GetDeviceChecked(), renderEngine->GetPipelineManager(),
         "shaders/fullScreen.vert", "shaders/postprocess.frag");
 }
 
@@ -41,7 +41,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     uint32_t imageIndex;
     VkSemaphore imageAvailableSemaphore = swapchain->GetImageAvailableSemaphore();
-    auto res = vkAcquireNextImageKHR(renderEngine->GetDevice(), swapchain->GetSwapchain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    auto res = vkAcquireNextImageKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain->GetSwapchain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
         swapchain->Recreate();
@@ -75,8 +75,8 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
         }
     }
 
-    vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
+    vkWaitForFences(GetVulkanDeviceManager().GetDeviceChecked(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(GetVulkanDeviceManager().GetDeviceChecked(), 1, &inFlightFence);
 
 
     // Réinitialise le command buffer
@@ -167,8 +167,8 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
 
     
-    vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
+    vkWaitForFences(GetVulkanDeviceManager().GetDeviceChecked(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(GetVulkanDeviceManager().GetDeviceChecked(), 1, &inFlightFence);
 
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
         throw std::runtime_error("failed to reset command buffer!");
@@ -232,8 +232,8 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     
 
 
-    vkWaitForFences(renderEngine->GetDevice(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(renderEngine->GetDevice(), 1, &inFlightFence);
+    vkWaitForFences(GetVulkanDeviceManager().GetDeviceChecked(), 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(GetVulkanDeviceManager().GetDeviceChecked(), 1, &inFlightFence);
 
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
         throw std::runtime_error("failed to reset command buffer!");
@@ -303,7 +303,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     return true;
 }
 
-bool VulkanRenderer::RenderToShadowMap(VulkanRenderTarget *renderTarget, IRenderable *renderObject, VulkanCamera *light, VkQueue graphicsQueue)
+bool VulkanRenderer::RenderToShadowMap(VulkanShadowMapRenderTarget *renderTarget, IRenderable *renderObject, VulkanCamera *light, VkQueue graphicsQueue)
 {
     if (!renderTarget)
         throw std::invalid_argument("Light render target is invalid");

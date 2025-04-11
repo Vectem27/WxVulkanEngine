@@ -1,6 +1,7 @@
 add_library(EngineCore STATIC
     private/EngineCore.cpp
     private/Quaternion.cpp
+    private/Logger.cpp
 )
 
 target_include_directories(EngineCore 

@@ -7,15 +7,19 @@
 
 #include "VulkanRenderPassManager.h"
 #include "VulkanRenderImageManager.h"
+#include "VulkanTransferManager.h"
 
+
+#include "Logger.h"
 
 
 bool VulkanRenderEngine::Init(void *windowHandle)
 {
     createInstance();
-    deviceManager = new VulkanDeviceManager(instance);
+    VulkanDeviceManager::GetInstance().InitDeviceManager(instance);
+
     createDescriptorPool();
-    pipelineManager = new VulkanPipelineManager(GetDeviceManager()->GetDevice());
+    pipelineManager = new VulkanPipelineManager(GetDeviceManager()->GetDeviceChecked());
 
     PassesInfo passesInfo;
     passesInfo.colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
@@ -24,27 +28,29 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     passesInfo.hdrFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
     VulkanRenderPassManager::GetInstance()->InitRenderPasses(
-        GetDeviceManager()->GetDevice(),
+        GetDeviceManager()->GetDeviceChecked(),
         passesInfo
     );
 
-    VulkanRenderImageManager::GetInstance()->Init(GetDevice(), GetPhysicalDevice());
-
+    VulkanRenderImageManager::GetInstance()->Init(GetVulkanDeviceManager().GetDeviceChecked(), GetVulkanDeviceManager().GetPhysicalDeviceChecked());
+    GetVulkanTransferManager().InitTransfereManager();
 
     return true;
 }
 
-void VulkanRenderEngine::Shutdown() {
-    if (GetDevice() != VK_NULL_HANDLE) 
-        vkDeviceWaitIdle(GetDevice());
+void VulkanRenderEngine::Shutdown() 
+{
+    if (GetVulkanDeviceManager().GetDevice() != VK_NULL_HANDLE) 
+        vkDeviceWaitIdle(GetVulkanDeviceManager().GetDevice());
 
     VulkanRenderPassManager::GetInstance()->Cleanup();
+    GetVulkanTransferManager().Shutdown();
 
     if (descriptorPoolManager)
         delete descriptorPoolManager;
 
     delete pipelineManager;
-    delete deviceManager;
+    VulkanDeviceManager::GetInstance().Shutdown();
 
     if (instance != VK_NULL_HANDLE) 
     {
@@ -92,9 +98,10 @@ void VulkanRenderEngine::createInstance()
     createInfo.ppEnabledExtensionNames = extensions.data();
     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 
-    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
+    if (auto result = vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
     {
-        throw std::runtime_error("failed to create Vulkan instance!");
+        Log(Critical, "Vulkan", "Failed to create instance, result code : %d", result);
+        throw std::runtime_error("failed to create Vulkan instance");
     }
 }
 

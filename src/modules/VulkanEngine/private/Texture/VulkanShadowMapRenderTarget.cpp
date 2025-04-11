@@ -1,48 +1,50 @@
-#include "VulkanRenderTarget.h"
+#include "VulkanShadowMapRenderTarget.h"
 #include "VulkanRenderEngine.h"
 
-VulkanRenderTarget::VulkanRenderTarget(VulkanRenderEngine *renderEngine, uint32_t width, uint32_t height, VkFormat format)
+#include "VulkanRenderPassManager.h"
+#include "VulkanDeviceManager.h"
+
+VulkanShadowMapRenderTarget::VulkanShadowMapRenderTarget(VulkanRenderEngine *renderEngine, uint32_t width, uint32_t height, VkFormat format)
     : renderEngine(renderEngine), width(width), height(height), format(format) 
 {
-    CreateImage();
-    CreateImageView();
+    depthTexture.InitTexture(
+        width, height, format, 
+        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_IMAGE_ASPECT_DEPTH_BIT
+    );
+
     CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
     CreateCommandBuffer();
-    TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+    //TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
 
-VulkanRenderTarget::~VulkanRenderTarget()
+VulkanShadowMapRenderTarget::~VulkanShadowMapRenderTarget()
 {
-    vkDestroyFramebuffer(renderEngine->GetDevice(), framebuffer, nullptr);
-    vkDestroyImageView(renderEngine->GetDevice(), imageView, nullptr);
-    vkDestroyImage(renderEngine->GetDevice(), image, nullptr);
-    vkFreeMemory(renderEngine->GetDevice(), imageMemory, nullptr);
-    vkDestroyCommandPool(renderEngine->GetDevice(), commandPool, nullptr);
+    vkDestroyFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), framebuffer, nullptr);
+    vkDestroyCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), commandPool, nullptr);
 
 }
 
-void VulkanRenderTarget::CreateFramebuffer(VkRenderPass renderPass)
+void VulkanShadowMapRenderTarget::CreateFramebuffer(VkRenderPass renderPass)
 {
-    this->renderPass = renderPass;
-
     VkFramebufferCreateInfo framebufferInfo{};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = renderPass;
+    framebufferInfo.renderPass = GetVulkanRenderPassManager().GetShadowPass();
     framebufferInfo.attachmentCount = 1;
-    framebufferInfo.pAttachments = &imageView;
+    framebufferInfo.pAttachments = &GetImageView();
     framebufferInfo.width = width;
     framebufferInfo.height = height;
     framebufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(renderEngine->GetDevice(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS) 
+    if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS) 
     {
         throw std::runtime_error("Failed to create render target framebuffer.");
     }
 }
-
-void VulkanRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) 
+/*
+void VulkanDepthRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) 
 {
-    VkDevice device = renderEngine->GetDevice();
+    VkDevice device = GetVulkanDeviceManager().GetDeviceChecked();
     
     // 1. Vérification de la taille requise
     const size_t requiredSize = width * height * sizeof(uint32_t); // D24S8 = 4 bytes par pixel
@@ -220,81 +222,20 @@ void VulkanRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size)
     
     vkUnmapMemory(device, stagingMemory);
 }
-
-void VulkanRenderTarget::CreateImage()
-{
-    VkImageCreateInfo imageInfo{};
-    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    imageInfo.imageType = VK_IMAGE_TYPE_2D;
-    imageInfo.extent = {width, height, 1};
-    imageInfo.mipLevels = 1;
-    imageInfo.arrayLayers = 1;
-    imageInfo.format = format;
-    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    // Modification des usages pour une shadow map
-    imageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    if (vkCreateImage(renderEngine->GetDevice(), &imageInfo, nullptr, &image) != VK_SUCCESS) 
-    {
-        throw std::runtime_error("Failed to create depth image.");
-    }
-
-    VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(renderEngine->GetDevice(), image, &memRequirements);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = renderEngine->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-    if (vkAllocateMemory(renderEngine->GetDevice(), &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) 
-    {
-        throw std::runtime_error("Failed to allocate render target image memory.");
-    }
-
-    vkBindImageMemory(renderEngine->GetDevice(), image, imageMemory, 0);
-}
-
-void VulkanRenderTarget::CreateImageView()
-{
-    VkImageViewCreateInfo viewInfo{};
-    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    viewInfo.image = image;
-    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    viewInfo.format = format;
-    // Correction de l'aspect mask
-    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-    // Ajout du stencil si nécessaire
-    if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT) {
-        viewInfo.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-    }
-    viewInfo.subresourceRange.baseMipLevel = 0;
-    viewInfo.subresourceRange.levelCount = 1;
-    viewInfo.subresourceRange.baseArrayLayer = 0;
-    viewInfo.subresourceRange.layerCount = 1;
-
-    if (vkCreateImageView(renderEngine->GetDevice(), &viewInfo, nullptr, &imageView) != VK_SUCCESS) 
-    {
-        throw std::runtime_error("Failed to create depth image view.");
-    }
-}
-
-void VulkanRenderTarget::CreateCommandPool(uint32_t graphicsQueueFamilyIndex)
+*/
+void VulkanShadowMapRenderTarget::CreateCommandPool(uint32_t graphicsQueueFamilyIndex)
 {
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex = graphicsQueueFamilyIndex;
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    if (vkCreateCommandPool(renderEngine->GetDevice(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &commandPool) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool!");
     }
 }
 
-void VulkanRenderTarget::CreateCommandBuffer()
+void VulkanShadowMapRenderTarget::CreateCommandBuffer()
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -302,7 +243,7 @@ void VulkanRenderTarget::CreateCommandBuffer()
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 1;
 
-    if (vkAllocateCommandBuffers(renderEngine->GetDevice(), &allocInfo, &commandBuffer) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, &commandBuffer) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }
@@ -313,13 +254,13 @@ void VulkanRenderTarget::CreateCommandBuffer()
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 1;
 
-    if (vkAllocateCommandBuffers(renderEngine->GetDevice(), &allocInfo, &transferCommandBuffer) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, &transferCommandBuffer) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }
 }
-
-void VulkanRenderTarget::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
+/*
+void VulkanDepthRenderTarget::TransitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout)
 {
     if (vkResetCommandBuffer(commandBuffer, 0) != VK_SUCCESS) 
     {
@@ -382,3 +323,4 @@ void VulkanRenderTarget::TransitionImageLayout(VkImageLayout oldLayout, VkImageL
     vkQueueSubmit(renderEngine->GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(renderEngine->GetDeviceManager()->GetGraphicsQueue());
 }
+*/

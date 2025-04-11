@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 
 class VulkanRenderEngine;
-class VulkanRenderTarget;
+class VulkanShadowMapRenderTarget;
 class VulkanSwapchain;
 class VulkanCamera;
 class VulkanLight;
@@ -21,7 +21,7 @@ public:
     bool RenderToSwapchain( VulkanSwapchain* swapchain , IRenderable* renderObject, 
         VulkanCamera* camera, VulkanGlobalLightManager* lightManager, VkQueue graphicsQueue, VkQueue presentQueue);
 
-    bool RenderToShadowMap( VulkanRenderTarget* renderTarget ,IRenderable* renderObject, 
+    bool RenderToShadowMap( VulkanShadowMapRenderTarget* renderTarget ,IRenderable* renderObject, 
         VulkanCamera* light, VkQueue graphicsQueue);
 
 protected:

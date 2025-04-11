@@ -1,7 +1,11 @@
 #include "Mesh.h"
 
 #include "VulkanRenderEngine.h"
-#include "Vertex.h"
+
+struct ObjectData
+{
+    alignas(16) Matrix4f model;
+};
 
 Mesh::~Mesh()
 {
@@ -28,7 +32,7 @@ void Mesh::InitVulkanMesh(VulkanRenderEngine *vulkanRenderEngine)
         throw std::runtime_error("Failed to allocate descriptor set !");
 
 
-    GetVulkanMeshBuffer().Create(vulkanRenderEngine->GetDevice(), vulkanRenderEngine->GetPhysicalDevice(), sizeof(ObjectData));
+    GetVulkanMeshBuffer().Create(sizeof(ObjectData));
 
     UpdateVulkanMeshBuffer();
 
@@ -55,5 +59,5 @@ void Mesh::UpdateVulkanMeshBuffer()
     descriptorWrite.descriptorCount = 1;
     descriptorWrite.pBufferInfo = &bufferInfo;
 
-    vkUpdateDescriptorSets(GetVulkanRenderEngine()->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+    vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), 1, &descriptorWrite, 0, nullptr);
 }

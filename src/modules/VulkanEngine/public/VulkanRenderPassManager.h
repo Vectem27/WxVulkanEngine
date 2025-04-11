@@ -55,6 +55,7 @@ private:
     static VulkanRenderPassManager* instance;
 };
 
+VulkanRenderPassManager& GetVulkanRenderPassManager();
 
 
 #endif // VULKANRENDERPASSMANAGER_H

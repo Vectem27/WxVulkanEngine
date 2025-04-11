@@ -16,12 +16,7 @@ void VulkanSpotlightLightManager::InitLightManager(VulkanRenderEngine *vulkanRen
     CreateDescriptorPool();
     CreateDescriptorSets();
 
-    lightDataBuffer.Create(
-        vulkanRenderEngine->GetDevice(),
-        vulkanRenderEngine->GetPhysicalDevice(),
-        sizeof(LightData) * GetMaxNumOfLights()
-    );
-
+    lightDataBuffer.Create( sizeof(LightData) * GetMaxNumOfLights());
     
     isInitialized = true;
 }
@@ -99,7 +94,7 @@ void VulkanSpotlightLightManager::Update()
         .pImageInfo = imageInfo.data(),
     });
 
-    vkUpdateDescriptorSets(GetRenderEngine()->GetDevice(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
+    vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), descriptorWrites.size(), descriptorWrites.data(), 0, nullptr);
 }
 
 void VulkanSpotlightLightManager::Bind(VkCommandBuffer commandBuffer) const
@@ -126,7 +121,7 @@ void VulkanSpotlightLightManager::CreateDescriptorPool()
     poolInfo.pPoolSizes = poolSizes.data();
     poolInfo.maxSets = 2;
 
-    if (vkCreateDescriptorPool(GetRenderEngine()->GetDevice(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
+    if (vkCreateDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
         throw std::runtime_error("Failed to create spotlight manager descriptor pool");
 }
 
@@ -140,7 +135,7 @@ void VulkanSpotlightLightManager::CreateDescriptorSets()
     allocInfo.descriptorPool = descriptorPool;
 
     VkResult allocResult = vkAllocateDescriptorSets(
-        GetRenderEngine()->GetDevice(), &allocInfo, &descriptorSet
+        GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, &descriptorSet
     );
     
     if (allocResult != VK_SUCCESS)

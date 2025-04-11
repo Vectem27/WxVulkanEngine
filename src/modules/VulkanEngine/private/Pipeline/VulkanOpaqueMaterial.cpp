@@ -1,7 +1,6 @@
 #include "Pipeline/VulkanOpaqueMaterial.h"
 
 #include "Pipeline/VulkanPipelineManager.h"
-#include "Vertex.h"
 
 #include <stdexcept>
 #include <array>

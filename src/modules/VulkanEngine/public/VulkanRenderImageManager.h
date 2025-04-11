@@ -12,8 +12,8 @@ public:
     static VulkanRenderImageManager* GetInstance();
     void Init(VkDevice device, VkPhysicalDevice physicalDevice);
 
-    void CreateImage(VkImage &depthImage, VkDeviceMemory& depthImageMemory, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags flags) const;
-    void CreateImageView(VkImageView &imageView, VkImage &image, VkFormat format, VkImageAspectFlags flags) const;
+    void CreateImage(VkImage &image, VkDeviceMemory& imageMemory, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usageFlags) const;
+    void CreateImageView(VkImageView &imageView, VkImage &image, VkFormat format, VkImageAspectFlags aspectFlags) const;
 
     void CreateColorImage(VkImage &depthImage, VkDeviceMemory& depthImageMemory, uint32_t width, uint32_t height) const;
     void CreateColorImageView(VkImageView &depthImageView, VkImage &depthImage) const;
@@ -27,5 +27,7 @@ private:
 
     uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 };
+
+VulkanRenderImageManager& GetVulkanImageManager();
 
 #endif // VULKANRENDERIMAGEMANAGER_H

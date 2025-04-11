@@ -7,7 +7,7 @@
 
 class VulkanCamera;
 class VulkanRenderEngine;
-class VulkanRenderTarget;
+class VulkanShadowMapRenderTarget;
 
 struct ProjectorLightData
 {
@@ -59,7 +59,7 @@ private:
     ProjectorLightData data{};
 public:
     VulkanCamera* camera;
-    VulkanRenderTarget* renderTarget;
+    VulkanShadowMapRenderTarget* renderTarget;
 
     static const VulkanLightType lightType;
 };

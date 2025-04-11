@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include "Logger.h"
+
 #ifdef _WIN32
     #include <windows.h>
     #include <vulkan/vulkan_win32.h>
@@ -13,13 +15,31 @@
 VulkanSurface::VulkanSurface(VkInstance instance, const VulkanDeviceManager *deviceManager, void *windowHandle)
     : instance(instance)
 {
+    if (instance == VK_NULL_HANDLE)
+    {
+        Log(Error, "Vulkan", "Failed to create surface, instance is null");
+        throw std::invalid_argument("Failed to create vulkan surface, instance is null");
+    }
+
+    if (!deviceManager)
+    {
+        Log(Error, "Vulkan", "Failed to create surface, device manage is null");
+        throw std::invalid_argument("Failed to create vulkan surface, device manage is null");
+    }
+
+    if (!windowHandle)
+    {
+        Log(Error, "Vulkan", "Failed to create surface, window handle is null");
+        throw std::invalid_argument("Failed to create vulkan surface, window handle is null");
+    }
+
     CreateSurface(instance, windowHandle);
     FindPresentQueue(deviceManager);
 }
 
 VulkanSurface::~VulkanSurface()
 {
-    if (surface != VK_NULL_HANDLE) 
+    if (surface != VK_NULL_HANDLE && instance != VK_NULL_HANDLE) 
     {
         vkDestroySurfaceKHR(instance, surface, nullptr);
     }
@@ -33,8 +53,9 @@ void VulkanSurface::CreateSurface(VkInstance instance, void *windowHandle)
     createInfo.hwnd = static_cast<HWND>(windowHandle);
     createInfo.hinstance = GetModuleHandle(nullptr);
 
-    if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) 
+    if (auto res = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) 
     {
+        Log(Error, "Vulkan", "Failed to create Win32 surface, result code : %d", res);
         throw std::runtime_error("Failed to create Win32 Vulkan surface!");
     }
 #elif defined(__linux__)
@@ -44,8 +65,9 @@ void VulkanSurface::CreateSurface(VkInstance instance, void *windowHandle)
     createInfo.connection = static_cast<xcb_connection_t*>(windowHandle);
     createInfo.window = static_cast<xcb_window_t>(windowHandle);
 
-    if (vkCreateXcbSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) 
+    if (auto res = vkCreateXcbSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) 
     {
+        Log(Error, "Vulkan", "Failed to create Linux surface, result code : %d", res);
         throw std::runtime_error("Failed to create XCB Vulkan surface!");
     }
 #endif
@@ -68,10 +90,11 @@ void VulkanSurface::FindPresentQueue(const VulkanDeviceManager *deviceManager)
         if (presentSupport) 
         {
             presentQueueFamilyIndex = i;
-            vkGetDeviceQueue(deviceManager->GetDevice(), i, 0, &presentQueue);
+            vkGetDeviceQueue(GetVulkanDeviceManager().GetDeviceChecked(), i, 0, &presentQueue);
             return;
         }
     }
 
+    Log(Error, "Vulkan", "Failed to find present queue");
     throw std::runtime_error("Failed to find a suitable present queue!");
 }

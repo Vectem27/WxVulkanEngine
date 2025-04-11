@@ -313,3 +313,8 @@ void VulkanRenderPassManager::InitRenderPasses(VkDevice device, PassesInfo infos
     InitLightingPass(device);
     InitPostprocessPass(device);
 }
+
+VulkanRenderPassManager& GetVulkanRenderPassManager()
+{
+    return *VulkanRenderPassManager::GetInstance();
+}

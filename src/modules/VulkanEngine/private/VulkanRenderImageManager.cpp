@@ -239,3 +239,8 @@ uint32_t VulkanRenderImageManager::FindMemoryType(uint32_t typeFilter, VkMemoryP
 
     throw std::runtime_error("failed to find suitable memory type!");
 }
+
+VulkanRenderImageManager &GetVulkanImageManager()
+{
+    return *VulkanRenderImageManager::GetInstance();
+}

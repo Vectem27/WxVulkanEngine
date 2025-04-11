@@ -7,8 +7,7 @@
 #include "Matrix.hpp"
 
 #include "IVulkanLightManager.h"
-#include "ShaderStorageBuffer.h"
-#include "UniformBufferObject.h"
+#include "VulkanUniformBuffer.h"
 
 
 
@@ -69,9 +68,7 @@ private:
 
     Array<const VulkanSpotlightLight*> lights;
 
-    UniformBuffer lightDataBuffer;
-
-    
+    VulkanUniformBuffer lightDataBuffer;
 };
 
 #endif // VULKANSPOTLIGHTLIGHTMANAGER_H

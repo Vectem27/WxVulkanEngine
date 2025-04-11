@@ -1,27 +1,9 @@
-add_library(VulkanEngine STATIC 
-    private/VulkanCamera.cpp 
-    private/VulkanRenderEngine.cpp
-    private/VulkanSurface.cpp 
-    private/VulkanRenderTarget.cpp 
-    private/VulkanSwapchain.cpp 
-    private/VulkanRenderer.cpp
-    private/VulkanDeviceManager.cpp 
-    private/VulkanSurface.cpp
-    private/VulkanDescriptorPoolManager.cpp
-    private/VulkanRenderPassManager.cpp
-    private/VulkanRenderImageManager.cpp
-    private/Pipeline/PipelineUtils.h
-    private/Pipeline/VulkanPipelineManager.cpp
-    private/Pipeline/VulkanOpaqueMaterial.cpp
+file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 
-    private/Pipeline/VulkanSpotlightLightPipeline.cpp
-    private/Pipeline/VulkanPostprocessPipeline.cpp
-    
-    public/IVulkanMesh.h
-    #public/IVulkanMaterial.h
-    private/Light/VulkanSpotlightLight.cpp
-    private/Light/VulkanGlobalLightManager.cpp
-    private/Light/LightManagers/VulkanSpotlightLightManager.cpp
+add_library(VulkanEngine STATIC 
+    ${SRC_FILES}
+    ${HEADER_FILES}
 )
 
 
@@ -35,6 +17,15 @@ target_include_directories(VulkanEngine
 
     PUBLIC public/Pipeline
     PRIVATE private/Pipeline
+    
+    PRIVATE private/Descriptor
+    PUBLIC public/Descriptor
+
+    PUBLIC public/Buffer
+    PRIVATE private/Buffer
+
+    PUBLIC public/Texture
+    PRIVATE private/Texture
 )
 
 target_include_directories(VulkanEngine PUBLIC ${Vulkan_INCLUDE_DIRS})

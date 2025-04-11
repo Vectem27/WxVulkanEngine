@@ -11,13 +11,13 @@ VulkanDescriptorPoolManager::~VulkanDescriptorPoolManager()
 {
     for (const auto& pool : descriptorPools)
     {
-        VkResult result = vkResetDescriptorPool(renderEngine->GetDevice(), pool, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
+        VkResult result = vkResetDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), pool, VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT);
         if (result != VK_SUCCESS) 
         {
             std::cerr << "Failed to free descriptor set!" << std::endl;
         }
 
-        vkDestroyDescriptorPool(renderEngine->GetDevice(), pool, nullptr);
+        vkDestroyDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), pool, nullptr);
     }
 
     descriptorPools.clear();
@@ -42,7 +42,7 @@ VkDescriptorPool VulkanDescriptorPoolManager::CreateNewDescriptorPool()
     poolInfo.maxSets = 1000; // Nombre maximal de descriptor sets dans ce pool
 
     VkDescriptorPool pool;
-    vkCreateDescriptorPool(renderEngine->GetDevice(), &poolInfo, nullptr, &pool);
+    vkCreateDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &pool);
     descriptorPools.push_back(pool);
     return pool;
 }
@@ -61,7 +61,7 @@ bool VulkanDescriptorPoolManager::AllocateDescriptorSets(const VkDescriptorSetLa
     for (const auto& pool : descriptorPools)
     {
         allocInfo.descriptorPool = pool;
-        result = vkAllocateDescriptorSets(renderEngine->GetDevice(), &allocInfo, descriptorSets);
+        result = vkAllocateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, descriptorSets);
     
         if (result == VK_SUCCESS)
         {
@@ -73,7 +73,7 @@ bool VulkanDescriptorPoolManager::AllocateDescriptorSets(const VkDescriptorSetLa
     if (!found)
     {
         allocInfo.descriptorPool = CreateNewDescriptorPool();
-        result = vkAllocateDescriptorSets(renderEngine->GetDevice(), &allocInfo, descriptorSets);
+        result = vkAllocateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, descriptorSets);
         return result == VK_SUCCESS;
     }
 

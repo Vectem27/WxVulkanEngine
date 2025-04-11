@@ -2,10 +2,16 @@
 #define CUBEMESH_H
 
 #include "Mesh.h"
-#include "Vertex.h"
 #include <vector>
 #include "Pipeline/IVulkanMaterial.h"
 #include "VulkanRenderEngine.h"
+
+#include "VulkanVertexBuffer.h"
+#include "VulkanIndexBuffer.h"
+#include "VulkanStagingBuffer.h"
+#include "VulkanTransferManager.h"
+
+#include "VulkanTexture.h"
 
 class CubeMesh : public Mesh
 {
@@ -69,28 +75,27 @@ public:
             20, 21, 22, 23, 22, 21,    // Y-
         };
 
+
         // Définir la taille des buffers
         VkDeviceSize vertexBufferSize = sizeof(vertices[0]) * vertices.size();
         VkDeviceSize indexBufferSize = sizeof(indices[0]) * indices.size();
 
-        // Créer le buffer de vertex
-        GetVulkanRenderEngine()->CreateBuffer(vertexBufferSize, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer, vertexBufferMemory);
+        VulkanStagingBuffer sBuffer;
+        sBuffer.Create(vertexBufferSize);
+        sBuffer.Update(vertices.data());
 
-        // Copier les données des vertices dans le buffer
-        void* vertexData;
-        vkMapMemory(GetVulkanRenderEngine()->GetDevice(), vertexBufferMemory, 0, vertexBufferSize, 0, &vertexData);
-        memcpy(vertexData, vertices.data(), (size_t)vertexBufferSize);
-        vkUnmapMemory(GetVulkanRenderEngine()->GetDevice(), vertexBufferMemory);
+        vertexBuffer.Create(vertexBufferSize);
 
-        // Créer le buffer d'index
-        GetVulkanRenderEngine()->CreateBuffer(indexBufferSize, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBuffer, indexBufferMemory);
+        GetVulkanTransferManager().CopyBuffer(sBuffer.GetBuffer(), vertexBuffer.GetBuffer(), sBuffer.GetBufferSize());
 
-        // Copier les données des indices dans le buffer
-        void* indexData;
-        vkMapMemory(GetVulkanRenderEngine()->GetDevice(), indexBufferMemory, 0, indexBufferSize, 0, &indexData);
-        memcpy(indexData, indices.data(), (size_t)indexBufferSize);
-        vkUnmapMemory(GetVulkanRenderEngine()->GetDevice(), indexBufferMemory);
+        sBuffer.Cleanup();
+        
+        sBuffer.Create(indexBufferSize);
+        sBuffer.Update(indices.data());
 
+        indexBuffer.Create(indexBufferSize);
+
+        GetVulkanTransferManager().CopyBuffer(sBuffer.GetBuffer(), indexBuffer.GetBuffer(), sBuffer.GetBufferSize());
     }
     
     virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) override
@@ -102,8 +107,8 @@ public:
 
         VkDeviceSize offset = 0;
 
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer.GetBuffer(), &offset);
+        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
     }
 
@@ -112,12 +117,8 @@ public:
         this->material = material;
     }
 private:
-
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    VkBuffer indexBuffer;
-    VkDeviceMemory indexBufferMemory;
+    VulkanVertexBuffer vertexBuffer;
+    VulkanIndexBuffer indexBuffer;
 
     std::vector<uint32_t> indices;
     std::vector<class Vertex> vertices;
