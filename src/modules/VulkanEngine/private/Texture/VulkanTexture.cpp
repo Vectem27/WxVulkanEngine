@@ -35,18 +35,19 @@ void VulkanTexture::Cleanup() noexcept
 {
     try
     {
-        if (image != VK_NULL_HANDLE)
-        vkDestroyImage(GetVulkanDeviceManager().GetDeviceChecked(), image, nullptr);
-        if (imageMemory != VK_NULL_HANDLE)
-            vkFreeMemory(GetVulkanDeviceManager().GetDeviceChecked(), imageMemory, nullptr);
+        auto device = GetVulkanDeviceManager().GetDeviceChecked();
+
         if (imageView != VK_NULL_HANDLE)
-            vkDestroyImageView(GetVulkanDeviceManager().GetDeviceChecked(), imageView, nullptr);
+            vkDestroyImageView(device, imageView, nullptr);
+        if (image != VK_NULL_HANDLE)
+            vkDestroyImage(device, image, nullptr);
+        if (imageMemory != VK_NULL_HANDLE)
+            vkFreeMemory(device, imageMemory, nullptr);
     }
     catch(...)
     {
         Log(Warning, "Vulkan", "Failed to cleanup texture");
-    }
-    
+    }   
     
     image = VK_NULL_HANDLE;
     imageMemory = VK_NULL_HANDLE;
