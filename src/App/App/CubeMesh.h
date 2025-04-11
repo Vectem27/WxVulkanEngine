@@ -112,6 +112,11 @@ public:
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
     }
 
+    virtual void DrawVulkanMeshForShadowMap(VkCommandBuffer commandBuffer) override
+    {
+        DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
+    }
+
     void SetMaterial(IVulkanMaterial *material)
     {
         this->material = material;
