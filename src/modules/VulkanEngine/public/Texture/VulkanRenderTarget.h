@@ -16,7 +16,7 @@ public:
     void Cleanup() noexcept;
 
 public: // IVulkanRenderTarget Interface
-    virtual void StartRendering() = 0;
+    virtual void StartRendering() {}
     virtual uint32_t GetWidth() const override { return width; }
     virtual uint32_t GetHeight() const override { return height; }
 
@@ -31,6 +31,14 @@ public: // Lighting
 public: // Post-process
     VkFramebuffer& GetPostprocessFrameBuffer() { return postprocessFrameBuffer; }
     VkFramebuffer GetPostprocessFrameBuffer() const { return postprocessFrameBuffer; }
+
+public:
+    VkImageView GetBaseColorImageView() const { return baseColorTexture.GetImageView(); }
+    VkImageView GetDepthStencilImageView() const { return depthStencilTexture.GetImageView(); }
+    VkImageView GetPositionImageView() const { return positionTexture.GetImageView(); }
+    VkImageView GetNormalImageView() const { return normalTexture.GetImageView(); }
+    VkImageView GetLightingImageView() const { return lightingTexture.GetImageView(); }
+    VkImageView GetPostprocessImageView() const { return postprocessTexture.GetImageView(); }
 private:
     void CreateFrameBuffer();
 private:
