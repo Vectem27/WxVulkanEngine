@@ -61,14 +61,14 @@ void VulkanRenderTarget::Init(uint32_t width, uint32_t height)
 
 void VulkanRenderTarget::Cleanup() noexcept
 {
+    CleanupFrameBuffer();
+
     baseColorTexture.Cleanup();
     depthStencilTexture.Cleanup();
     normalTexture.Cleanup();
     positionTexture.Cleanup();
     lightingTexture.Cleanup();
     postprocessTexture.Cleanup();
-
-    CleanupFrameBuffer();
 }
 
 void VulkanRenderTarget::CleanupFrameBuffer() noexcept
@@ -166,7 +166,7 @@ void VulkanRenderTarget::CreateFrameBuffer()
     framebufferInfo.height = GetHeight();
     framebufferInfo.layers = 1;
 
-    vkCreateFramebuffer(
+    result = vkCreateFramebuffer(
         GetVulkanDeviceManager().GetDeviceChecked(), 
         &framebufferInfo, nullptr, &GetPostprocessFrameBuffer()
     );
