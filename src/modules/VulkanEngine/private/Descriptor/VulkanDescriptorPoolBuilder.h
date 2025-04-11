@@ -24,6 +24,7 @@ public:
     void Reset()
     {
         maxSets = 0;
+        allowFreeDescriptorSet = false;
         poolSizes.clear();
     }
 
@@ -38,8 +39,13 @@ public:
         if (allowFreeDescriptorSet)
             poolInfo.flags |= VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
-        VkDescriptorPool pool;
-        vkCreateDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &pool);
+        VkDescriptorPool pool{VK_NULL_HANDLE};
+        VkResult result = vkCreateDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &pool);
+        if (result != VK_SUCCESS)
+        {
+            Log(Error, "Vulkan", "Failed to build descriptor pool, result code : %d", result);
+            throw std::runtime_error("Failed to build descriptor pool");
+        }
         return pool;
     }
 
