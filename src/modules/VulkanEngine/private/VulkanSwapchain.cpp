@@ -187,17 +187,15 @@ void VulkanSwapchain::CreateSwapchain()
     swapchainImageViews.clear();
     swapchainImages.resize(imageCount);
     swapchainImageViews.resize(imageCount);
-
-    for (auto& view : swapchainImageViews)
-        view = VK_NULL_HANDLE;
-    for (auto& img : swapchainImages)
-        img = VK_NULL_HANDLE;
+    renderTargets.resize(imageCount);
 
     vkGetSwapchainImagesKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, &imageCount, swapchainImages.data());
 
     
     for (int i = 0; i < imageCount; ++i)
     {
+        renderTargets[i].Init(GetWidth(), GetHeight());
+
         GetVulkanImageManager().CreateImageView(
             swapchainImageViews[i],
             swapchainImages[i],
@@ -233,10 +231,14 @@ void VulkanSwapchain::CreateFramebuffer()
     {
         std::vector<VkImageView> attachments = 
         {
-            GetImagesData(BufferType::BASECOLOR).imageViews[i], 
-            GetImagesData(BufferType::DEPTHSTENCIL).imageViews[i],
-            GetImagesData(BufferType::NORMAL).imageViews[i],
-            GetImagesData(BufferType::POSITION).imageViews[i]
+            //GetImagesData(BufferType::BASECOLOR).imageViews[i], 
+            //GetImagesData(BufferType::DEPTHSTENCIL).imageViews[i],
+            //GetImagesData(BufferType::NORMAL).imageViews[i],
+            //GetImagesData(BufferType::POSITION).imageViews[i],
+            renderTargets[i].GetBaseColorImageView(),
+            renderTargets[i].GetDepthStencilImageView(),
+            renderTargets[i].GetNormalImageView(),
+            renderTargets[i].GetPositionImageView(),
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -255,7 +257,8 @@ void VulkanSwapchain::CreateFramebuffer()
 
         std::vector<VkImageView> lightingAttachments = 
         {
-            GetImagesData(BufferType::LIGHTING).imageViews[i]
+            //GetImagesData(BufferType::LIGHTING).imageViews[i]
+            renderTargets[i].GetLightingImageView()
         };
 
         framebufferInfo={};
@@ -313,19 +316,22 @@ void VulkanSwapchain::UpdateGBufferDescriptorSet()
     // Préparez les informations d'image pour chaque attachement
     VkDescriptorImageInfo positionInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::POSITION).imageViews[renderingImageIndex], // Vue de votre texture de position
+        //.imageView = GetImagesData(BufferType::POSITION).imageViews[renderingImageIndex], // Vue de votre texture de position
+        .imageView = renderTargets[renderingImageIndex].GetPositionImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo normalInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::NORMAL).imageViews[renderingImageIndex], // Vue de votre texture de normales
+        //.imageView = GetImagesData(BufferType::NORMAL).imageViews[renderingImageIndex], // Vue de votre texture de normales
+        .imageView = renderTargets[renderingImageIndex].GetNormalImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo baseColorInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture d'albedo
+        //.imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture d'albedo
+        .imageView = renderTargets[renderingImageIndex].GetBaseColorImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
@@ -367,13 +373,15 @@ void VulkanSwapchain::UpdatePostprocessDescriptorSet()
 {
     VkDescriptorImageInfo colorInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture de position
+        //.imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture de position
+        .imageView = renderTargets[renderingImageIndex].GetBaseColorImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo lightingInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::LIGHTING).imageViews[renderingImageIndex], // Vue de votre texture de position
+        //.imageView = GetImagesData(BufferType::LIGHTING).imageViews[renderingImageIndex], // Vue de votre texture de position
+        .imageView = renderTargets[renderingImageIndex].GetLightingImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
@@ -427,6 +435,9 @@ void VulkanSwapchain::CreateCommandBuffers()
 
 void VulkanSwapchain::Cleanup()
 {
+    for (auto& rt : renderTargets)
+        rt.Cleanup();
+
     // Détruire les framebuffers
     for (auto& framebuffer : framebuffers) 
     {

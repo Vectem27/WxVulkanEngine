@@ -8,6 +8,7 @@
 
 class VulkanRenderTarget : public IVulkanRenderTarget
 {
+public:
     VulkanRenderTarget() = default;
     virtual ~VulkanRenderTarget() {Cleanup();}
 public:

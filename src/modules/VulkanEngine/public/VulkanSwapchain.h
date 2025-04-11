@@ -8,6 +8,7 @@
 
 #include "IRenderTarget.h"
 #include "IVulkanRenderTarget.h"
+#include "VulkanRenderTarget.h"
 
 enum BufferType
 {
@@ -142,6 +143,8 @@ private:
     std::vector<VkFramebuffer> framebuffers;
     std::vector<VkFramebuffer> lightingFramebuffers;
     std::vector<VkFramebuffer> postprocessFramebuffers;
+
+    std::vector<VulkanRenderTarget> renderTargets;
 
     std::vector<VkImage> swapchainImages;
     std::vector<VkImageView> swapchainImageViews;
