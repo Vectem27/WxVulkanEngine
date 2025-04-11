@@ -1,5 +1,5 @@
-#ifndef VULKANRENDERTARGET_H
-#define VULKANRENDERTARGET_H
+#ifndef VULKANSHADOWMAPRENDERTARGET_H
+#define VULKANSHADOWMAPRENDERTARGET_H
 
 #include <vulkan/vulkan.h>
 #include "IRenderTarget.h"
@@ -42,4 +42,4 @@ private:
     VulkanTexture depthTexture;
 };
 
-#endif // VULKANRENDERTARGET_H
+#endif // VULKANSHADOWMAPRENDERTARGET_H
