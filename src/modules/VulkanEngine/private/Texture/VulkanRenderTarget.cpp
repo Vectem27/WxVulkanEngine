@@ -68,6 +68,11 @@ void VulkanRenderTarget::Cleanup() noexcept
     lightingTexture.Cleanup();
     postprocessTexture.Cleanup();
 
+    CleanupFrameBuffer();
+}
+
+void VulkanRenderTarget::CleanupFrameBuffer() noexcept
+{
     try
     {
         if (geometryFrameBuffer != VK_NULL_HANDLE) 
@@ -83,10 +88,16 @@ void VulkanRenderTarget::Cleanup() noexcept
     {
         Log(Warning, "Vulkan", "Failed to cleanup render target");
     }
+
+    geometryFrameBuffer = VK_NULL_HANDLE;
+    lightingFrameBuffer = VK_NULL_HANDLE;
+    postprocessFrameBuffer = VK_NULL_HANDLE;
 }
 
 void VulkanRenderTarget::CreateFrameBuffer()
 {
+    CleanupFrameBuffer();
+
     std::vector<VkImageView> attachments = 
     {
         baseColorTexture.GetImageView(), 
