@@ -34,6 +34,9 @@ public:
         poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
         poolInfo.pPoolSizes = poolSizes.data();
         poolInfo.maxSets = maxSets;
+        
+        if (allowFreeDescriptorSet)
+            poolInfo.flags |= VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
         VkDescriptorPool pool;
         vkCreateDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &pool);
@@ -41,36 +44,36 @@ public:
     }
 
     VulkanDescriptorPoolBuilder& AddUniformBuffer(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, count);}
 
     VulkanDescriptorPoolBuilder& AddUniformBufferDynamic(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, count);}
 
     VulkanDescriptorPoolBuilder& AddStorageBuffer(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, count);}
 
     VulkanDescriptorPoolBuilder& AddStorageBufferDynamic(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, count);}
 
     VulkanDescriptorPoolBuilder& AddSampledImage(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, count); }
 
     VulkanDescriptorPoolBuilder& AddCombinedImageSampler(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, count); }
 
     VulkanDescriptorPoolBuilder& AddSampler(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_SAMPLER, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_SAMPLER, count); }
 
     VulkanDescriptorPoolBuilder& AddStorageImage(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, count); }
 
     VulkanDescriptorPoolBuilder& AddInputAttachment(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, count); }
 
     VulkanDescriptorPoolBuilder& AddInlineUniformBlock(uint32_t count) 
-    { Add(VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, count); return *this; }
+    { return Add(VK_DESCRIPTOR_TYPE_INLINE_UNIFORM_BLOCK, count); }
 
-    void Add(VkDescriptorType type, uint32_t count)
+    VulkanDescriptorPoolBuilder& Add(VkDescriptorType type, uint32_t count)
     {
         for (auto& poolSize : poolSizes)
         {
@@ -78,7 +81,7 @@ public:
             { 
                 Log(Warning, "Vulkan", "Descriptor pool builder, multiple pool size add");
                 poolSize.descriptorCount = count; 
-                return; 
+                return * this; 
             }
         }
 
@@ -86,9 +89,24 @@ public:
             .type = type,
             .descriptorCount = count
         });
+
+        return *this;
+    }
+
+    VulkanDescriptorPoolBuilder& SetMaxSets(uint32_t num) 
+    { 
+        maxSets = num;
+        return *this; 
+    }
+
+    VulkanDescriptorPoolBuilder& AllowFreeDescriptorSet() 
+    { 
+        allowFreeDescriptorSet = true;
+        return *this; 
     }
 
 private:
+    bool allowFreeDescriptorSet{false};
     uint32_t maxSets;
     std::vector<VkDescriptorPoolSize> poolSizes;
 };
