@@ -74,18 +74,6 @@ struct SwapchainSupportDetails
 
 class VulkanSwapchain : public IRenderTarget, public IVulkanRenderTarget
 {
-    BufferType viewBufferType{BufferType::POSTPROCESS};
-
-    std::vector<ImageData> imagesData;
-    ImageData& GetImagesData(BufferType type)
-    {
-        for (auto& data : imagesData)
-            if (data.type == type)  
-                return data;
-        printf("%u : ", type);
-        throw std::runtime_error("Unknown swapchain image type");
-    }
-
 public:
     VulkanSwapchain(class VulkanRenderEngine* renderEngine, class VulkanSurface* surface);
     ~VulkanSwapchain();
@@ -95,8 +83,8 @@ public:
     virtual uint32_t GetHeight() const override { return GetExtent().height; }
 
     virtual void StartRendering() override;
-    virtual VkFramebuffer GetGeometryFrameBuffer() const override { return 0; }
-    virtual VkFramebuffer GetLightingFrameBuffer() const override { return lightingFramebuffers[renderingImageIndex]; }
+    virtual VkFramebuffer GetGeometryFrameBuffer() const override { return renderTargets[renderingImageIndex].GetGeometryFrameBuffer(); }
+    virtual VkFramebuffer GetLightingFrameBuffer() const override { return renderTargets[renderingImageIndex].GetLightingFrameBuffer(); }
     virtual VkFramebuffer GetPostprocessFrameBuffer() const override { return postprocessFramebuffers[renderingImageIndex]; }
 
 public:
@@ -108,7 +96,6 @@ public:
     VkSwapchainKHR GetSwapchain() const { return swapchain; }
     VkExtent2D GetExtent() const { return swapchainExtent; }
 
-    const VkFramebuffer& GetFrameBuffer() const { return framebuffers[renderingImageIndex]; }
     const VkCommandBuffer& GetCommandBuffer() const { return commandBuffers[renderingImageIndex]; }
 
     const VkFence& GetInFlightFence() const {return inFlightFence; }
@@ -140,8 +127,6 @@ private:
     uint32_t width{ 720 }, height{ 480 }, imageCount{ 0 }, renderingImageIndex{0};
 
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
-    std::vector<VkFramebuffer> framebuffers;
-    std::vector<VkFramebuffer> lightingFramebuffers;
     std::vector<VkFramebuffer> postprocessFramebuffers;
 
     std::vector<VulkanRenderTarget> renderTargets;

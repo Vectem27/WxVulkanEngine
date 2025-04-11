@@ -56,6 +56,7 @@ void VulkanRenderTarget::Init(uint32_t width, uint32_t height)
         VK_IMAGE_ASPECT_COLOR_BIT
     );
 
+    CreateFrameBuffer();
 }
 
 void VulkanRenderTarget::Cleanup() noexcept

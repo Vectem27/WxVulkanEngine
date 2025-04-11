@@ -44,7 +44,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     swapchain->StartRendering();
 
     VkCommandBuffer commandBuffer = swapchain->GetCommandBuffer();
-    VkFramebuffer frameBuffer = swapchain->GetFrameBuffer();
+    VkFramebuffer frameBuffer = swapchain->GetGeometryFrameBuffer();
     VkFramebuffer lightingFrameBuffer = swapchain->GetLightingFrameBuffer();
     VkFramebuffer postprocessFrameBuffer = swapchain->GetPostprocessFrameBuffer();
     VkFence inFlightFence = swapchain->GetInFlightFence();

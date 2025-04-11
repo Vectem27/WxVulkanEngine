@@ -10,41 +10,6 @@
 VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface* surface)
     : renderEngine(renderEngine), surface(surface)
 { 
-    imagesData.push_back({
-        BufferType::BASECOLOR, VulkanRenderPassManager::GetInstance()->GetColorFormat(), 
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT
-    });
-
-    imagesData.push_back({
-        BufferType::DEPTHSTENCIL, VulkanRenderPassManager::GetInstance()->GetDepthStencilFormat(),
-        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT| VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT
-    });
-    imagesData.push_back({
-        BufferType::NORMAL, VulkanRenderPassManager::GetInstance()->GetColorFormat(),
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT
-    });
-
-    imagesData.push_back({
-        BufferType::LIGHTING, VulkanRenderPassManager::GetInstance()->GetHDRFormat(),
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT
-    });
-
-    imagesData.push_back({
-        BufferType::POSITION, VulkanRenderPassManager::GetInstance()->GetHDRFormat(),
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT
-    });
-
-    imagesData.push_back({
-        BufferType::POSTPROCESS, VulkanRenderPassManager::GetInstance()->GetColorFormat(),
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        VK_IMAGE_ASPECT_COLOR_BIT
-    });
-
     VulkanDescriptorPoolBuilder poolBuilder;
 
     renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(
@@ -149,7 +114,7 @@ void VulkanSwapchain::CreateSwapchain()
         createInfo.minImageCount = capabilities.maxImageCount;
     }
 
-    createInfo.imageFormat = GetImagesData(viewBufferType).format;
+    createInfo.imageFormat = GetVulkanRenderPassManager().GetColorFormat();
     createInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     createInfo.imageExtent = swapchainExtent;
     createInfo.imageArrayLayers = 1;
@@ -180,9 +145,6 @@ void VulkanSwapchain::CreateSwapchain()
 
     vkGetSwapchainImagesKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, &imageCount, nullptr);
 
-    for (auto& imageData : imagesData)
-        imageData.Resize(imageCount);
-
     swapchainImages.clear();
     swapchainImageViews.clear();
     swapchainImages.resize(imageCount);
@@ -202,85 +164,23 @@ void VulkanSwapchain::CreateSwapchain()
             VulkanRenderPassManager::GetInstance()->GetColorFormat(),
             VK_IMAGE_ASPECT_COLOR_BIT
         );
-
-        for (auto& imageData : imagesData)
-        {
-            if (viewBufferType != imageData.type)
-            {
-                VulkanRenderImageManager::GetInstance()->CreateImage(
-                    imageData.images[i], imageData.imageMemorys[i], 
-                    GetWidth(), GetHeight(), imageData.format,
-                    imageData.usageFlags
-                );
-                VulkanRenderImageManager::GetInstance()->CreateImageView(
-                    imageData.imageViews[i], imageData.images[i], imageData.format,
-                    imageData.aspectFlags
-                );
-            }
-        }
     }
 }
 
 
 void VulkanSwapchain::CreateFramebuffer()
 {
-    framebuffers.resize(imageCount);
-    lightingFramebuffers.resize(imageCount);
     postprocessFramebuffers.resize(imageCount);
     for (size_t i = 0; i < imageCount; i++)
     {
-        std::vector<VkImageView> attachments = 
-        {
-            //GetImagesData(BufferType::BASECOLOR).imageViews[i], 
-            //GetImagesData(BufferType::DEPTHSTENCIL).imageViews[i],
-            //GetImagesData(BufferType::NORMAL).imageViews[i],
-            //GetImagesData(BufferType::POSITION).imageViews[i],
-            renderTargets[i].GetBaseColorImageView(),
-            renderTargets[i].GetDepthStencilImageView(),
-            renderTargets[i].GetNormalImageView(),
-            renderTargets[i].GetPositionImageView(),
-        };
-
-        VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetGeometryPass();
-        framebufferInfo.attachmentCount = attachments.size();
-        framebufferInfo.pAttachments = attachments.data();
-        framebufferInfo.width = GetExtent().width;
-        framebufferInfo.height = GetExtent().height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
-            throw std::runtime_error("Failed to create swapchain framebuffer!");
-
-
-
-        std::vector<VkImageView> lightingAttachments = 
-        {
-            //GetImagesData(BufferType::LIGHTING).imageViews[i]
-            renderTargets[i].GetLightingImageView()
-        };
-
-        framebufferInfo={};
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass();
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(lightingAttachments.size());
-        framebufferInfo.pAttachments = lightingAttachments.data();
-        framebufferInfo.width = GetExtent().width;
-        framebufferInfo.height = GetExtent().height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &lightingFramebuffers[i]) != VK_SUCCESS)
-            throw std::runtime_error("Failed to create swapchain framebuffer!");
-
-
+        
         /* POST PROCESS*/
         std::vector<VkImageView> postprocessAttachments = 
         {
             swapchainImageViews[i]
         };
 
-        framebufferInfo={};
+        VkFramebufferCreateInfo framebufferInfo{}; 
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetPostprocessPass();
         framebufferInfo.attachmentCount = static_cast<uint32_t>(postprocessAttachments.size());
@@ -437,26 +337,6 @@ void VulkanSwapchain::Cleanup()
 {
     for (auto& rt : renderTargets)
         rt.Cleanup();
-
-    // Détruire les framebuffers
-    for (auto& framebuffer : framebuffers) 
-    {
-        if (framebuffer != VK_NULL_HANDLE) {
-            vkDestroyFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), framebuffer, nullptr);
-        }
-    }
-    framebuffers.clear();
-
-    for (auto& framebuffer : lightingFramebuffers) 
-    {
-        if (framebuffer != VK_NULL_HANDLE) {
-            vkDestroyFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), framebuffer, nullptr);
-        }
-    }
-    lightingFramebuffers.clear();
-
-    for (auto& imageData : imagesData)
-        imageData.Cleanup(GetVulkanDeviceManager().GetDeviceChecked(), imageData.type == viewBufferType);
 
     for (size_t i = 0; i < swapchainImageViews.size(); i++)
     {
