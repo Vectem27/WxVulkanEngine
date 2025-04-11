@@ -82,11 +82,15 @@ public:
     virtual uint32_t GetWidth() const override { return GetExtent().width; }
     virtual uint32_t GetHeight() const override { return GetExtent().height; }
 
-    virtual void StartRendering() override;
     virtual VkFramebuffer GetGeometryFrameBuffer() const override { return renderTargets[renderingImageIndex].GetGeometryFrameBuffer(); }
     virtual VkFramebuffer GetLightingFrameBuffer() const override { return renderTargets[renderingImageIndex].GetLightingFrameBuffer(); }
     virtual VkFramebuffer GetPostprocessFrameBuffer() const override { return renderTargets[renderingImageIndex].GetPostprocessFrameBuffer(); }
 
+    virtual void BeginRendering(VkCommandBuffer commandBuffer) override;
+    virtual void EndRendering(VkQueue queue, VkCommandBuffer commandBuffer) override;
+
+    virtual void StartLighting(VkCommandBuffer commandBuffer) override;
+    virtual void StartPostprocessing(VkCommandBuffer commandBuffer) override;
 public:
     void Create(VkRenderPass renderPass);
     void Recreate();

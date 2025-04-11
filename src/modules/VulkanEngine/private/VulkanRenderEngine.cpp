@@ -9,6 +9,8 @@
 #include "VulkanRenderImageManager.h"
 #include "VulkanTransferManager.h"
 
+#include "VulkanRenderTargetRenderer.h"
+#include "VulkanShadowMapRenderer.h"
 
 #include "Logger.h"
 
@@ -19,7 +21,6 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     VulkanDeviceManager::GetInstance().InitDeviceManager(instance);
 
     createDescriptorPool();
-    pipelineManager = new VulkanPipelineManager(GetDeviceManager()->GetDeviceChecked());
 
     PassesInfo passesInfo;
     passesInfo.colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
@@ -35,6 +36,22 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     VulkanRenderImageManager::GetInstance()->Init(GetVulkanDeviceManager().GetDeviceChecked(), GetVulkanDeviceManager().GetPhysicalDeviceChecked());
     GetVulkanTransferManager().InitTransfereManager();
 
+    /* Init RenderTargetRenderer*/
+    GetVulkanRenderTargetRenderer().Init(
+        GetVulkanDeviceManager().GetGraphicsQueue(), 
+        GetVulkanDeviceManager().GetGraphicsQueueFamilyIndex()
+    );
+    GetVulkanRenderTargetRenderer().SetGeometryRenderPass(GetVulkanRenderPassManager().GetGeometryPass());
+    GetVulkanRenderTargetRenderer().SetLightingRenderPass(GetVulkanRenderPassManager().GetLightingPass());
+    GetVulkanRenderTargetRenderer().SetPostprocessRenderPass(GetVulkanRenderPassManager().GetPostprocessPass());
+
+    /* Init ShadowMapRenderer*/
+    GetVulkanShadowMapRenderer().Init(
+        GetVulkanDeviceManager().GetGraphicsQueue(), 
+        GetVulkanDeviceManager().GetGraphicsQueueFamilyIndex()
+    );
+    GetVulkanShadowMapRenderer().SetRenderPass(GetVulkanRenderPassManager().GetShadowPass());
+    
     return true;
 }
 
@@ -42,6 +59,10 @@ void VulkanRenderEngine::Shutdown()
 {
     if (GetVulkanDeviceManager().GetDevice() != VK_NULL_HANDLE) 
         vkDeviceWaitIdle(GetVulkanDeviceManager().GetDevice());
+
+    GetVulkanShadowMapRenderer().Shutdown();
+    GetVulkanRenderTargetRenderer().Shutdown();
+
 
     VulkanRenderPassManager::GetInstance()->Cleanup();
     GetVulkanTransferManager().Shutdown();

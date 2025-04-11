@@ -4,8 +4,6 @@ file(GLOB_RECURSE HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 add_library(VulkanEngine STATIC 
     ${SRC_FILES}
     ${HEADER_FILES}
-
-    public/Material/IVulkanMaterial.h
 )
 
 
@@ -21,7 +19,7 @@ target_include_directories(VulkanEngine
     PRIVATE private/Pipeline
     
     PRIVATE private/Descriptor
-    PUBLIC public/Descriptor
+    PRIVATE private/Command
 
     PUBLIC public/Buffer
     PRIVATE private/Buffer

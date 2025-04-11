@@ -17,9 +17,11 @@ public:
     void CleanupFrameBuffer() noexcept;
 
 public: // IVulkanRenderTarget Interface
-    virtual void StartRendering() {}
     virtual uint32_t GetWidth() const override { return width; }
     virtual uint32_t GetHeight() const override { return height; }
+
+    virtual void BeginRendering(VkCommandBuffer commandBuffer) override;
+    virtual void EndRendering(VkQueue queue, VkCommandBuffer commandBuffer) override;
 
 public: // GBuffer
     VkFramebuffer& GetGeometryFrameBuffer() { return geometryFrameBuffer; }

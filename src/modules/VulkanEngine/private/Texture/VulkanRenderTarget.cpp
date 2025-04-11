@@ -7,6 +7,8 @@
 #include "VulkanDeviceManager.h"
 #include "VulkanRenderPassManager.h"
 
+#include "VulkanCommandUtils.h"
+
 void VulkanRenderTarget::Init(uint32_t width, uint32_t height)
 {
     this->width = width;
@@ -92,6 +94,18 @@ void VulkanRenderTarget::CleanupFrameBuffer() noexcept
     geometryFrameBuffer = VK_NULL_HANDLE;
     lightingFrameBuffer = VK_NULL_HANDLE;
     postprocessFrameBuffer = VK_NULL_HANDLE;
+}
+
+void VulkanRenderTarget::BeginRendering(VkCommandBuffer commandBuffer)
+{
+    VulkanCommandUtils::ResetCommandBuffer(commandBuffer);
+    VulkanCommandUtils::BeginCommandBuffer(commandBuffer);
+}
+
+void VulkanRenderTarget::EndRendering(VkQueue queue, VkCommandBuffer commandBuffer)
+{
+    VulkanCommandUtils::EndCommandBuffer(commandBuffer);
+    VulkanCommandUtils::SubmitCommandBuffer(queue, commandBuffer);
 }
 
 void VulkanRenderTarget::CreateFrameBuffer()

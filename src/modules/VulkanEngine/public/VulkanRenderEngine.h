@@ -39,7 +39,7 @@ public:
     VulkanDeviceManager* GetDeviceManager() const { return &GetVulkanDeviceManager(); }
     VulkanDescriptorPoolManager* GetDescriptorPoolManager() { return descriptorPoolManager;}
 
-    VulkanPipelineManager* GetPipelineManager() { return pipelineManager; }
+    VulkanPipelineManager* GetPipelineManager() { return &VulkanPipelineManager::GetInstance(); }
 private:
     VkInstance instance{ VK_NULL_HANDLE };
     VulkanSurface* surfaceTest{ nullptr };
