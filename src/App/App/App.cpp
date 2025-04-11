@@ -189,8 +189,10 @@ void wxVulkanApp::RenderVulkan()
     {
      
         if(frame->renderSurface->IsVulkanInitialized())
+        {
             renderer->RenderToSwapchain(swapchain, world, camera, lightManager, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue(), frame->renderSurface->GetVulkanSurface()->GetPresentQueue());
-        
+            swapchain->Present();
+        }
         return;
         ++counter;
         if (counter % 5 != 0)
