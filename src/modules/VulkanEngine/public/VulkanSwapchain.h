@@ -85,7 +85,7 @@ public:
     virtual void StartRendering() override;
     virtual VkFramebuffer GetGeometryFrameBuffer() const override { return renderTargets[renderingImageIndex].GetGeometryFrameBuffer(); }
     virtual VkFramebuffer GetLightingFrameBuffer() const override { return renderTargets[renderingImageIndex].GetLightingFrameBuffer(); }
-    virtual VkFramebuffer GetPostprocessFrameBuffer() const override { return postprocessFramebuffers[renderingImageIndex]; }
+    virtual VkFramebuffer GetPostprocessFrameBuffer() const override { return renderTargets[renderingImageIndex].GetPostprocessFrameBuffer(); }
 
 public:
     void Create(VkRenderPass renderPass);
@@ -115,7 +115,6 @@ private:
     void CreateSync();
 
     void CreateSwapchain();
-    void CreateFramebuffer();
 
     void Cleanup();
 
@@ -127,7 +126,6 @@ private:
     uint32_t width{ 720 }, height{ 480 }, imageCount{ 0 }, renderingImageIndex{0};
 
     VkSwapchainKHR swapchain{VK_NULL_HANDLE};
-    std::vector<VkFramebuffer> postprocessFramebuffers;
 
     std::vector<VulkanRenderTarget> renderTargets;
 

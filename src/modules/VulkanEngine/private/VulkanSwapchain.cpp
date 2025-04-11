@@ -31,7 +31,6 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
 void VulkanSwapchain::Create(VkRenderPass renderPass)
 {
     CreateSwapchain();
-    CreateFramebuffer();
     CreateCommandBuffers();
 }
 
@@ -57,7 +56,6 @@ void VulkanSwapchain::Recreate()
     Cleanup();
 
     CreateSwapchain();
-    CreateFramebuffer();
     CreateCommandBuffers();
 }
 
@@ -164,33 +162,9 @@ void VulkanSwapchain::CreateSwapchain()
             VulkanRenderPassManager::GetInstance()->GetColorFormat(),
             VK_IMAGE_ASPECT_COLOR_BIT
         );
-    }
-}
 
-
-void VulkanSwapchain::CreateFramebuffer()
-{
-    postprocessFramebuffers.resize(imageCount);
-    for (size_t i = 0; i < imageCount; i++)
-    {
-        
-        /* POST PROCESS*/
-        std::vector<VkImageView> postprocessAttachments = 
-        {
-            swapchainImageViews[i]
-        };
-
-        VkFramebufferCreateInfo framebufferInfo{}; 
-        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetPostprocessPass();
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(postprocessAttachments.size());
-        framebufferInfo.pAttachments = postprocessAttachments.data();
-        framebufferInfo.width = GetExtent().width;
-        framebufferInfo.height = GetExtent().height;
-        framebufferInfo.layers = 1;
-
-        if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &postprocessFramebuffers[i]) != VK_SUCCESS)
-            throw std::runtime_error("Failed to create swapchain framebuffer!");
+        renderTargets[i].GetPostprocessImageView() = swapchainImageViews[i];
+        renderTargets[i].CreateFrameBuffer();
     }
 }
 
