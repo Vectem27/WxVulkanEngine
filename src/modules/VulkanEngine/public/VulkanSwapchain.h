@@ -89,14 +89,13 @@ public:
 
 public:
     void Create(VkRenderPass renderPass);
-    void SetRenderPass(VkRenderPass renderPass);
     void Recreate();
     void Present();
 
     VkSwapchainKHR GetSwapchain() const { return swapchain; }
     VkExtent2D GetExtent() const { return swapchainExtent; }
 
-    const VkCommandBuffer& GetCommandBuffer() const { return commandBuffers[renderingImageIndex]; }
+    const VkCommandBuffer& GetCommandBuffer() const { return commandBuffer; }
 
     const VkFence& GetInFlightFence() const {return inFlightFence; }
     const VkSemaphore& GetImageAvailableSemaphore() const { return imageAvailableSemaphore; }
@@ -139,12 +138,14 @@ private:
     
     // Commands
     VkCommandPool commandPool{VK_NULL_HANDLE};
-    std::vector<VkCommandBuffer> commandBuffers;
+    VkCommandBuffer commandBuffer;
     
     // Sync
     VkFence inFlightFence{ VK_NULL_HANDLE }; // Wait for the last rendering finished
     VkSemaphore imageAvailableSemaphore{ VK_NULL_HANDLE }; // Wait the image is unused befor render in it
     VkSemaphore renderFinishedSemaphore{ VK_NULL_HANDLE }; // Wait for render finished before present
+
+    VkDescriptorPool descriptorPool{ VK_NULL_HANDLE };
 };
 
 #endif // VULKANSWAPCHAIN_H

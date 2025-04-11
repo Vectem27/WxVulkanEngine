@@ -7,22 +7,33 @@
 #include "VulkanRenderImageManager.h"
 #include "VulkanDescriptorPoolBuilder.h"
 
+#include "VulkanDescriptorUtils.h"
+
 VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface* surface)
     : renderEngine(renderEngine), surface(surface)
 { 
     VulkanDescriptorPoolBuilder poolBuilder;
+    descriptorPool = poolBuilder.SetMaxSets(5).AddCombinedImageSampler(5).Build();
 
-    renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(
-        &renderEngine->GetPipelineManager()->GetgBufferDescriptorSetLayout(),
-        1, &gBufferDescriptorSet
-    );
+    VkResult result;
+    auto gBufferSetLayout = renderEngine->GetPipelineManager()->GetgBufferDescriptorSetLayout();
+    result = VulkanDescriptorUtils::AllocateSet(descriptorPool, gBufferSetLayout, gBufferDescriptorSet);
+    if (result != VK_SUCCESS)
+    {
+        Log(Error, "Vulkan", "Failed to allocate swapchain gBuffer descriptor set");
+        throw std::runtime_error("Failed to allocate swapchain gBuffer descriptor set");
+    }
 
-    renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(
-        &renderEngine->GetPipelineManager()->GetPostprocessDescriptorSetLayout(),
-        1, &postprocessDescriptorSet
-    );
+    auto postprocessSetLayout = renderEngine->GetPipelineManager()->GetPostprocessDescriptorSetLayout();
+    result = VulkanDescriptorUtils::AllocateSet(descriptorPool, postprocessSetLayout, postprocessDescriptorSet);
+    if (result != VK_SUCCESS)
+    {
+        Log(Error, "Vulkan", "Failed to allocate swapchain post-process descriptor set");
+        throw std::runtime_error("Failed to allocate swapchain post-process descriptor set");
+    }
 
     CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
+    CreateCommandBuffers();
     CreateSync();
     CreateSwapchain();
 }
@@ -31,37 +42,28 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
 void VulkanSwapchain::Create(VkRenderPass renderPass)
 {
     CreateSwapchain();
-    CreateCommandBuffers();
-}
-
-void VulkanSwapchain::SetRenderPass(VkRenderPass renderPass)
-{
-    static bool isFirst = true;
-    if (isFirst)
-    {
-        Create(renderPass);
-        isFirst = false;
-    }
-    else
-    {
-        Recreate();
-    }
-    
 }
 
 void VulkanSwapchain::Recreate()
 {
     vkDeviceWaitIdle(GetVulkanDeviceManager().GetDeviceChecked());
-
     Cleanup();
-
     CreateSwapchain();
-    CreateCommandBuffers();
 }
 
 void VulkanSwapchain::Present()
 {
-    
+    static uint8_t infiniteLoopGuard{0};
+    const uint8_t maxLoopCount{3};
+
+    if (infiniteLoopGuard > maxLoopCount)
+    {
+        Log(Error, "Vulkan", "Failed present swapchain : infinite loop detected");
+        throw std::runtime_error("Failed to present swapchain : infinite loop detected");
+    }
+
+    ++infiniteLoopGuard;
+
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
     presentInfo.waitSemaphoreCount = 1;
@@ -75,14 +77,18 @@ void VulkanSwapchain::Present()
     VkResult res = vkQueuePresentKHR(surface->GetPresentQueue(), &presentInfo);
     if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) 
     {
+        Log(Trace, "Vulkan", "Can't present swapchain, recreate called");
         Recreate();
         Present();
     }
     else if (res != VK_SUCCESS) 
     {
+        infiniteLoopGuard = 0;
         Log(Error, "Vulkan", "Failed to present swapchain, result code : %d", res);
         throw std::runtime_error("Failed to present swapchain");
     }
+
+    infiniteLoopGuard = 0;
 }
 
 void VulkanSwapchain::CreateSwapchain()
@@ -143,8 +149,6 @@ void VulkanSwapchain::CreateSwapchain()
 
     vkGetSwapchainImagesKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, &imageCount, nullptr);
 
-    swapchainImages.clear();
-    swapchainImageViews.clear();
     swapchainImages.resize(imageCount);
     swapchainImageViews.resize(imageCount);
     renderTargets.resize(imageCount);
@@ -296,14 +300,13 @@ void VulkanSwapchain::CreateCommandPool(uint32_t graphicsQueueFamilyIndex)
 
 void VulkanSwapchain::CreateCommandBuffers()
 {
-    commandBuffers.resize(GetImageCount());
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = commandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+    allocInfo.commandBufferCount = 1;
 
-    if (vkAllocateCommandBuffers(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, &commandBuffer) != VK_SUCCESS)
         throw std::runtime_error("Failed to allocate swapchain command buffers!");
 }
 
@@ -312,11 +315,7 @@ void VulkanSwapchain::Cleanup()
     for (auto& rt : renderTargets)
         rt.Cleanup();
 
-    for (size_t i = 0; i < swapchainImageViews.size(); i++)
-    {
-        if (swapchainImageViews[i] != VK_NULL_HANDLE)
-            vkDestroyImageView(GetVulkanDeviceManager().GetDeviceChecked(), swapchainImageViews[i], nullptr);
-    }
+    renderTargets.clear();
 
     swapchainImageViews.clear();
 
@@ -333,31 +332,50 @@ VulkanSwapchain::~VulkanSwapchain()
 {
     Cleanup();
 
+    auto device = GetVulkanDeviceManager().GetDeviceChecked();
+
+    if (descriptorPool != VK_NULL_HANDLE)
+        vkDestroyDescriptorPool(device, descriptorPool, nullptr);   
+
     // Détruire les sémaphores et la fence
     if (imageAvailableSemaphore != VK_NULL_HANDLE) 
-        vkDestroySemaphore(GetVulkanDeviceManager().GetDeviceChecked(), imageAvailableSemaphore, nullptr);
+        vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
 
     if (renderFinishedSemaphore != VK_NULL_HANDLE) 
-        vkDestroySemaphore(GetVulkanDeviceManager().GetDeviceChecked(), renderFinishedSemaphore, nullptr);
+        vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 
     if (inFlightFence != VK_NULL_HANDLE) 
-        vkDestroyFence(GetVulkanDeviceManager().GetDeviceChecked(), inFlightFence, nullptr);
+        vkDestroyFence(device, inFlightFence, nullptr);
 
     if (commandPool != VK_NULL_HANDLE) 
-        vkDestroyCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), commandPool, nullptr);
+        vkDestroyCommandPool(device, commandPool, nullptr);
 }
 
 void VulkanSwapchain::StartRendering()
 {
+    static uint8_t infiniteLoopGuard{0};
+    const uint8_t maxLoopCount{3};
+
+    if (infiniteLoopGuard > maxLoopCount)
+    {
+        Log(Error, "Vulkan", "Failed to start swapchain rendering : infinite loop detected");
+        throw std::runtime_error("Failed to start swapchain rendering : infinite loop detected");
+    }
+
+    ++infiniteLoopGuard;
+
     auto res = vkAcquireNextImageKHR(GetVulkanDeviceManager().GetDeviceChecked(), GetSwapchain(), UINT64_MAX, GetImageAvailableSemaphore(), VK_NULL_HANDLE, &renderingImageIndex);
     if (res == VK_ERROR_OUT_OF_DATE_KHR) 
     {
+        Log(Trace, "Vulkan", "Can't start swapchain rendering, recreate called");
         Recreate();
         StartRendering();
     } 
     else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) 
     {
+        infiniteLoopGuard = 0;
         Log(Error, "Vulkan", "Failed to acquire next swapchain image, result code : %d", res);
         throw std::runtime_error("Failed to acquire next swapchain image");
     }
+    infiniteLoopGuard = 0;
 }
