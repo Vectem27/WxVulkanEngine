@@ -41,20 +41,12 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     uint32_t imageIndex;
     VkSemaphore imageAvailableSemaphore = swapchain->GetImageAvailableSemaphore();
-    auto res = vkAcquireNextImageKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain->GetSwapchain(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-    if (res == VK_ERROR_OUT_OF_DATE_KHR) 
-    {
-        swapchain->Recreate();
-        return false;
-    } else if (res != VK_SUCCESS && res != VK_SUBOPTIMAL_KHR) 
-    {
-        throw std::runtime_error("vkAcquireNextImageKHR failed!");
-    }
+    swapchain->StartRendering();
 
-    VkCommandBuffer commandBuffer = swapchain->GetCommandBuffer(imageIndex);
-    VkFramebuffer frameBuffer = swapchain->GetFrameBuffer(imageIndex);
-    VkFramebuffer lightingFrameBuffer = swapchain->GetLightingFrameBuffer(imageIndex);
-    VkFramebuffer postprocessFrameBuffer = swapchain->GetPostprocessFrameBuffer(imageIndex);
+    VkCommandBuffer commandBuffer = swapchain->GetCommandBuffer();
+    VkFramebuffer frameBuffer = swapchain->GetFrameBuffer();
+    VkFramebuffer lightingFrameBuffer = swapchain->GetLightingFrameBuffer();
+    VkFramebuffer postprocessFrameBuffer = swapchain->GetPostprocessFrameBuffer();
     VkFence inFlightFence = swapchain->GetInFlightFence();
     VkSemaphore renderFinishedSemaphore = swapchain->GetRenderFinishedSemaphore();
 
@@ -210,7 +202,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     spotlightLightPipeline->Bind(commandBuffer);
 
-    swapchain->UpdateGBufferDescriptorSet(imageIndex);
+    swapchain->UpdateGBufferDescriptorSet();
     vkCmdBindDescriptorSets(
         commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
         renderEngine->GetPipelineManager()->GetLightingPipelineLayout(),
@@ -263,7 +255,7 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
 
     postprocessPipeline->Bind(commandBuffer);
 
-    swapchain->UpdatePostprocessDescriptorSet(imageIndex);
+    swapchain->UpdatePostprocessDescriptorSet();
     vkCmdBindDescriptorSets(
         commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
         renderEngine->GetPipelineManager()->GetPostprocessPipelineLayout(),
@@ -275,30 +267,12 @@ bool VulkanRenderer::RenderToSwapchain(VulkanSwapchain *swapchain, IRenderable *
     // Termine le render pass
     vkCmdEndRenderPass(commandBuffer);
 
-
     // Termine l'enregistrement du command buffer
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
         throw std::runtime_error("failed to end command buffer!");
 
     if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) 
         throw std::runtime_error("failed to submit draw command buffer!");
-
-
-    VkPresentInfoKHR presentInfo{};
-    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-    presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores = signalSemaphores;
-    presentInfo.swapchainCount = 1;
-    
-    VkSwapchainKHR swapChains[] = {swapchain->GetSwapchain()};
-    presentInfo.pSwapchains = swapChains;
-    presentInfo.pImageIndices = &imageIndex;
-
-    res = vkQueuePresentKHR(presentQueue, &presentInfo);
-    if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) 
-        swapchain->Recreate();
-    else if (res != VK_SUCCESS) 
-        throw std::runtime_error("failed to present swap chain image!");
 
     return true;
 }

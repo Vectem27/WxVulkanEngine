@@ -292,24 +292,24 @@ void VulkanSwapchain::CreateSync()
         throw std::runtime_error("Failed to create inFlight fence!");
 }
 
-void VulkanSwapchain::UpdateGBufferDescriptorSet(uint32_t index)
+void VulkanSwapchain::UpdateGBufferDescriptorSet()
 {
     // Préparez les informations d'image pour chaque attachement
     VkDescriptorImageInfo positionInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::POSITION).imageViews[index], // Vue de votre texture de position
+        .imageView = GetImagesData(BufferType::POSITION).imageViews[renderingImageIndex], // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo normalInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::NORMAL).imageViews[index], // Vue de votre texture de normales
+        .imageView = GetImagesData(BufferType::NORMAL).imageViews[renderingImageIndex], // Vue de votre texture de normales
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo baseColorInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[index], // Vue de votre texture d'albedo
+        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture d'albedo
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
@@ -347,17 +347,17 @@ void VulkanSwapchain::UpdateGBufferDescriptorSet(uint32_t index)
     vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), 3, descriptorWrites, 0, nullptr);
 }
 
-void VulkanSwapchain::UpdatePostprocessDescriptorSet(uint32_t index)
+void VulkanSwapchain::UpdatePostprocessDescriptorSet()
 {
     VkDescriptorImageInfo colorInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[index], // Vue de votre texture de position
+        .imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo lightingInfo = {
         .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
-        .imageView = GetImagesData(BufferType::LIGHTING).imageViews[index], // Vue de votre texture de position
+        .imageView = GetImagesData(BufferType::LIGHTING).imageViews[renderingImageIndex], // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 

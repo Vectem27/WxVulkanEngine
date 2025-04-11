@@ -95,8 +95,8 @@ public:
 
     virtual void StartRendering() override;
     virtual VkFramebuffer GetGeometryFrameBuffer() const override { return 0; }
-    virtual VkFramebuffer GetLightingFrameBuffer() const override { return 0; }
-    virtual VkFramebuffer GetPostprocessFrameBuffer() const override { return 0; }
+    virtual VkFramebuffer GetLightingFrameBuffer() const override { return lightingFramebuffers[renderingImageIndex]; }
+    virtual VkFramebuffer GetPostprocessFrameBuffer() const override { return postprocessFramebuffers[renderingImageIndex]; }
 
 public:
     void Create(VkRenderPass renderPass);
@@ -107,10 +107,8 @@ public:
     VkSwapchainKHR GetSwapchain() const { return swapchain; }
     VkExtent2D GetExtent() const { return swapchainExtent; }
 
-    const VkFramebuffer& GetFrameBuffer(uint32_t index) const { return framebuffers[index]; }
-    const VkFramebuffer& GetLightingFrameBuffer(uint32_t index) const { return lightingFramebuffers[index]; }
-    const VkFramebuffer& GetPostprocessFrameBuffer(uint32_t index) const { return postprocessFramebuffers[index]; }
-    const VkCommandBuffer& GetCommandBuffer(uint32_t index) const { return commandBuffers[index]; }
+    const VkFramebuffer& GetFrameBuffer() const { return framebuffers[renderingImageIndex]; }
+    const VkCommandBuffer& GetCommandBuffer() const { return commandBuffers[renderingImageIndex]; }
 
     const VkFence& GetInFlightFence() const {return inFlightFence; }
     const VkSemaphore& GetImageAvailableSemaphore() const { return imageAvailableSemaphore; }
@@ -118,10 +116,10 @@ public:
 
     int32_t GetImageCount() const { return imageCount; }
 
-    void UpdateGBufferDescriptorSet(uint32_t index);
+    void UpdateGBufferDescriptorSet();
     VkDescriptorSet& GetGBufferDescriptorSet() { return gBufferDescriptorSet; }
 
-    void UpdatePostprocessDescriptorSet(uint32_t index);
+    void UpdatePostprocessDescriptorSet();
     VkDescriptorSet& GetPostprocessDescriptorSet() { return postprocessDescriptorSet; }
 private:
     void CreateCommandPool(uint32_t graphicsQueueFamilyIndex);
