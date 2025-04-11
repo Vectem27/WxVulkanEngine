@@ -143,6 +143,9 @@ private:
     std::vector<VkFramebuffer> lightingFramebuffers;
     std::vector<VkFramebuffer> postprocessFramebuffers;
 
+    std::vector<VkImage> swapchainImages;
+    std::vector<VkImageView> swapchainImageViews;
+
     VkDescriptorSet gBufferDescriptorSet{VK_NULL_HANDLE};
     VkDescriptorSet postprocessDescriptorSet{VK_NULL_HANDLE};
 

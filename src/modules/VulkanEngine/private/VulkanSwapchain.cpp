@@ -183,11 +183,28 @@ void VulkanSwapchain::CreateSwapchain()
     for (auto& imageData : imagesData)
         imageData.Resize(imageCount);
 
-    vkGetSwapchainImagesKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, &imageCount, GetImagesData(viewBufferType).images.data());
+    swapchainImages.clear();
+    swapchainImageViews.clear();
+    swapchainImages.resize(imageCount);
+    swapchainImageViews.resize(imageCount);
+
+    for (auto& view : swapchainImageViews)
+        view = VK_NULL_HANDLE;
+    for (auto& img : swapchainImages)
+        img = VK_NULL_HANDLE;
+
+    vkGetSwapchainImagesKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, &imageCount, swapchainImages.data());
 
     
     for (int i = 0; i < imageCount; ++i)
     {
+        GetVulkanImageManager().CreateImageView(
+            swapchainImageViews[i],
+            swapchainImages[i],
+            VulkanRenderPassManager::GetInstance()->GetColorFormat(),
+            VK_IMAGE_ASPECT_COLOR_BIT
+        );
+
         for (auto& imageData : imagesData)
         {
             if (viewBufferType != imageData.type)
@@ -197,12 +214,11 @@ void VulkanSwapchain::CreateSwapchain()
                     GetWidth(), GetHeight(), imageData.format,
                     imageData.usageFlags
                 );
+                VulkanRenderImageManager::GetInstance()->CreateImageView(
+                    imageData.imageViews[i], imageData.images[i], imageData.format,
+                    imageData.aspectFlags
+                );
             }
-
-            VulkanRenderImageManager::GetInstance()->CreateImageView(
-                imageData.imageViews[i], imageData.images[i], imageData.format,
-                imageData.aspectFlags
-            );
         }
     }
 }
@@ -258,7 +274,7 @@ void VulkanSwapchain::CreateFramebuffer()
         /* POST PROCESS*/
         std::vector<VkImageView> postprocessAttachments = 
         {
-            GetImagesData(BufferType::POSTPROCESS).imageViews[i]
+            swapchainImageViews[i]
         };
 
         framebufferInfo={};
@@ -431,11 +447,21 @@ void VulkanSwapchain::Cleanup()
     for (auto& imageData : imagesData)
         imageData.Cleanup(GetVulkanDeviceManager().GetDeviceChecked(), imageData.type == viewBufferType);
 
+    for (size_t i = 0; i < swapchainImageViews.size(); i++)
+    {
+        if (swapchainImageViews[i] != VK_NULL_HANDLE)
+            vkDestroyImageView(GetVulkanDeviceManager().GetDeviceChecked(), swapchainImageViews[i], nullptr);
+    }
+
+    swapchainImageViews.clear();
+
     if (swapchain != VK_NULL_HANDLE) 
     {
         vkDestroySwapchainKHR(GetVulkanDeviceManager().GetDeviceChecked(), swapchain, nullptr);
         swapchain = VK_NULL_HANDLE;
     }
+
+    swapchainImages.clear();
 }
 
 VulkanSwapchain::~VulkanSwapchain()
