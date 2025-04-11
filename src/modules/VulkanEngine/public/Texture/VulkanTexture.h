@@ -4,6 +4,16 @@
 #include <vulkan/vulkan.h>
 #include "IVulkanTexture.h"
 
+/**
+ * @class VulkanTexture
+ * @implements IVulkanTexture
+ * 
+ * @brief The base vulkan texture class
+ * 
+ * @author Vectem
+ * @date 11 apr 2025
+ * @version 1.0
+ */
 class VulkanTexture : public IVulkanTexture
 {
 public:
@@ -25,9 +35,9 @@ private:
     VkFormat format{VK_FORMAT_R8G8B8A8_UNORM};
     uint32_t width{128}, height{128};
 
-    VkImage image;
-    VkDeviceMemory imageMemory;
-    VkImageView imageView;
+    VkImage image{VK_NULL_HANDLE};
+    VkDeviceMemory imageMemory{VK_NULL_HANDLE};
+    VkImageView imageView{VK_NULL_HANDLE};
 };
 
 #endif // VULKANTEXTURE_H
