@@ -36,7 +36,6 @@ private:
     class Cube* floor;
     class VulkanOpaqueMaterial* material;
 
-    class VulkanRenderer* renderer;
     class VulkanSwapchain* swapchain;
     class World* world;
     class VulkanGlobalLightManager* lightManager;

@@ -4,7 +4,6 @@
 
 #include <wx/wx.h>
 #include <vulkan/vulkan.h>
-#include "VulkanRenderer.h"
 #include "VulkanSurface.h"
 
 class RenderSurface : public wxWindow

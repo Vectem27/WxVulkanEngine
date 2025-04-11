@@ -34,6 +34,13 @@ public: // IRenderable
     }
     virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
 
+    void CollectChilds(Array<SceneComponent*>& childs)
+    {
+        childs.Add(this);
+        for (const auto& child : GetChilds())
+            child->CollectChilds(childs);
+    }
+
 public: // ISceneNode Interface
     virtual void AddChild(SceneComponent* child);
     virtual void RemoveChild(SceneComponent* child);

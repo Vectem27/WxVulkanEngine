@@ -1,7 +1,6 @@
 #include "App.h"
 
 #include "Pipeline/VulkanOpaqueMaterial.h"
-#include "VulkanRenderer.h"
 #include "VulkanSwapchain.h"
 #include "VulkanCamera.h"
 #include "VulkanShadowMapRenderTarget.h"
@@ -13,6 +12,8 @@
 #include "LightManagers/VulkanSpotlightLightManager.h"
 
 #include "VulkanRenderPassManager.h"
+
+#include "VulkanSceneRenderer.h"
 
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
@@ -98,8 +99,6 @@ void wxVulkanApp::InitVulkan()
         swapchain->Create(
             VulkanRenderPassManager::GetInstance()->GetGeometryPass()
         );
-
-        renderer = new VulkanRenderer(vulkanRenderEngine);
 
         projLight->InitVulkanSpotlightLight(vulkanRenderEngine);
         auto projLight2 = new ProjectorLightComponent();
@@ -190,7 +189,7 @@ void wxVulkanApp::RenderVulkan()
      
         if(frame->renderSurface->IsVulkanInitialized())
         {
-            renderer->RenderToSwapchain(swapchain, world, camera, lightManager, vulkanRenderEngine->GetDeviceManager()->GetGraphicsQueue(), frame->renderSurface->GetVulkanSurface()->GetPresentQueue());
+            VulkanSceneRenderer::RenderWorld(world, camera, lightManager);
             swapchain->Present();
         }
         return;
@@ -254,8 +253,6 @@ void wxVulkanApp::ShutdownVulkan()
     delete world;
     Log(Trace, LogDefault, "Destroy swapchain");
     delete swapchain;
-    Log(Trace, LogDefault, "Destroy renderer");
-    delete renderer;
     Log(Trace, LogDefault, "Destroy light manager");
     delete lightManager;
 
@@ -263,6 +260,6 @@ void wxVulkanApp::ShutdownVulkan()
     if (vulkanRenderEngine)
     {
         vulkanRenderEngine->Shutdown();
-        delete renderer;
+        delete vulkanRenderEngine;
     }
 }

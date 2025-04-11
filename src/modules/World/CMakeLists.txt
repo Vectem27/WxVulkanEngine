@@ -1,8 +1,9 @@
+file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+
 add_library(World STATIC 
-    private/World.cpp
-    private/SceneComponent.cpp
-    private/ActorBase.cpp
-    private/Actor.cpp
+    ${SRC_FILES}
+    ${HEADER_FILES}
 )
 
 target_include_directories(World 
