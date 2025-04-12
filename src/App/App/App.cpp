@@ -17,7 +17,6 @@
 
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
-    lightManager(new VulkanGlobalLightManager()),
     vulkanRenderEngine(new VulkanRenderEngine()),
     camera(new CameraComponent()),
     projLight(new ProjectorLightComponent())
@@ -87,12 +86,6 @@ void wxVulkanApp::InitVulkan()
         
         frame->renderSurface->InitVulkanSurface(vulkanRenderEngine);
         
-        lightManager->InitLightManager(vulkanRenderEngine);
-        auto manager = new VulkanSpotlightLightManager(10);
-        manager->InitLightManager(vulkanRenderEngine);
-        if (!lightManager->AddLightManager(VulkanSpotlightLight::lightType, manager))
-            throw std::runtime_error("Failed to add spotlight light manager");
-
         if (!frame->renderSurface->IsVulkanInitialized())
             throw std::runtime_error("Render surface not initialized");
         swapchain = new VulkanSwapchain(vulkanRenderEngine, frame->renderSurface->GetVulkanSurface());
@@ -160,6 +153,9 @@ void wxVulkanApp::InitVulkan()
         camera->SetRelativeTransform(Transform({-5,-2,2}, Rotator::FromEulerDegrees(-10,0,45), {1,1,1}));
         li->SetRelativeTransform(Transform({-6,6,4}, Rotator::FromEulerDegrees(-30,0,-45), {1,1,1}));
         li2->SetRelativeTransform(Transform({-3,3,8}, Rotator::FromEulerDegrees(-80,0,45), {1,1,1}));
+
+        sceneRenderer = new VulkanSceneRenderer();
+        sceneRenderer->Init();
     }
     catch(const std::exception& e)
     {
@@ -189,7 +185,7 @@ void wxVulkanApp::RenderVulkan()
      
         if(frame->renderSurface->IsVulkanInitialized())
         {
-            VulkanSceneRenderer::RenderWorld(world, camera, lightManager);
+            sceneRenderer->RenderWorld(world, camera);
             swapchain->Present();
         }
         return;
@@ -253,8 +249,6 @@ void wxVulkanApp::ShutdownVulkan()
     delete world;
     Log(Trace, LogDefault, "Destroy swapchain");
     delete swapchain;
-    Log(Trace, LogDefault, "Destroy light manager");
-    delete lightManager;
 
     Log(Trace, LogDefault, "Shutdown vulkan render engine");
     if (vulkanRenderEngine)

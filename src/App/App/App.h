@@ -38,8 +38,9 @@ private:
 
     class VulkanSwapchain* swapchain;
     class World* world;
-    class VulkanGlobalLightManager* lightManager;
     class ProjectorLightComponent* projLight;
+
+    class VulkanSceneRenderer* sceneRenderer;
 };
 
 #endif

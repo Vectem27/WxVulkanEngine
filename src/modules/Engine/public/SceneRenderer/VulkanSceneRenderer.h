@@ -10,13 +10,25 @@
 #include <vector>
 #include "IVulkanMesh.h"
 
+#include "VulkanGlobalLightManager.h"
+#include "LightManagers/VulkanSpotlightLightManager.h"
+
+//TODO: Adding light managers inside the class
+
 class VulkanSceneRenderer
 {
 public:
     VulkanSceneRenderer() = default;
     ~VulkanSceneRenderer() = default;
+
+    void Init()
+    {
+        auto spotlightLightManager = new VulkanSpotlightLightManager(16);
+        spotlightLightManager->InitLightManager();
+        lightManager.AddLightManager(VulkanSpotlightLight::lightType, spotlightLightManager);
+    }
    
-    static void RenderScene(SceneComponent* scene, VulkanCamera* camera, VulkanGlobalLightManager* lightManager)
+    void RenderScene(SceneComponent* scene, VulkanCamera* camera)
     {
 
         Array<SceneComponent*> sceneArray;
@@ -26,7 +38,7 @@ public:
         std::vector<IVulkanMesh*> meshes;
         Array<VulkanSpotlightLight*> sceneLights;
 
-        lightManager->ClearLights();
+        lightManager.ClearLights();
         for (auto& object : sceneArray)
         {
             auto light = dynamic_cast<VulkanSpotlightLight*>(object);
@@ -40,7 +52,7 @@ public:
 
         for (auto& light : sceneLights)
         {
-            lightManager->AddLight(light);
+            lightManager.AddLight(light);
             //RenderToShadowMap(light->renderTarget, renderObject, light->camera, graphicsQueue);
             GetVulkanShadowMapRenderer().Render(light->renderTarget, light->camera, meshes.data(), meshes.size());
         }
@@ -48,14 +60,14 @@ public:
         static bool doOnce{true};
         if (doOnce)
         {
-            lightManager->Update();
+            lightManager.Update();
             doOnce = false;
         }
 
-        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), lightManager);
+        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), &lightManager);
     }
 
-    static void RenderWorld(World* world, VulkanCamera* camera, VulkanGlobalLightManager* lightManager)
+    void RenderWorld(World* world, VulkanCamera* camera)
     {
 
         Array<SceneComponent*> sceneArray;
@@ -68,7 +80,7 @@ public:
         std::vector<IVulkanMesh*> meshes;
         Array<VulkanSpotlightLight*> sceneLights;
 
-        lightManager->ClearLights();
+        lightManager.ClearLights();
         for (auto& object : sceneArray)
         {
             auto light = dynamic_cast<VulkanSpotlightLight*>(object);
@@ -82,7 +94,7 @@ public:
 
         for (auto& light : sceneLights)
         {
-            lightManager->AddLight(light);
+            lightManager.AddLight(light);
             //RenderToShadowMap(light->renderTarget, renderObject, light->camera, graphicsQueue);
             GetVulkanShadowMapRenderer().Render(light->renderTarget, light->camera, meshes.data(), meshes.size());
         }
@@ -90,15 +102,16 @@ public:
         static bool doOnce{true};
         if (doOnce)
         {
-            lightManager->Update();
+            lightManager.Update();
             doOnce = false;
         }
 
-        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), lightManager);
+        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), &lightManager);
     }
 
 
 private:
+    VulkanGlobalLightManager lightManager;
 };
 
 #endif // VULKANSCENERENDERER_H
