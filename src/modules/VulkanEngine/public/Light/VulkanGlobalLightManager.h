@@ -12,7 +12,6 @@ struct LightManager
     IVulkanLightManager* manager;
 };
 
-class VulkanRenderEngine;
 class VulkanSpotlightLight;
 class IVulkanLightManager;
 
@@ -21,11 +20,9 @@ class VulkanGlobalLightManager : public IVulkanLightManager
 public:
     bool AddLightManager(VulkanLightType lightType, IVulkanLightManager* lightManager);
     IVulkanLightManager* GetManager(VulkanLightType lightType) const;
-    VulkanRenderEngine* GetRenderEngine() { return vulkanRenderEngine; }
 
 public:
-    virtual void InitLightManager(VulkanRenderEngine* vulkanRenderEngine) override;
-    virtual bool IsInitialized() const override { return isInitialized; }
+    //void InitLightManager();
 
     virtual void AddLight(const IVulkanLight* light) override;
     virtual void ClearLights() override;
@@ -34,9 +31,6 @@ public:
     virtual void Bind(VkCommandBuffer commandBuffer) const override;
 
 private:
-    bool isInitialized{false};
-    VulkanRenderEngine* vulkanRenderEngine;
-
     Array<LightManager> managers;
 };
 

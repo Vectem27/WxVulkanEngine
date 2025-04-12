@@ -22,11 +22,6 @@ IVulkanLightManager *VulkanGlobalLightManager::GetManager(VulkanLightType lightT
     return nullptr;
 }
 
-void VulkanGlobalLightManager::InitLightManager(VulkanRenderEngine *vulkanRenderEngine)
-{
-    isInitialized = true;
-}
-
 void VulkanGlobalLightManager::AddLight(const IVulkanLight *light)
 {
     auto manager = GetManager(light->GetLightType());

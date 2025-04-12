@@ -3,14 +3,9 @@
 
 #include "IVulkanLight.h"
 
-class VulkanRenderEngine;
-
 class IVulkanLightManager
 {
 public:
-    virtual void InitLightManager(VulkanRenderEngine* vulkanRenderEngine) = 0;
-    virtual bool IsInitialized() const = 0;
-
     virtual void AddLight(const IVulkanLight* light) = 0;
     virtual void ClearLights() = 0;
 

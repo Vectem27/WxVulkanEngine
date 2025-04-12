@@ -4,21 +4,17 @@
 #include <array>
 
 #include "VulkanSpotlightLight.h"
-#include "VulkanRenderEngine.h"
 #include "VulkanSpotlightLightPipeline.h"
 
-void VulkanSpotlightLightManager::InitLightManager(VulkanRenderEngine *vulkanRenderEngine)
-{
-    if (!vulkanRenderEngine)
-            throw std::invalid_argument("Render engine reference is null");
+#include "VulkanDeviceManager.h"
+#include "VulkanPipelineManager.h"
 
-    this->vulkanRenderEngine = vulkanRenderEngine;
+void VulkanSpotlightLightManager::InitLightManager()
+{
     CreateDescriptorPool();
     CreateDescriptorSets();
 
     lightDataBuffer.Create( sizeof(LightData) * GetMaxNumOfLights());
-    
-    isInitialized = true;
 }
 
 void VulkanSpotlightLightManager::AddLight(const IVulkanLight *light)
@@ -34,9 +30,6 @@ void VulkanSpotlightLightManager::AddLight(const IVulkanLight *light)
 
 void VulkanSpotlightLightManager::Update()
 {
-    if (!IsInitialized())
-        throw std::runtime_error("Vulkan spotlight light manager is not initialized");
-
     int num = 0; //fragLights.GetSize();
     for(const auto& light : lights)
     {
@@ -78,7 +71,7 @@ void VulkanSpotlightLightManager::Update()
     for (size_t i = 0; i < lights.GetSize(); i++)
     {
         imageInfo.push_back({
-            .sampler = GetRenderEngine()->GetPipelineManager()->GetShadowMapSampler(),
+            .sampler = VulkanPipelineManager::GetInstance().GetShadowMapSampler(),
             .imageView = lights[i]->GetSpotlightLightData().shadowMapView,
             .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
         });
@@ -102,7 +95,7 @@ void VulkanSpotlightLightManager::Bind(VkCommandBuffer commandBuffer) const
     for (size_t i = 0; i < GetLightCount(); i++)
     {
         uint32_t offset = i * sizeof(LightData);
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetRenderEngine()->GetPipelineManager()->GetLightingPipelineLayout(), 1, 1, &descriptorSet, 1, &offset);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, VulkanPipelineManager::GetInstance().GetLightingPipelineLayout(), 1, 1, &descriptorSet, 1, &offset);
         vkCmdDraw(commandBuffer, 4, 1, 0, 0);
     }
 }
@@ -130,7 +123,7 @@ void VulkanSpotlightLightManager::CreateDescriptorSets()
     VkDescriptorSetAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &GetRenderEngine()->GetPipelineManager()->GetLightDescriptorSetLayout();
+    allocInfo.pSetLayouts = &VulkanPipelineManager::GetInstance().GetLightDescriptorSetLayout();
     allocInfo.pNext = nullptr;
     allocInfo.descriptorPool = descriptorPool;
 

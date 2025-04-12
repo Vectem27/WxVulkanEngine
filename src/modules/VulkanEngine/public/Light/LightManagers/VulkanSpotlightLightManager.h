@@ -9,13 +9,8 @@
 #include "IVulkanLightManager.h"
 #include "VulkanUniformBuffer.h"
 
-
-
-
-class VulkanRenderEngine;
 class VulkanSpotlightLight;
 class VulkanSpotlightLightPipeline;
-
 
 class VulkanSpotlightLightManager : public IVulkanLightManager
 {
@@ -41,8 +36,7 @@ public:
     }
 
 public: // IVulkanLightManager Interface
-    virtual void InitLightManager(VulkanRenderEngine* vulkanRenderEngine) override;
-    virtual bool IsInitialized() const override { return isInitialized; }
+    virtual void InitLightManager();
 
     virtual void AddLight(const IVulkanLight* light) override;
     virtual void ClearLights() override { lights.Clear(); }
@@ -53,15 +47,12 @@ public:
     unsigned short GetMaxNumOfLights() const { return maxNumOfLights; }
     unsigned short GetLightCount() const { return lights.GetSize();}
 
-    VulkanRenderEngine* GetRenderEngine() const { return vulkanRenderEngine; }
     const VkDescriptorSet& GetDescriptorSet() const { return descriptorSet; }
 private:
     void CreateDescriptorPool();
     void CreateDescriptorSets();
 private:
     unsigned short maxNumOfLights;
-    bool isInitialized{false};
-    VulkanRenderEngine* vulkanRenderEngine;
 
     VkDescriptorPool descriptorPool;
     VkDescriptorSet descriptorSet;
