@@ -64,7 +64,7 @@ public:
             doOnce = false;
         }
 
-        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), &lightManager);
+        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), lightManager);
     }
 
     void RenderWorld(World* world, VulkanCamera* camera)
@@ -106,7 +106,7 @@ public:
             doOnce = false;
         }
 
-        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), &lightManager);
+        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), lightManager);
     }
 
 

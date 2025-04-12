@@ -7,6 +7,8 @@ class IVulkanRenderTarget;
 class VulkanCamera;
 class IVulkanMesh;
 
+class IVulkanLightManager;
+
 class VulkanRenderTargetRenderer
 {
 private:
@@ -32,7 +34,7 @@ public:
         return instance;
     }
 
-    void Render(IVulkanRenderTarget* renderTarget, VulkanCamera *lightViewCamera, IVulkanMesh **meshes, uint32_t meshNumber, class VulkanGlobalLightManager* lightManager);
+    void Render(IVulkanRenderTarget* renderTarget, VulkanCamera *lightViewCamera, IVulkanMesh **meshes, uint32_t meshNumber, const IVulkanLightManager& lightManager);
 
 private:
     VkCommandBuffer commandBuffer{VK_NULL_HANDLE};

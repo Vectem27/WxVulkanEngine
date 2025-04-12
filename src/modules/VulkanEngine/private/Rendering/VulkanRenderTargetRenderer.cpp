@@ -9,13 +9,12 @@
 #include "IVulkanRenderTarget.h"
 #include "VulkanCommandPoolBuilder.h"
 #include "VulkanCommandUtils.h"
+#include "LightManagers/IVulkanLightManager.h"
 
 //TODO: Remove
-#include "VulkanSwapchain.h"
 #include "VulkanSpotlightLightPipeline.h"
 #include "VulkanPostprocessPipeline.h"
 #include "VulkanPipelineManager.h"
-#include "VulkanGlobalLightManager.h"
 
 VulkanRenderTargetRenderer &GetVulkanRenderTargetRenderer()
 {
@@ -56,7 +55,7 @@ void VulkanRenderTargetRenderer::Shutdown() noexcept
     VulkanCommandUtils::DestroyCommandPool(commandPool);
 }
 
-void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, VulkanCamera *camera, IVulkanMesh **meshes, uint32_t meshNumber, VulkanGlobalLightManager* lightManager)
+void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, VulkanCamera *camera, IVulkanMesh **meshes, uint32_t meshNumber, const IVulkanLightManager& lightManager)
 {
     //TODO: Assert function arguments
 
@@ -135,7 +134,7 @@ void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, Vulka
 
         renderTarget->StartLighting(commandBuffer);
 
-        lightManager->Bind(commandBuffer);
+        lightManager.Bind(commandBuffer);
     }
 
     
