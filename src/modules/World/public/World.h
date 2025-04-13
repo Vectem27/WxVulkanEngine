@@ -12,7 +12,8 @@ public:
     ~World() 
     {
         for(const auto& actor : GetActors())
-            delete actor;
+            if(actor)
+                delete actor;
     }
 
     Array<Actor*> GetActors() const { return actors; }

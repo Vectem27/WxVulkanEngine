@@ -32,6 +32,8 @@ void VulkanTransferManager::Shutdown()
         return;
 
     vkDestroyCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), commandPool, nullptr);
+
+    commandPool = VK_NULL_HANDLE;
 }
 
 void VulkanTransferManager::CopyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size)

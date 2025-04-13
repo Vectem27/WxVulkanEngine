@@ -6,6 +6,8 @@
 #include "VulkanUniformBuffer.h"
 #include "EngineCore.hpp"
 
+#include "logger.h"
+
 class VulkanCamera : public ICamera
 {
     struct ViewProj
@@ -15,7 +17,7 @@ class VulkanCamera : public ICamera
     };
 public:
     VulkanCamera() {}
-    ~VulkanCamera() {}
+    virtual ~VulkanCamera() { Cleanup(); }
 
 public: // ICamera Interface
     virtual bool Init(class IRenderEngine* renderEngine, class IRenderTarget* renderTarget = nullptr) override;

@@ -71,6 +71,8 @@ void VulkanShadowMapRenderer::Render(VulkanShadowMapRenderTarget* shadowMap, Vul
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     lightViewCamera->Render(nullptr, commandBuffer);
 
+    vkCmdSetDepthBias(commandBuffer, 0.0f, 0.0f, 0.0f);
+
     for (uint32_t i = 0; i < meshNumber; i++)
     {
         if (meshes[i])

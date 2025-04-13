@@ -6,6 +6,7 @@
 class ProjectorLightComponent : public SceneComponent, public VulkanSpotlightLight
 {
 public:
+public:
     virtual void UpdateWorldTransform() override
     {
         SceneComponent::UpdateWorldTransform();

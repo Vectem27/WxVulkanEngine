@@ -30,7 +30,7 @@ public:
         isVulkanInitialized = true;
     }
 
-    VulkanSurface* GetVulkanSurface() const { return surface; }
+    VulkanSurface* GetVulkanSurface() { return surface; }
 private:
     bool isVulkanInitialized{false};
     VulkanRenderEngine* vulkanRenderEngine{nullptr};

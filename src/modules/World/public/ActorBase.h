@@ -21,7 +21,7 @@ public:
 
         UpdateWorldTransform();
     }
-    virtual ~ActorBase() {}
+    virtual ~ActorBase() = default;
 
 public:
     virtual World* GetWorld() const override { return creationInfo.world; }

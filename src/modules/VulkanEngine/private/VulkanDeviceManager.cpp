@@ -113,7 +113,11 @@ void VulkanDeviceManager::PickPhysicalDevice(VkInstance instance)
 void VulkanDeviceManager::CreateLogicalDevice()
 {
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::vector<uint32_t> uniqueQueueFamilies = { graphicsQueueFamilyIndex, transferQueueFamilyIndex };
+
+    std::vector<uint32_t> uniqueQueueFamilies;
+    uniqueQueueFamilies.push_back(graphicsQueueFamilyIndex);
+    if (graphicsQueueFamilyIndex != transferQueueFamilyIndex)
+        uniqueQueueFamilies.push_back(transferQueueFamilyIndex);
 
     float queuePriority = 1.0f;
 
@@ -129,6 +133,8 @@ void VulkanDeviceManager::CreateLogicalDevice()
     const char* deviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
     VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.independentBlend = VK_TRUE;
+    
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());

@@ -25,7 +25,7 @@ struct ProjectorLightData
 class VulkanSpotlightLight : public IVulkanLight
 {
 public:
-    ~VulkanSpotlightLight();
+    virtual ~VulkanSpotlightLight();
     void InitVulkanSpotlightLight(VulkanRenderEngine* renderEngine);
 
 public: // IVulkanLight Interface

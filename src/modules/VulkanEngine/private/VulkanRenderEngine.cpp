@@ -57,8 +57,9 @@ bool VulkanRenderEngine::Init(void *windowHandle)
 
 void VulkanRenderEngine::Shutdown() 
 {
-    if (GetVulkanDeviceManager().GetDevice() != VK_NULL_HANDLE) 
-        vkDeviceWaitIdle(GetVulkanDeviceManager().GetDevice());
+    if (instance == VK_NULL_HANDLE) 
+        return;
+    vkDeviceWaitIdle(GetVulkanDeviceManager().GetDeviceChecked());
 
     GetVulkanShadowMapRenderer().Shutdown();
     GetVulkanRenderTargetRenderer().Shutdown();
@@ -73,6 +74,13 @@ void VulkanRenderEngine::Shutdown()
     delete pipelineManager;
     VulkanDeviceManager::GetInstance().Shutdown();
 
+    auto destroyFunc = (PFN_vkDestroyDebugUtilsMessengerEXT)
+    vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    if (destroyFunc != nullptr) 
+    {
+        destroyFunc(instance, debugMessenger, nullptr);
+    }
+
     if (instance != VK_NULL_HANDLE) 
     {
         vkDestroyInstance(instance, nullptr);
@@ -86,7 +94,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) 
 {
-    std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
+    Log(Debug, "Vulkan" "Validation layer : %s", pCallbackData->pMessage);
+    //std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
     return VK_FALSE; // On ne stoppe pas l'exécution du programme
 }
 
@@ -106,10 +115,22 @@ void VulkanRenderEngine::createInstance()
     extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 #endif
 
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+    const std::vector<const char*> validationLayers = {
+        "VK_LAYER_KHRONOS_validation"
+    };
+
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
     debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-    debugCreateInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-    debugCreateInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+    debugCreateInfo.messageSeverity = 
+        //VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    debugCreateInfo.messageType = 
+        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | 
+        VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | 
+        VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     debugCreateInfo.pfnUserCallback = debugCallback; // Fonction de callback
 
     VkInstanceCreateInfo createInfo{};
@@ -117,12 +138,24 @@ void VulkanRenderEngine::createInstance()
     createInfo.pApplicationInfo = &appInfo;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
+    createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+    createInfo.ppEnabledLayerNames = validationLayers.data();
     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 
     if (auto result = vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
     {
         Log(Critical, "Vulkan", "Failed to create instance, result code : %d", result);
         throw std::runtime_error("failed to create Vulkan instance");
+    }
+
+    auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
+    vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    if (func != nullptr) 
+    {
+        if (func(instance, &debugCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS) 
+        {
+            Log(Warning, "Vulkan", "Failed to set up debug messenger!");
+        }
     }
 }
 

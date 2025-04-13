@@ -27,7 +27,7 @@ wxVulkanApp::wxVulkanApp()
 
 bool wxVulkanApp::OnInit()
 {
-    Logger::GetLogger().SetVerbosity(5);
+    Logger::GetLogger().SetVerbosity(3);
 
     Log(Info, LogDefault, "Application initialization start");
 
@@ -134,6 +134,7 @@ void wxVulkanApp::InitVulkan()
         floor->SetRelativePosition({0.0f,0.0f,-1.0f});
         floor->SetRelativeScale({15.f,15.0f,1.0f});
 
+        // TODO: Check why it crashed whene dont spawn cubes
         world = new World();
         cubeActor = world->SpawnActor<Actor>();
         cubeActor->AddChild(cube);
@@ -242,13 +243,14 @@ void wxVulkanApp::ShutdownVulkan()
 {
     Log(Debug, LogDefault, "Shutdown vulkan");
 
-    Log(Trace, LogDefault, "Destroy cameras");
-    camera->Cleanup();
-    delete camera;
     Log(Trace, LogDefault, "Destroy world");
     delete world;
+    
     Log(Trace, LogDefault, "Destroy swapchain");
     delete swapchain;
+
+    Log(Trace, LogDefault, "Destroy render surface");
+    delete frame->renderSurface->GetVulkanSurface();
 
     Log(Trace, LogDefault, "Shutdown vulkan render engine");
     if (vulkanRenderEngine)

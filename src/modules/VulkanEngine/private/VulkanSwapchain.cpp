@@ -210,7 +210,7 @@ void VulkanSwapchain::CreateSwapchain()
     createInfo.imageColorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
     createInfo.imageExtent = swapchainExtent;
     createInfo.imageArrayLayers = 1;
-    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     if (queuesAreDifferent) 
     {
         uint32_t queueFamilyIndices[] = {renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex(), surface->GetPresentQueueFamilyIndex()};

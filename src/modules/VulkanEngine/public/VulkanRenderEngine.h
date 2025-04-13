@@ -50,50 +50,9 @@ private:
 private:
     void createInstance();
     void createDescriptorPool();
+
 public:
-    void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory) {
-        VkBufferCreateInfo bufferCreateInfo = {};
-        bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-        bufferCreateInfo.size = size;
-        bufferCreateInfo.usage = usage;
-        bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    
-        if (vkCreateBuffer(GetVulkanDeviceManager().GetDeviceChecked(), &bufferCreateInfo, nullptr, &buffer) != VK_SUCCESS) 
-        {
-            throw std::runtime_error("failed to create buffer!");
-        }
-    
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(GetVulkanDeviceManager().GetDeviceChecked(), buffer, &memRequirements);
-    
-        VkMemoryAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-        allocInfo.allocationSize = memRequirements.size;
-        allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
-    
-        if (vkAllocateMemory(GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-            throw std::runtime_error("failed to allocate buffer memory!");
-        }
-    
-        vkBindBufferMemory(GetVulkanDeviceManager().GetDeviceChecked(), buffer, bufferMemory, 0);
-    }
-    
-    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) 
-    {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(GetVulkanDeviceManager().GetPhysicalDeviceChecked(), &memProperties);
-    
-        // Parcourir tous les types de mémoire pour trouver celui qui correspond aux critères
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
-        {
-            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
-            {
-                return i;
-            }
-        }
-    
-        throw std::runtime_error("failed to find suitable memory type!");
-    }
+    VkDebugUtilsMessengerEXT debugMessenger;
 };
 
 #endif // VULKAN_RENDERER_H

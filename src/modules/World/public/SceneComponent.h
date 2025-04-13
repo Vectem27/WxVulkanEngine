@@ -9,10 +9,11 @@
 class SceneComponent : public IWorldContextObject, public IRenderable
 {
 public:
-    ~SceneComponent()
+    virtual ~SceneComponent()
     {
         for (const auto& child : GetChilds())
-            delete child;
+            if (child)
+                delete child;
     }
 public: // IWorldContextObject Interface
     virtual World* GetWorld() const override

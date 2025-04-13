@@ -19,6 +19,11 @@ public:
     CubeMesh() = default;
     CubeMesh(Transform transform) : Mesh(transform) {}
 
+    virtual ~CubeMesh()
+    {
+        vertexBuffer.Cleanup();
+        indexBuffer.Cleanup();
+    }
 public:
     virtual void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine) override
     {

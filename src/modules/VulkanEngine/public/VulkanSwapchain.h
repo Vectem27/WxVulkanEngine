@@ -10,61 +10,6 @@
 #include "IVulkanRenderTarget.h"
 #include "VulkanRenderTarget.h"
 
-enum BufferType
-{
-    BASECOLOR,
-    DEPTHSTENCIL,
-    NORMAL,
-    LIGHTING,
-    POSITION,
-    POSTPROCESS,
-};
-
-struct ImageData
-{
-    BufferType type;
-    VkFormat format;
-    VkImageUsageFlags usageFlags;
-    VkImageAspectFlags aspectFlags;
-    std::vector<VkImage> images;
-    std::vector<VkDeviceMemory> imageMemorys;
-    std::vector<VkImageView> imageViews;
-
-    void Resize(uint32_t size)
-    {
-        images.clear();
-        imageViews.clear();
-        imageMemorys.clear();
-
-        images.resize(size);
-        imageMemorys.resize(size);
-        imageViews.resize(size);
-
-        for (size_t i = 0; i < size; i++)
-        {
-            images[i] = VK_NULL_HANDLE;
-            imageMemorys[i] = VK_NULL_HANDLE;
-            imageViews[i] = VK_NULL_HANDLE;
-        }
-    }
-
-    void Cleanup(VkDevice device, bool excludeImages)
-    {
-        for (size_t i = 0; i < images.size(); i++)
-        {
-            if (images[i] != VK_NULL_HANDLE && !excludeImages)
-                vkDestroyImage(device, images[i], nullptr);
-            if (imageMemorys[i] != VK_NULL_HANDLE)
-                vkFreeMemory(device, imageMemorys[i], nullptr);
-            if (imageViews[i] != VK_NULL_HANDLE)
-                vkDestroyImageView(device, imageViews[i], nullptr);
-        }
-        images.clear();
-        imageViews.clear();
-        imageMemorys.clear();
-    }
-};
-
 struct SwapchainSupportDetails 
 {
     VkSurfaceCapabilitiesKHR capabilities;

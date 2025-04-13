@@ -6,6 +6,12 @@
 
 class Cube : public SceneComponent
 {
+public:
+    virtual ~Cube()
+    {
+        if (mesh)
+            delete mesh;
+    }
 public: // IRenderable Interface
     bool Init(IRenderEngine* engine)
     {
