@@ -38,12 +38,23 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
         }
     }; 
 
+    VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = 0;
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkVertexInputAttributeDescription attrDesc{};
+    attrDesc.location = 0;
+    attrDesc.binding = 0;
+    attrDesc.format = VK_FORMAT_R8_UNORM;
+    attrDesc.offset = 0;
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = nullptr,
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = nullptr
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &bindingDescription,
+        .vertexAttributeDescriptionCount = 1,
+        .pVertexAttributeDescriptions = &attrDesc
     };
 
     // 4. Configuration de l'assemblage des primitives
@@ -142,15 +153,15 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
         .pStages = shaderStages,
         .pVertexInputState = &vertexInputInfo,
         .pInputAssemblyState = &inputAssembly,
-        .pViewportState = &viewportState, // Important: null car on utilise des états dynamiques
+        .pViewportState = &viewportState,
         .pRasterizationState = &rasterizer,
         .pMultisampleState = &multisampling,
         .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicState,
-        .layout = pipelineManager->GetLightingPipelineLayout(),
+        .layout = VulkanPipelineManager::GetInstance().GetLightingPipelineLayout(),
         .renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass(),
-        .subpass = 0, // N'oubliez pas de spécifier le subpass!
+        .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1
     };

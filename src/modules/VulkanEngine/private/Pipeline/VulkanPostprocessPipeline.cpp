@@ -38,12 +38,23 @@ void VulkanPostprocessPipeline::InitPipeline(VkDevice device, VulkanPipelineMana
         }
     };
 
+    VkVertexInputBindingDescription bindingDescription{};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = 0;
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkVertexInputAttributeDescription attrDesc{};
+    attrDesc.location = 0;
+    attrDesc.binding = 0;
+    attrDesc.format = VK_FORMAT_R8_UNORM;
+    attrDesc.offset = 0;
+
     VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .vertexBindingDescriptionCount = 0,
-        .pVertexBindingDescriptions = nullptr,
-        .vertexAttributeDescriptionCount = 0,
-        .pVertexAttributeDescriptions = nullptr
+        .vertexBindingDescriptionCount = 1,
+        .pVertexBindingDescriptions = &bindingDescription,
+        .vertexAttributeDescriptionCount = 1,
+        .pVertexAttributeDescriptions = &attrDesc
     };
 
     // 4. Configuration de l'assemblage des primitives
