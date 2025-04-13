@@ -3,18 +3,52 @@
 #include <vector>
 #include <array>
 
+#include "Matrix.hpp"
+
 #include "VulkanSpotlightLight.h"
 #include "VulkanSpotlightLightPipeline.h"
 
 #include "VulkanDeviceManager.h"
 #include "VulkanPipelineManager.h"
 
-void VulkanSpotlightLightManager::InitLightManager()
-{
-    CreateDescriptorPool();
-    CreateDescriptorSets();
+#include "VulkanDescriptorPoolBuilder.h"
+#include "VulkanDescriptorUtils.h"
 
-    lightDataBuffer.Create( sizeof(LightData) * GetMaxNumOfLights());
+/**
+ * @struct The light data struct aligned to be transfered in shaders
+ */
+struct alignas(256) LightData
+{
+    alignas(16) Matrix4f viewProj;
+    alignas(16) Vector3f pos;
+    alignas(16) Vector3f direction;
+    alignas(4)  float length;
+    alignas(4)  float angle;
+    alignas(16) Vector3f color;
+    alignas(4)  float intensity;
+    alignas(4)  float softAngle; // Angle de transition douce
+    alignas(4)  unsigned int shadowMapIndex;
+};
+
+VulkanSpotlightLightManager::VulkanSpotlightLightManager()
+{
+    descriptorPool = VulkanDescriptorPoolBuilder().SetMaxSets(16).AddUniformBufferDynamic(1).AddCombinedImageSampler(GetVulkanPipelineManager().GetMaxLightsPerDescriptor()).Build();
+    descriptorSet = VulkanDescriptorUtils::AllocateSet(descriptorPool, GetVulkanPipelineManager().GetLightDescriptorSetLayout());
+
+    lightDataBuffer.Create(sizeof(LightData) * GetVulkanPipelineManager().GetMaxLightsPerDescriptor());
+
+    spotlightLightPipeline = new VulkanSpotlightLightPipeline();
+    spotlightLightPipeline->InitPipeline(GetVulkanDeviceManager().GetDeviceChecked(), &VulkanPipelineManager::GetInstance(),
+        "shaders/fullScreen.vert", "shaders/lighting.frag");
+
+}
+
+VulkanSpotlightLightManager::~VulkanSpotlightLightManager()
+{
+    delete spotlightLightPipeline;
+    lightDataBuffer.Cleanup();
+
+    VulkanDescriptorUtils::DestroyDescriptorPool(descriptorPool);
 }
 
 void VulkanSpotlightLightManager::AddLight(const IVulkanLight *light)
@@ -24,7 +58,7 @@ void VulkanSpotlightLightManager::AddLight(const IVulkanLight *light)
 
     auto spotlightLight = dynamic_cast<const VulkanSpotlightLight*>(light);
     
-    if (spotlightLight && GetLightCount() < GetMaxNumOfLights())
+    if (spotlightLight)
         lights.Add(spotlightLight);
 }
 
@@ -92,6 +126,8 @@ void VulkanSpotlightLightManager::Update()
 
 void VulkanSpotlightLightManager::Bind(VkCommandBuffer commandBuffer) const
 {
+    spotlightLightPipeline->Bind(commandBuffer);
+
     for (size_t i = 0; i < GetLightCount(); i++)
     {
         uint32_t offset = i * sizeof(LightData);
@@ -100,37 +136,3 @@ void VulkanSpotlightLightManager::Bind(VkCommandBuffer commandBuffer) const
     }
 }
 
-void VulkanSpotlightLightManager::CreateDescriptorPool() 
-{
-    std::vector<VkDescriptorPoolSize> poolSizes = {
-        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, GetMaxNumOfLights() },
-        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, GetMaxNumOfLights() },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, GetMaxNumOfLights() }
-    };
-
-    VkDescriptorPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-    poolInfo.pPoolSizes = poolSizes.data();
-    poolInfo.maxSets = 2;
-
-    if (vkCreateDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS)
-        throw std::runtime_error("Failed to create spotlight manager descriptor pool");
-}
-
-void VulkanSpotlightLightManager::CreateDescriptorSets()
-{
-    VkDescriptorSetAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &VulkanPipelineManager::GetInstance().GetLightDescriptorSetLayout();
-    allocInfo.pNext = nullptr;
-    allocInfo.descriptorPool = descriptorPool;
-
-    VkResult allocResult = vkAllocateDescriptorSets(
-        GetVulkanDeviceManager().GetDeviceChecked(), &allocInfo, &descriptorSet
-    );
-    
-    if (allocResult != VK_SUCCESS)
-        throw std::runtime_error("Failed to allocate spotlight manager descriptor set");
-}

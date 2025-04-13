@@ -45,7 +45,6 @@ private:
     VkQueue graphicsQueue{VK_NULL_HANDLE};
 
     // TODO: Remove
-    class VulkanSpotlightLightPipeline* spotlightLightPipeline;
     class VulkanPostprocessPipeline* postprocessPipeline;
 };
 

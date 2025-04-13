@@ -13,6 +13,8 @@
 #include "VulkanGlobalLightManager.h"
 #include "LightManagers/VulkanSpotlightLightManager.h"
 
+#include "VulkanSpotlightLight.h"
+
 //TODO: Adding light managers inside the class
 
 class VulkanSceneRenderer
@@ -23,8 +25,7 @@ public:
 
     void Init()
     {
-        auto spotlightLightManager = new VulkanSpotlightLightManager(16);
-        spotlightLightManager->InitLightManager();
+        auto spotlightLightManager = new VulkanSpotlightLightManager();
         lightManager.AddLightManager(VulkanSpotlightLight::lightType, spotlightLightManager);
     }
    

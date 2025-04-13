@@ -22,8 +22,6 @@ public:
     IVulkanLightManager* GetManager(VulkanLightType lightType) const;
 
 public:
-    //void InitLightManager();
-
     virtual void AddLight(const IVulkanLight* light) override;
     virtual void ClearLights() override;
 

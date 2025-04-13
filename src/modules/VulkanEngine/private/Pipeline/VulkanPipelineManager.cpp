@@ -126,7 +126,7 @@ void VulkanPipelineManager::InitDescriptorSetLayouts(VkDevice device)
     // Shadow Map (optionnel)
     lightingBindings[1].binding = 1;
     lightingBindings[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    lightingBindings[1].descriptorCount = 16;
+    lightingBindings[1].descriptorCount = GetMaxLightsPerDescriptor();
     lightingBindings[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
     layoutInfo = {};
@@ -208,4 +208,9 @@ void VulkanPipelineManager::InitPostprocessPipelineLayouts(VkDevice device)
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &postprocessPipelineLayout) != VK_SUCCESS)
         throw std::runtime_error("Failed to create lighting pipeline layout !");
+}
+
+VulkanPipelineManager& GetVulkanPipelineManager()
+{
+    return VulkanPipelineManager::GetInstance();
 }

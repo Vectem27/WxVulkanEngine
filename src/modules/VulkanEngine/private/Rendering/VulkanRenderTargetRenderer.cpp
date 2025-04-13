@@ -37,12 +37,6 @@ void VulkanRenderTargetRenderer::Init(VkQueue graphicsQueue, uint32_t queueFamil
 
     commandBuffer = VulkanCommandUtils::AllocateCommandBuffer(commandPool);
 
-
-    //TODO: Remove
-    spotlightLightPipeline = new VulkanSpotlightLightPipeline();
-    spotlightLightPipeline->InitPipeline(GetVulkanDeviceManager().GetDeviceChecked(), &VulkanPipelineManager::GetInstance(),
-        "shaders/fullScreen.vert", "shaders/lighting.frag");
-
     postprocessPipeline = new VulkanPostprocessPipeline();
     postprocessPipeline->InitPipeline(GetVulkanDeviceManager().GetDeviceChecked(), &VulkanPipelineManager::GetInstance(),
         "shaders/fullScreen.vert", "shaders/postprocess.frag");
@@ -130,8 +124,6 @@ void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, Vulka
         
         vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
         vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
-        spotlightLightPipeline->Bind(commandBuffer);
 
         renderTarget->StartLighting(commandBuffer);
 

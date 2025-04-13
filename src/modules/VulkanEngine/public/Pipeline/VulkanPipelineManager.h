@@ -18,12 +18,14 @@ public:
     const VkSampler GetShadowMapSampler() const { return shadowMapSampler; }
     const VkSampler GetGBufferSampler() const { return gBufferSampler; }
 
+    uint32_t GetMaxLightsPerDescriptor() const { return 16; }
 public: // DescriptionSetLayouts Getters
     const VkDescriptorSetLayout& GetCameraDescriptorSetLayout() const { return cameraDescriptorLayout; }
     const VkDescriptorSetLayout& GetObjectDescriptorSetLayout() const { return objectDescriptorLayout; }
     const VkDescriptorSetLayout& GetPostprocessDescriptorSetLayout() const { return postprocessDescriptorLayout; }
     const VkDescriptorSetLayout& GetLightDescriptorSetLayout() const { return lightingDescriptorLayout; }
     const VkDescriptorSetLayout& GetgBufferDescriptorSetLayout() const { return gBufferDescriptorLayout; }
+    
 public: // PipelineLayouts Getters
     VkPipelineLayout GetPipelineLayout() const { return pipelineLayout; }
     VkPipelineLayout GetLightingPipelineLayout() const { return lightingPipelineLayout; }
@@ -52,5 +54,7 @@ private:
     void InitLightingPipelineLayouts(VkDevice device);
     void InitPostprocessPipelineLayouts(VkDevice device);
 };
+
+VulkanPipelineManager& GetVulkanPipelineManager();
 
 #endif // VULKANPIPELINEMANAGER_H

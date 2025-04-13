@@ -22,11 +22,11 @@ wxVulkanApp::wxVulkanApp()
     projLight(new ProjectorLightComponent())
 
 {
-    
 }
 
 bool wxVulkanApp::OnInit()
 {
+
     Logger::GetLogger().SetVerbosity(3);
 
     Log(Info, LogDefault, "Application initialization start");

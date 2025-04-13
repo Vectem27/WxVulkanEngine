@@ -24,9 +24,9 @@ namespace VulkanCommandUtils
 
     /**
      * @brief Reset a command buffer 
-     * @warning This function should be called on a command buffer created by a pool with the reset command flag
      * @param commandBuffer The command buffer to reset
      * @note Parameters are checked and can throw a runtime error
+     * @warning This function should be called on a command buffer created by a pool with the reset command flag
      */
     void ResetCommandBuffer(VkCommandBuffer commandBuffer);
 
@@ -83,7 +83,7 @@ namespace VulkanCommandUtils
      * 
      * @note Parameters are checked but don't throw errors
      */
-    void FreeCommandBuffer(VkCommandPool commandPool, VkCommandBuffer commandBuffer) noexcept;
+    void FreeCommandBuffer(VkCommandPool commandPool, VkCommandBuffer& commandBuffer) noexcept;
 
     /**
      * @brief Destroy a command pool
@@ -91,7 +91,7 @@ namespace VulkanCommandUtils
      * 
      * @note Parameters are checked but don't throw errors
      */
-    void DestroyCommandPool(VkCommandPool commandPool) noexcept;
+    void DestroyCommandPool(VkCommandPool& commandPool) noexcept;
 };
 
 #endif // VULKANCOMMANDUTILS_H

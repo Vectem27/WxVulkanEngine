@@ -4,7 +4,6 @@
 #include <vulkan/vulkan.h>
 
 #include "Array.h"
-#include "Matrix.hpp"
 
 #include "IVulkanLightManager.h"
 #include "VulkanUniformBuffer.h"
@@ -12,54 +11,50 @@
 class VulkanSpotlightLight;
 class VulkanSpotlightLightPipeline;
 
+/**
+ * @brief The spotlight lights manager
+ * @class VulkanSpotlightLightManager
+ * @implements IVulkanLightManager
+ * 
+ * @author Vectem
+ */
 class VulkanSpotlightLightManager : public IVulkanLightManager
 {
-    struct alignas(256) LightData
-    {
-        alignas(16) Matrix4f viewProj;
-        alignas(16) Vector3f pos;
-        alignas(16) Vector3f direction;
-        alignas(4)  float length;
-        alignas(4)  float angle;
-        alignas(16) Vector3f color;
-        alignas(4)  float intensity;
-        alignas(4)  float softAngle; // Angle de transition douce
-        alignas(4)  unsigned int shadowMapIndex;
-    };
 public:
-    VulkanSpotlightLightManager(unsigned short maxNumOfLights) 
-        : maxNumOfLights(maxNumOfLights) {}
+    /**
+     * @brief Default constructor
+     * @warning Class should be created after vulkan engine singletons initializations
+     */
+    VulkanSpotlightLightManager();
+    VulkanSpotlightLightManager(const VulkanSpotlightLightManager&) = delete;
+    VulkanSpotlightLightManager& operator=(const VulkanSpotlightLightManager&) = delete;
+    VulkanSpotlightLightManager(VulkanSpotlightLightManager&&) = delete;
+    VulkanSpotlightLightManager& operator=(VulkanSpotlightLightManager&&) = delete;
 
-    ~VulkanSpotlightLightManager()
-    {
-        lightDataBuffer.Cleanup();
-    }
+    virtual ~VulkanSpotlightLightManager();
 
 public: // IVulkanLightManager Interface
-    virtual void InitLightManager();
-
     virtual void AddLight(const IVulkanLight* light) override;
     virtual void ClearLights() override { lights.Clear(); }
-
     virtual void Update() override;
     virtual void Bind(VkCommandBuffer commandBuffer) const override;
+
 public:
-    unsigned short GetMaxNumOfLights() const { return maxNumOfLights; }
+    /**
+     * @brief Get the current number of managed lights
+     * @return the number of lights
+     */
     unsigned short GetLightCount() const { return lights.GetSize();}
 
-    const VkDescriptorSet& GetDescriptorSet() const { return descriptorSet; }
 private:
-    void CreateDescriptorPool();
-    void CreateDescriptorSets();
-private:
-    unsigned short maxNumOfLights;
-
-    VkDescriptorPool descriptorPool;
-    VkDescriptorSet descriptorSet;
-
     Array<const VulkanSpotlightLight*> lights;
 
+    VulkanSpotlightLightPipeline* spotlightLightPipeline{nullptr};
+
     VulkanUniformBuffer lightDataBuffer;
+    VkDescriptorSet descriptorSet;
+
+    VkDescriptorPool descriptorPool;
 };
 
 #endif // VULKANSPOTLIGHTLIGHTMANAGER_H

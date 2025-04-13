@@ -159,7 +159,7 @@ void VulkanCommandUtils::SubmitCommandBufferWithSync(VkQueue queue, const VkComm
     }
 }
 
-void VulkanCommandUtils::FreeCommandBuffer(VkCommandPool commandPool, VkCommandBuffer commandBuffer) noexcept
+void VulkanCommandUtils::FreeCommandBuffer(VkCommandPool commandPool, VkCommandBuffer& commandBuffer) noexcept
 {
     try
     {
@@ -178,9 +178,11 @@ void VulkanCommandUtils::FreeCommandBuffer(VkCommandPool commandPool, VkCommandB
     {
         Log(Warning, "Vulkan", "Failed to free command buffer");
     }
+
+    commandBuffer = VK_NULL_HANDLE;
 }
 
-void VulkanCommandUtils::DestroyCommandPool(VkCommandPool commandPool) noexcept
+void VulkanCommandUtils::DestroyCommandPool(VkCommandPool& commandPool) noexcept
 {
     try
     {
@@ -193,4 +195,6 @@ void VulkanCommandUtils::DestroyCommandPool(VkCommandPool commandPool) noexcept
     {
         Log(Warning, "Vulkan", "Failed to destroy command pool");
     }
+
+    commandPool = VK_NULL_HANDLE;
 }

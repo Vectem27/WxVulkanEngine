@@ -9,6 +9,11 @@
  * @brief A vulkan descriptor pool creation helper class
  * @class VulkanDescriptorPoolBuilder
  * 
+ * Example of use :
+ * @code
+ * descPool = VulkanDescriptorPoolBuilder()..SetMaxSets(16).AddUniformBufferDynamic(1).Build();
+ * @endcode
+ * 
  * @author Vectem
  */
 class VulkanDescriptorPoolBuilder

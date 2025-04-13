@@ -36,3 +36,45 @@ VkDescriptorSet VulkanDescriptorUtils::AllocateSet(VkDescriptorPool pool, VkDesc
 
     return descSet;
 }
+
+void VulkanDescriptorUtils::FreeDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSet &descriptorSet) noexcept
+{
+    if (descriptorSet == VK_NULL_HANDLE)
+        return;
+
+    if (descriptorPool == VK_NULL_HANDLE)
+    {
+        Log(Error, "Vulkan", "Failed to free descriptor set, descriptor pool is null");
+    }
+
+    try
+    {
+        if (auto result = vkFreeDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), descriptorPool, 1, &descriptorSet); result != VK_SUCCESS)
+        {
+            Log(Error, "Vulkan", "Failed to free descriptor set. Result code : %d", result);
+        }
+    }
+    catch(...)
+    {
+        Log(Error, "Vulkan", "Failed to free descriptor set");
+    }
+
+    descriptorSet = VK_NULL_HANDLE;
+}
+
+void VulkanDescriptorUtils::DestroyDescriptorPool(VkDescriptorPool& descriptorPool) noexcept
+{
+    if (descriptorPool == VK_NULL_HANDLE)
+        return;
+
+    try
+    {
+        vkDestroyDescriptorPool(GetVulkanDeviceManager().GetDeviceChecked(), descriptorPool, nullptr);
+    }
+    catch(...)
+    {
+        Log(Error, "Vulkan", "Failed to destroy descriptor pool");
+    }
+
+    descriptorPool = VK_NULL_HANDLE;
+}

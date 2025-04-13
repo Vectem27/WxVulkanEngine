@@ -35,7 +35,13 @@ target_include_directories(VulkanEngine
 
     PUBLIC public/Rendering
     PRIVATE private/Rendering
+
+    PUBLIC public/Objects
+    PRIVATE private/Objects
 )
+
+target_compile_features(VulkanEngine PRIVATE cxx_std_20)
+target_compile_options(VulkanEngine PRIVATE -fmodules-ts)
 
 target_include_directories(VulkanEngine PUBLIC ${Vulkan_INCLUDE_DIRS})
 target_link_libraries(VulkanEngine PUBLIC ${Vulkan_LIBRARIES} RenderApi EngineCore)
