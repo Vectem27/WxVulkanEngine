@@ -1,12 +1,12 @@
 #ifndef VULKANSTORAGEBUFFER_H
 #define VULKANSTORAGEBUFFER_H
 
-#include "VulkanBuffer.h"
+#include "VulkanGpuOnlyBuffer.h"
 #include <utility> // std::move
 
 /**
  * @class VulkanStorageBuffer 
- * @extends VulkanBuffer
+ * @extends VulkanGpuOnlyBuffer
  * @ingroup Buffer
  * 
  * @brief The vulkan storage buffer implementation
@@ -20,18 +20,15 @@
  * @endcode
  * 
  * @author Vectem
- * @date 11 apr 2025
- * @version 1.0
  */
-class VulkanStorageBuffer : public VulkanBuffer
+class VulkanStorageBuffer : public VulkanGpuOnlyBuffer
 {
 public:
     /**
      * @brief The default constructor
      */
-    VulkanStorageBuffer(BufferType bufferType = BufferType::DEVICE_LOCAL)
-        : VulkanBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-            HOST_VISIBLE_BIT | HOST_COHERENT_BIT)
+    VulkanStorageBuffer(bool isTransferDestination = TRANSFER_DEST_BUFFER)
+        : VulkanGpuOnlyBuffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, isTransferDestination)
     {}
 
     VulkanStorageBuffer(VulkanStorageBuffer& other) = delete;

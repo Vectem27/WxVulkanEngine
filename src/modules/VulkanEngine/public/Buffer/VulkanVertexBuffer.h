@@ -1,12 +1,12 @@
 #ifndef VULKANVERTEXBUFFER_H
 #define VULKANVERTEXBUFFER_H
 
-#include "VulkanBuffer.h"
+#include "VulkanGpuOnlyBuffer.h"
 #include <utility> // std::move
 
 /**
  * @class VulkanVertexBuffer 
- * @extends VulkanBuffer
+ * @extends VulkanGpuOnlyBuffer
  * @ingroup Buffer
  * 
  * @brief The vulkan vertex buffer implementation
@@ -23,15 +23,14 @@
  * @date 11 apr 2025
  * @version 1.0
  */
-class VulkanVertexBuffer : public VulkanBuffer
+class VulkanVertexBuffer : public VulkanGpuOnlyBuffer
 {
 public:
     /**
      * @brief The default constructor
      */
     VulkanVertexBuffer() 
-        : VulkanBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+        : VulkanGpuOnlyBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, TRANSFER_DEST_BUFFER)
     {}
 
     VulkanVertexBuffer(VulkanVertexBuffer& other) = delete;

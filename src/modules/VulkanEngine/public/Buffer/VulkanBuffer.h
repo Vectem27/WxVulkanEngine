@@ -49,19 +49,7 @@ public:
      */
     void Create(VkDeviceSize size);
 
-    /**
-     * @brief Update the buffer memory
-     * @param data New buffer memory data
-     */
-    void Update(const void* data) { Update(data, 0, static_cast<size_t>(bufferSize)); }
-
-    /**
-     * @brief Update the buffer memory
-     * @param data New data
-     * @param offset Starting offset (in bytes)
-     * @param size Number of bytes to update
-     */
-    void Update(const void* data, VkDeviceSize offset, size_t size);
+    
 
     /**
      * @brief Cleanup the buffer memory
@@ -81,10 +69,12 @@ public:
      */
     VkDeviceSize GetBufferSize() const { return bufferSize; }
 
-private:
+protected:
     VkBuffer buffer{VK_NULL_HANDLE};
     VkDeviceMemory bufferMemory{VK_NULL_HANDLE};
     VkDeviceSize bufferSize{0};
+    
+private:
     VkBufferUsageFlags bufferUsage;
     VkMemoryPropertyFlags memoryProperties;
 };

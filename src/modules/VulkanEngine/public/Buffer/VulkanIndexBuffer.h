@@ -1,12 +1,12 @@
 #ifndef VULKANINDEXBUFFER_H
 #define VULKANINDEXBUFFER_H
 
-#include "VulkanBuffer.h"
+#include "VulkanGpuOnlyBuffer.h"
 #include <utility> // std::move
 
 /**
  * @class VulkanIndexBuffer 
- * @extends VulkanBuffer
+ * @extends VulkanGpuOnlyBuffer
  * @ingroup Buffer
  * 
  * @brief The vulkan index buffer implementation
@@ -20,18 +20,15 @@
  * @endcode
  * 
  * @author Vectem
- * @date 11 apr 2025
- * @version 1.0
  */
-class VulkanIndexBuffer : public VulkanBuffer
+class VulkanIndexBuffer : public VulkanGpuOnlyBuffer
 {
 public:
     /**
      * @brief The default constructor
      */
     VulkanIndexBuffer() 
-        : VulkanBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 
-            VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
+        : VulkanGpuOnlyBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, TRANSFER_DEST_BUFFER)
     {}
 
     VulkanIndexBuffer(VulkanIndexBuffer& other) = delete;

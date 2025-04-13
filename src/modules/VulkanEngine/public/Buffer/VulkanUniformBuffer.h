@@ -1,12 +1,12 @@
 #ifndef VULKANUNIFORMBUFFER_H
 #define VULKANUNIFORMBUFFER_H
 
-#include "VulkanBuffer.h"
+#include "VulkanCpuOnlyBuffer.h"
 #include <utility> // std::move
 
 /**
  * @class VulkanUniformBuffer 
- * @extends VulkanBuffer
+ * @extends VulkanCpuOnlyBuffer
  * @ingroup Buffer
  * 
  * @brief The vulkan uniform buffer implementation
@@ -20,18 +20,15 @@
  * @endcode
  * 
  * @author Vectem
- * @date 11 apr 2025
- * @version 1.0
  */
-class VulkanUniformBuffer : public VulkanBuffer
+class VulkanUniformBuffer : public VulkanCpuOnlyBuffer
 {
 public:
     /**
      * @brief The default constructor
      */
     VulkanUniformBuffer() 
-        : VulkanBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)
+        : VulkanCpuOnlyBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
     {}
 
     VulkanUniformBuffer(VulkanUniformBuffer& other) = delete;
