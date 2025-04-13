@@ -3,20 +3,19 @@
 
 #include <vulkan/vulkan.h>
 
-class VulkanDescriptorUtils
+namespace VulkanDescriptorUtils
 {
-public:
-    static VkResult AllocateSet(const VkDescriptorPool& pool, const VkDescriptorSetLayout& setLayouts, VkDescriptorSet& descSet)
-    {
-        VkDescriptorSetAllocateInfo allocInfo{};
-        allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-        allocInfo.descriptorSetCount = 1;
-        allocInfo.pSetLayouts = &setLayouts;
-        allocInfo.pNext = nullptr;
-        allocInfo.descriptorPool = pool;
-
-        return vkAllocateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(),&allocInfo, &descSet);
-    }
+    /**
+     * @brief Create and allocate a descriptor set
+     * @param pool The descriptor pool which allocate the descriptor set
+     * @param setLayouts The descriptor set layout
+     * 
+     * @note Parameters are checked and can throw a runtime error
+     */
+    VkDescriptorSet AllocateSet(
+        VkDescriptorPool pool, 
+        VkDescriptorSetLayout setLayouts
+    );
 };
 
 #endif // VULKANDESCRIPTORUTILS_H

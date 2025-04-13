@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 
+#include "Logger.h"
+
 #include "VulkanRenderPassManager.h"
 #include "VulkanRenderImageManager.h"
 #include "VulkanDescriptorPoolBuilder.h"
@@ -16,23 +18,12 @@ VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface
     VulkanDescriptorPoolBuilder poolBuilder;
     descriptorPool = poolBuilder.SetMaxSets(5).AddCombinedImageSampler(5).Build();
 
-    VkResult result;
     auto gBufferSetLayout = renderEngine->GetPipelineManager()->GetgBufferDescriptorSetLayout();
-    result = VulkanDescriptorUtils::AllocateSet(descriptorPool, gBufferSetLayout, gBufferDescriptorSet);
-    if (result != VK_SUCCESS)
-    {
-        Log(Error, "Vulkan", "Failed to allocate swapchain gBuffer descriptor set");
-        throw std::runtime_error("Failed to allocate swapchain gBuffer descriptor set");
-    }
+    gBufferDescriptorSet = VulkanDescriptorUtils::AllocateSet(descriptorPool, gBufferSetLayout);
 
     auto postprocessSetLayout = renderEngine->GetPipelineManager()->GetPostprocessDescriptorSetLayout();
-    result = VulkanDescriptorUtils::AllocateSet(descriptorPool, postprocessSetLayout, postprocessDescriptorSet);
-    if (result != VK_SUCCESS)
-    {
-        Log(Error, "Vulkan", "Failed to allocate swapchain post-process descriptor set");
-        throw std::runtime_error("Failed to allocate swapchain post-process descriptor set");
-    }
-
+    postprocessDescriptorSet = VulkanDescriptorUtils::AllocateSet(descriptorPool, postprocessSetLayout);
+    
     CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
     CreateCommandBuffers();
     CreateSync();
@@ -87,25 +78,7 @@ void VulkanSwapchain::BeginRendering(VkCommandBuffer commandBuffer)
 void VulkanSwapchain::EndRendering(VkQueue queue, VkCommandBuffer commandBuffer)
 {
     VulkanCommandUtils::EndCommandBuffer(commandBuffer);
-    
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
-    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    submitInfo.waitSemaphoreCount = 1;
-    submitInfo.pWaitSemaphores = waitSemaphores;
-    submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffer;
-
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores = signalSemaphores;
-    if (auto result = vkQueueSubmit(queue, 1, &submitInfo, inFlightFence); result != VK_SUCCESS) 
-    {
-        Log(Error, "Vulkan", "Failed to submit swapchain render command buffer, result code : %d", result);
-        throw std::runtime_error("Failed to submit swapchain render command buffer");
-    }
+    VulkanCommandUtils::SubmitCommandBufferWithSync(queue, commandBuffer, imageAvailableSemaphore, renderFinishedSemaphore, inFlightFence);
 }
 
 void VulkanSwapchain::StartLighting(VkCommandBuffer commandBuffer) 

@@ -10,6 +10,7 @@
 #include "VulkanCommandPoolBuilder.h"
 #include "VulkanCommandUtils.h"
 #include "LightManagers/IVulkanLightManager.h"
+#include "VulkanDeviceManager.h"
 
 //TODO: Remove
 #include "VulkanSpotlightLightPipeline.h"

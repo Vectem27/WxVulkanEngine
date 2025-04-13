@@ -2,149 +2,96 @@
 #define VULKANCOMMANDUTILS_H
 
 #include <vulkan/vulkan.h>
-#include "Logger.h"
-#include "VulkanDeviceManager.h"
 
-class VulkanCommandUtils
+/**
+ * @namespace VulkanCommandUtils
+ * @brief Contain vulkan command buffer/pool utility functions
+ */
+namespace VulkanCommandUtils
 {
-public:
-    static VkCommandBuffer AllocateCommandBuffer(VkCommandPool commandPool, VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY) 
-    {
-        if (commandPool == VK_NULL_HANDLE)
-        {
-            Log(Error, "Vulkan", "Failed to allocate commande buffer : command pool is null");
-            throw std::runtime_error("Failed to allocate commande buffer : command pool is null");
-        }
+    /**
+     * @brief Create and allocate command buffer
+     * @param commandPool The command pool
+     * @param level Primary or secondary command buffer
+     * 
+     * @return The created command buffer
+     * @note Parameters are checked and can throw a runtime error
+     */
+    VkCommandBuffer AllocateCommandBuffer(
+        VkCommandPool commandPool, 
+        VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY
+    );
 
-        auto device = GetVulkanDeviceManager().GetDeviceChecked();
+    /**
+     * @brief Reset a command buffer 
+     * @warning This function should be called on a command buffer created by a pool with the reset command flag
+     * @param commandBuffer The command buffer to reset
+     * @note Parameters are checked and can throw a runtime error
+     */
+    void ResetCommandBuffer(VkCommandBuffer commandBuffer);
 
-        VkCommandBufferAllocateInfo allocInfo = {};
-        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = commandPool;
-        allocInfo.level = level;
-        allocInfo.commandBufferCount = 1;
+    /**
+     * @brief Begin a command buffer 
+     * @param commandBuffer The command buffer to begin
+     * 
+     * @note Parameters are checked and can throw a runtime error
+     * @note The buffer begin with de simultaneous use flag
+     */
+    void BeginCommandBuffer(VkCommandBuffer commandBuffer);
 
-        VkCommandBuffer commandBuffer;
-        if (auto result = vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer); result != VK_SUCCESS) 
-        {
-            Log(Error, "Vulkan", "Failed to allocate command buffer, result code : %d", result);
-            throw std::runtime_error("Failed to allocate command buffer");
-        }
+    /**
+     * @brief End a command buffer
+     * @param commandBuffer The command buffer to end
+     * 
+     * @note Parameters are checked and can throw a runtime error
+     */
+    void EndCommandBuffer(VkCommandBuffer commandBuffer);
 
-        return commandBuffer;
-    }
+    /**
+     * @brief Submit a command buffer with default options
+     * @param queue The queue to submit commands
+     * @param commandBuffer The command buffer to submit
+     * 
+     * @note Parameters are checked and can throw a runtime error
+     * @warning If you need semaphores syncronisation, don't use this function
+     */
+    void SubmitCommandBuffer(VkQueue queue, const VkCommandBuffer commandBuffer);
 
-    static void ResetCommandBuffer(VkCommandBuffer commandBuffer)
-    {
-        if (commandBuffer == VK_NULL_HANDLE)
-        {
-            Log(Error, "Vulkan", "Failed to reset command buffer : command buffer is null");
-            throw std::runtime_error("Failed to reset command buffer : command buffer is null");
-        }
+    /**
+     * @brief Submit a command buffer with semaphore synchronization
+     * @param queue The queue to submit commands
+     * @param commandBuffer The command buffer to submit
+     * @param waitSemaphore The semaphore to wait on before starting the execution of the command buffer
+     * @param signalSemaphore The semaphore to signal after the execution of the command buffer
+     * 
+     * @note Parameters are checked and can throw a runtime error
+     * @note Use this function when you need synchronization between commands via semaphores.
+     */
+    void SubmitCommandBufferWithSync(
+        VkQueue queue, 
+        const VkCommandBuffer commandBuffer, 
+        VkSemaphore waitSemaphore,
+        VkSemaphore signalSemaphore,
+        VkFence fence
+    );
 
-        if (auto result = vkResetCommandBuffer(commandBuffer, 0); result != VK_SUCCESS)
-        {
-            Log(Error, "Vulkan", "Failed to reset command buffer, result code : %d", result);
-            throw std::runtime_error("Failed to reset command buffer");
-        }
-    }
 
-    static void BeginCommandBuffer(VkCommandBuffer commandBuffer) 
-    {
-        if (commandBuffer == VK_NULL_HANDLE)
-        {
-            Log(Error, "Vulkan", "Failed to begin recording command buffer : command buffer is null");
-            throw std::runtime_error("Failed to begin recording command buffer : command buffer is null");
-        }
+    /**
+     * @brief Free a command buffer
+     * @param commandPool The command pool which created the command buffer
+     * @param commandBuffer The command buffer to submit
+     * 
+     * @note Parameters are checked but don't throw errors
+     */
+    void FreeCommandBuffer(VkCommandPool commandPool, VkCommandBuffer commandBuffer) noexcept;
 
-        VkCommandBufferBeginInfo beginInfo = {};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;  // Permet la réutilisation avant fin
-        beginInfo.pInheritanceInfo = nullptr;  // Pas d'info d'héritage pour un command buffer primaire
-    
-        if (auto result = vkBeginCommandBuffer(commandBuffer, &beginInfo); result != VK_SUCCESS) 
-        {
-            Log(Error, "Vulkan", "Failed to begin recording command buffer, result code : %d", result);
-            throw std::runtime_error("Failed to begin recording command buffer");
-        }
-    }
-
-    static void EndCommandBuffer(VkCommandBuffer commandBuffer) 
-    {
-        if (commandBuffer == VK_NULL_HANDLE) 
-        {
-            Log(Error, "Vulkan", "Failed to record command buffer : command buffer is null");
-            throw std::runtime_error("Failed to record command buffer : command buffer is null");
-        }
-
-        if (auto result = vkEndCommandBuffer(commandBuffer); result != VK_SUCCESS) 
-        {
-            Log(Error, "Vulkan", "Failed to record command buffer, result code : %d", result);
-            throw std::runtime_error("Failed to record command buffer");
-        }
-    }
-
-    static void SubmitCommandBuffer(VkQueue queue, VkCommandBuffer commandBuffer) 
-    {
-        if (queue == VK_NULL_HANDLE) 
-        {
-            Log(Error, "Vulkan", "Failed to submit command buffer : queue is null");
-            throw std::runtime_error("Failed to submit command buffer : queue is null");
-        }
-
-        if (commandBuffer == VK_NULL_HANDLE) 
-        {
-            Log(Error, "Vulkan", "Failed to submit command buffer : command buffer is null");
-            throw std::runtime_error("Failed to submit command buffer : command buffer is null");
-        }
-
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers = &commandBuffer;
-    
-        if (auto result = vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE); result != VK_SUCCESS) 
-        {
-            Log(Error, "Vulkan", "Failed to submit command buffer, result code : %d", result);
-            throw std::runtime_error("Failed to submit command buffer");
-        }
-    }
-
-    static void FreeCommandBuffer(VkCommandPool commandPool, VkCommandBuffer commandBuffer) noexcept
-    {
-        try
-        {
-            if (commandPool == VK_NULL_HANDLE)
-            {
-                Log(Warning, "Vulkan", "Failed to free command buffer : command pool is null");
-                return;
-            }
-    
-            if (commandBuffer != VK_NULL_HANDLE)
-            {
-                vkFreeCommandBuffers(GetVulkanDeviceManager().GetDeviceChecked(), commandPool, 1, &commandBuffer);
-            }        
-        }
-        catch(...)
-        {
-            Log(Warning, "Vulkan", "Failed to free command buffer");
-        }
-    }
-
-    static void DestroyCommandPool(VkCommandPool commandPool) noexcept
-    {
-        try
-        {
-            if (commandPool != VK_NULL_HANDLE)
-            {
-                vkDestroyCommandPool(GetVulkanDeviceManager().GetDeviceChecked(), commandPool, nullptr);
-            }
-        }
-        catch(...)
-        {
-            Log(Warning, "Vulkan", "Failed to destroy command pool");
-        }
-    }
+    /**
+     * @brief Destroy a command pool
+     * @param commandPool The command pool to destroy
+     * 
+     * @note Parameters are checked but don't throw errors
+     */
+    void DestroyCommandPool(VkCommandPool commandPool) noexcept;
 };
 
 #endif // VULKANCOMMANDUTILS_H

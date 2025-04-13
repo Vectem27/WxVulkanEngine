@@ -11,8 +11,6 @@
  * @brief Generic class for the vulkan buffer managment
  * 
  * @author Vectem
- * @date 11 apr 2025
- * @version 1.0
  */
 class VulkanBuffer
 {

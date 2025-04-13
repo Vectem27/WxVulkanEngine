@@ -8,6 +8,7 @@
 #include "VulkanShadowMapRenderTarget.h"
 #include "VulkanCommandPoolBuilder.h"
 #include "VulkanCommandUtils.h"
+#include "VulkanDeviceManager.h"
 
 VulkanShadowMapRenderer &GetVulkanShadowMapRenderer()
 {
