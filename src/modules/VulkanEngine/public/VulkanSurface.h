@@ -1,12 +1,12 @@
 #ifndef VULKANSURFACE_H
 #define VULKANSURFACE_H
 
-#include "VulkanDeviceManager.h"
+#include <vulkan/vulkan.h>
 
 class VulkanSurface 
 {
 public:
-    VulkanSurface(VkInstance instance, void* windowHandle);
+    VulkanSurface(void* windowHandle);
     ~VulkanSurface();
 
     VkSurfaceKHR GetSurface() const { return surface; }
@@ -16,10 +16,8 @@ public:
     uint32_t GetPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }
 
 private:
-    void CreateSurface(VkInstance instance, void* windowHandle);
+    void CreateSurface(void* windowHandle);
     void FindPresentQueue();
-
-    VkInstance instance;
 
     VkSurfaceKHR surface{ VK_NULL_HANDLE };
     VkQueue presentQueue{ VK_NULL_HANDLE };

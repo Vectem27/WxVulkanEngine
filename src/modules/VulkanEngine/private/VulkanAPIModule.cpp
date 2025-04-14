@@ -1,9 +1,6 @@
-#include "VulkanRenderEngine.h"
-#include <sstream>
-#include <array>
-#include <fstream>
-#include <glm/gtc/matrix_transform.hpp>
-#include <algorithm>
+#include "VulkanAPIModule.h"
+
+#include "Logger.h"
 
 #include "VulkanRenderPassManager.h"
 #include "VulkanRenderImageManager.h"
@@ -12,15 +9,10 @@
 #include "VulkanRenderTargetRenderer.h"
 #include "VulkanShadowMapRenderer.h"
 
-#include "Logger.h"
-
-
-bool VulkanRenderEngine::InitModule()
+bool VulkanAPIModule::InitModule()
 {
-    createInstance();
-    VulkanDeviceManager::GetInstance().InitDeviceManager(instance);
-
-    createDescriptorPool();
+    CreateInstance();
+    VulkanDeviceManager::GetInstance().InitDeviceManager(vulkanInstance);
 
     PassesInfo passesInfo;
     passesInfo.colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
@@ -55,10 +47,11 @@ bool VulkanRenderEngine::InitModule()
     return true;
 }
 
-void VulkanRenderEngine::ShutdownModule() 
+void VulkanAPIModule::ShutdownModule() 
 {
-    if (instance == VK_NULL_HANDLE) 
+    if (vulkanInstance == VK_NULL_HANDLE) 
         return;
+
     vkDeviceWaitIdle(GetVulkanDeviceManager().GetDeviceChecked());
 
     GetVulkanShadowMapRenderer().Shutdown();
@@ -68,23 +61,19 @@ void VulkanRenderEngine::ShutdownModule()
     VulkanRenderPassManager::GetInstance()->Cleanup();
     GetVulkanTransferManager().Shutdown();
 
-    if (descriptorPoolManager)
-        delete descriptorPoolManager;
-
-    delete pipelineManager;
     VulkanDeviceManager::GetInstance().Shutdown();
 
     auto destroyFunc = (PFN_vkDestroyDebugUtilsMessengerEXT)
-    vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+    vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");
     if (destroyFunc != nullptr) 
     {
-        destroyFunc(instance, debugMessenger, nullptr);
+        destroyFunc(vulkanInstance, debugMessenger, nullptr);
     }
 
-    if (instance != VK_NULL_HANDLE) 
+    if (vulkanInstance != VK_NULL_HANDLE) 
     {
-        vkDestroyInstance(instance, nullptr);
-        instance = VK_NULL_HANDLE;
+        vkDestroyInstance(vulkanInstance, nullptr);
+        vulkanInstance = VK_NULL_HANDLE;
     }
 }
 
@@ -95,27 +84,27 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     void* pUserData) 
 {
     Log(Debug, "Vulkan" "Validation layer : %s", pCallbackData->pMessage);
-    //std::cerr << "Validation layer: " << pCallbackData->pMessage << std::endl;
-    return VK_FALSE; // On ne stoppe pas l'exécution du programme
+    return VK_FALSE;
 }
 
-void VulkanRenderEngine::createInstance()
+void VulkanAPIModule::CreateInstance()
 {
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "Vulkan wxWidgets App";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
+    appInfo.pEngineName = "Vulkan API";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
 
     std::vector<const char *> extensions;
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 #ifdef _WIN32
     extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(__linux__)
+    extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #endif
-
-    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
     const std::vector<const char*> validationLayers = {
         "VK_LAYER_KHRONOS_validation"
@@ -142,24 +131,19 @@ void VulkanRenderEngine::createInstance()
     createInfo.ppEnabledLayerNames = validationLayers.data();
     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
 
-    if (auto result = vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
+    if (auto result = vkCreateInstance(&createInfo, nullptr, &vulkanInstance) != VK_SUCCESS)
     {
         Log(Critical, "Vulkan", "Failed to create instance, result code : %d", result);
         throw std::runtime_error("failed to create Vulkan instance");
     }
 
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
-    vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+    vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr) 
     {
-        if (func(instance, &debugCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS) 
+        if (func(vulkanInstance, &debugCreateInfo, nullptr, &debugMessenger) != VK_SUCCESS) 
         {
             Log(Warning, "Vulkan", "Failed to set up debug messenger!");
         }
     }
-}
-
-void VulkanRenderEngine::createDescriptorPool()
-{
-    descriptorPoolManager = new VulkanDescriptorPoolManager(this);
 }

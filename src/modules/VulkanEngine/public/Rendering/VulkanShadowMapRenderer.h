@@ -15,7 +15,7 @@ private:
     VkRenderPass GetRenderPass() const { return renderPass; }
     void Shutdown() noexcept;
 
-    friend class VulkanRenderEngine;
+    friend class VulkanAPIModule;
 public:
     static VulkanShadowMapRenderer& GetInstance()
     {

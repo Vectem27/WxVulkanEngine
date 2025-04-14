@@ -19,7 +19,7 @@ public:
         return instance;
     }
 
-    friend class VulkanRenderEngine;
+    friend class VulkanAPIModule;
     void InitDeviceManager(VkInstance instance);
     void Shutdown();
 public:

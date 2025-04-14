@@ -4,7 +4,7 @@
 #include "Mesh.h"
 #include <vector>
 #include "Pipeline/IVulkanMaterial.h"
-#include "VulkanRenderEngine.h"
+#include "VulkanAPIModule.h"
 
 #include "VulkanVertexBuffer.h"
 #include "VulkanIndexBuffer.h"
@@ -43,7 +43,7 @@ public:
             mesh->SetTransform(newTransform);
     }
 
-    void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine)
+    void InitVulkanMesh()
     {
         vertices = 
         {

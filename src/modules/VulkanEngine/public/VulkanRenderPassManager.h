@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-class VulkanRenderEngine;
+class VulkanAPIModule;
 
 struct PassesInfo
 {

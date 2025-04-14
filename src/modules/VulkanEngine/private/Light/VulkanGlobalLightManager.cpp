@@ -1,5 +1,5 @@
 #include "VulkanGlobalLightManager.h"
-#include "VulkanRenderEngine.h"
+#include "VulkanAPIModule.h"
 
 #include "Logger.h"
 

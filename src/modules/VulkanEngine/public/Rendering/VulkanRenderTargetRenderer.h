@@ -26,7 +26,7 @@ private:
 
     void Shutdown() noexcept;
 
-    friend class VulkanRenderEngine;
+    friend class VulkanAPIModule;
 public:
     static VulkanRenderTargetRenderer& GetInstance()
     {

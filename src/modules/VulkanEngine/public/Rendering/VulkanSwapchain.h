@@ -67,7 +67,7 @@ private:
 
 
 private:
-    class VulkanRenderEngine* renderEngine;
+    class VulkanAPIModule* renderEngine;
     class VulkanSurface* surface;
 
     uint32_t width{ 720 }, height{ 480 }, imageCount{ 0 }, renderingImageIndex{0};

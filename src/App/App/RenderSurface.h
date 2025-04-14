@@ -16,24 +16,13 @@ public:
     }
 
 public:
-    bool IsVulkanInitialized() const { return isVulkanInitialized; }
-
-    void InitVulkanSurface(VulkanRenderEngine* vulkanRenderEngine)
+    void InitVulkanSurface()
     {
-        if (!vulkanRenderEngine)
-            throw std::invalid_argument("Render engine reference is null");
-
-        this->vulkanRenderEngine = vulkanRenderEngine;
-
-        surface = new VulkanSurface(vulkanRenderEngine->GetVulkanInstance(), reinterpret_cast<void *>(GetHandle()));
-
-        isVulkanInitialized = true;
+        surface = new VulkanSurface(reinterpret_cast<void *>(GetHandle()));
     }
 
     VulkanSurface* GetVulkanSurface() { return surface; }
 private:
-    bool isVulkanInitialized{false};
-    VulkanRenderEngine* vulkanRenderEngine{nullptr};
 
     VulkanSurface* surface{nullptr};
 };

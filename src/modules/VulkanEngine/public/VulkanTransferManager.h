@@ -15,7 +15,7 @@ private:
     void InitTransfereManager();
     void Shutdown();
 
-    friend class VulkanRenderEngine;
+    friend class VulkanAPIModule;
 public:
     VulkanTransferManager(const VulkanTransferManager&) = delete;
     VulkanTransferManager& operator=(const VulkanTransferManager&) = delete;

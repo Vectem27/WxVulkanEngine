@@ -4,6 +4,8 @@
 #include <vector>
 
 #include "Logger.h"
+#include "VulkanDeviceManager.h"
+#include "VulkanAPIModule.h"
 
 #ifdef _WIN32
     #include <windows.h>
@@ -12,34 +14,27 @@
     #include <vulkan/vulkan_xcb.h> // Remplace par xlib ou wayland si nécessaire
 #endif
 
-VulkanSurface::VulkanSurface(VkInstance instance, void *windowHandle)
-    : instance(instance)
+VulkanSurface::VulkanSurface(void *windowHandle)
 {
-    if (instance == VK_NULL_HANDLE)
-    {
-        Log(Error, "Vulkan", "Failed to create surface, instance is null");
-        throw std::invalid_argument("Failed to create vulkan surface, instance is null");
-    }
-
     if (!windowHandle)
     {
         Log(Error, "Vulkan", "Failed to create surface, window handle is null");
         throw std::invalid_argument("Failed to create vulkan surface, window handle is null");
     }
 
-    CreateSurface(instance, windowHandle);
+    CreateSurface(windowHandle);
     FindPresentQueue();
 }
 
 VulkanSurface::~VulkanSurface()
 {
-    if (surface != VK_NULL_HANDLE && instance != VK_NULL_HANDLE) 
+    if (surface != VK_NULL_HANDLE) 
     {
-        vkDestroySurfaceKHR(instance, surface, nullptr);
+        vkDestroySurfaceKHR(GetVulkanAPIModule().GetVulkanInstance(), surface, nullptr);
     }
 }
 
-void VulkanSurface::CreateSurface(VkInstance instance, void *windowHandle)
+void VulkanSurface::CreateSurface(void *windowHandle)
 {
 #ifdef _WIN32
     VkWin32SurfaceCreateInfoKHR createInfo{};
@@ -47,7 +42,7 @@ void VulkanSurface::CreateSurface(VkInstance instance, void *windowHandle)
     createInfo.hwnd = static_cast<HWND>(windowHandle);
     createInfo.hinstance = GetModuleHandle(nullptr);
 
-    if (auto res = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) 
+    if (auto res = vkCreateWin32SurfaceKHR(GetVulkanAPIModule().GetVulkanInstance(), &createInfo, nullptr, &surface) != VK_SUCCESS) 
     {
         Log(Error, "Vulkan", "Failed to create Win32 surface, result code : %d", res);
         throw std::runtime_error("Failed to create Win32 Vulkan surface!");
@@ -59,7 +54,7 @@ void VulkanSurface::CreateSurface(VkInstance instance, void *windowHandle)
     createInfo.connection = static_cast<xcb_connection_t*>(windowHandle);
     createInfo.window = static_cast<xcb_window_t>(windowHandle);
 
-    if (auto res = vkCreateXcbSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) 
+    if (auto res = vkCreateXcbSurfaceKHR(GetVulkanAPIModule().GetVulkanInstance(), &createInfo, nullptr, &surface) != VK_SUCCESS) 
     {
         Log(Error, "Vulkan", "Failed to create Linux surface, result code : %d", res);
         throw std::runtime_error("Failed to create XCB Vulkan surface!");

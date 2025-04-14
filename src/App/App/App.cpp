@@ -19,7 +19,6 @@
 
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
-    vulkanRenderEngine(new VulkanRenderEngine()),
     camera(new CameraComponent())
 
 {
@@ -83,12 +82,9 @@ void wxVulkanApp::InitVulkan()
 {
     try
     {
-        vulkanRenderEngine->InitModule();
+        GetVulkanAPIModule().InitModule();
         
-        frame->renderSurface->InitVulkanSurface(vulkanRenderEngine);
-        
-        if (!frame->renderSurface->IsVulkanInitialized())
-            throw std::runtime_error("Render surface not initialized");
+        frame->renderSurface->InitVulkanSurface();
 
         swapchainTarget = new SwapchainTarget(frame->renderSurface->GetVulkanSurface());
 
@@ -97,11 +93,11 @@ void wxVulkanApp::InitVulkan()
         camera->VulkanCamera::Init(static_cast<IVulkanRenderTarget*>(swapchainTarget->GetRenderTarget(RenderAPI::Vulkan)));
 
         cube = new Cube();
-        cube->Init(vulkanRenderEngine);
+        cube->Init();
         tinyCube = new Cube();
-        tinyCube->Init(vulkanRenderEngine);
+        tinyCube->Init();
         floor = new Cube();
-        floor->Init(vulkanRenderEngine);
+        floor->Init();
         
         material = new VulkanOpaqueMaterial(&GetVulkanPipelineManager());
         MaterialInfo matInfo = {};
@@ -182,12 +178,10 @@ void wxVulkanApp::RenderVulkan()
     tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,yaw2));        
     try
     {
-     
-        if(frame->renderSurface->IsVulkanInitialized())
-        {
-            sceneRenderer->RenderWorld(world, camera);
-            static_cast<VulkanSwapchain*>(swapchainTarget->GetRenderTarget(RenderAPI::Vulkan))->Present();
-        }
+        sceneRenderer->RenderWorld(world, camera);
+        static_cast<VulkanSwapchain*>(swapchainTarget->GetRenderTarget(RenderAPI::Vulkan))->Present();
+        
+        
         return;
         ++counter;
         if (counter % 5 != 0)
@@ -254,9 +248,5 @@ void wxVulkanApp::ShutdownVulkan()
         delete frame->renderSurface->GetVulkanSurface();
 
     Log(Trace, LogDefault, "Shutdown vulkan render engine");
-    if (vulkanRenderEngine)
-    {
-        vulkanRenderEngine->ShutdownModule();
-        delete vulkanRenderEngine;
-    }
+    GetVulkanAPIModule().ShutdownModule();
 }

@@ -2,7 +2,7 @@
 #define WX_VULKAN_FRAME_H
 
 #include <wx/wx.h>
-#include "VulkanRenderEngine.h"
+#include "VulkanAPIModule.h"
 #include "RenderSurface.h"
 
 #include <functional>
