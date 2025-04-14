@@ -1,6 +1,7 @@
 #include "Mesh.h"
 
 #include "VulkanRenderEngine.h"
+#include "VulkanPipelineManager.h"
 
 struct ObjectData
 {
@@ -28,7 +29,7 @@ void Mesh::InitVulkanMesh(VulkanRenderEngine *vulkanRenderEngine)
 
     this->vulkanRenderEngine = vulkanRenderEngine;
 
-    if (!vulkanRenderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(&vulkanRenderEngine->GetPipelineManager()->GetObjectDescriptorSetLayout(), 1, &GetVulkanMeshDescriptorSet()))
+    if (!vulkanRenderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(&GetVulkanPipelineManager().GetObjectDescriptorSetLayout(), 1, &GetVulkanMeshDescriptorSet()))
         throw std::runtime_error("Failed to allocate descriptor set !");
 
 

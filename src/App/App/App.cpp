@@ -83,7 +83,7 @@ void wxVulkanApp::InitVulkan()
 {
     try
     {
-        vulkanRenderEngine->Init(nullptr);
+        vulkanRenderEngine->InitModule();
         
         frame->renderSurface->InitVulkanSurface(vulkanRenderEngine);
         
@@ -103,7 +103,7 @@ void wxVulkanApp::InitVulkan()
         floor = new Cube();
         floor->Init(vulkanRenderEngine);
         
-        material = new VulkanOpaqueMaterial(vulkanRenderEngine->GetPipelineManager());
+        material = new VulkanOpaqueMaterial(&GetVulkanPipelineManager());
         MaterialInfo matInfo = {};
         matInfo.fragmentShader = "shaders/shader.frag";
         matInfo.vertexShader = "shaders/shader.vert";
@@ -256,7 +256,7 @@ void wxVulkanApp::ShutdownVulkan()
     Log(Trace, LogDefault, "Shutdown vulkan render engine");
     if (vulkanRenderEngine)
     {
-        vulkanRenderEngine->Shutdown();
+        vulkanRenderEngine->ShutdownModule();
         delete vulkanRenderEngine;
     }
 }

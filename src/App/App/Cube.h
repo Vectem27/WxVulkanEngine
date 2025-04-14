@@ -13,7 +13,7 @@ public:
             delete mesh;
     }
 public: // IRenderable Interface
-    bool Init(IRenderEngine* engine)
+    bool Init(VulkanRenderEngine* engine)
     {
         mesh = new CubeMesh();
         mesh->InitVulkanMesh(reinterpret_cast<VulkanRenderEngine*>(engine));

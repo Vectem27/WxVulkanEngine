@@ -19,30 +19,22 @@
 #include "VulkanDescriptorPoolManager.h"
 #include "Pipeline/VulkanPipelineManager.h"
 
-class VulkanRenderEngine : public IRenderEngine
+//TODO: Rename to VulkanAPIModule
+
+class VulkanRenderEngine
 {
 public:
-    ~VulkanRenderEngine() { Shutdown(); }
+    ~VulkanRenderEngine() { ShutdownModule(); }
 
-    virtual bool Init(void* windowHandle) override;
-    void render();
-    virtual void Shutdown() override;
+    bool InitModule() ;
+    void ShutdownModule() ;
 
     VkInstance GetInstance() { return instance; }
 
-    VkQueue GetPresentQueue() const { return surfaceTest->GetPresentQueue(); }
-    //[[deprecated]]
-    VkQueue GetGraphicsQueue() const { return GetVulkanDeviceManager().GetGraphicsQueue(); }
-    
-    VulkanSurface* GetSurfaceTest() const { return surfaceTest; }
-    //[[deprecated]]
-    VulkanDeviceManager* GetDeviceManager() const { return &GetVulkanDeviceManager(); }
+    [[deprecated]]
     VulkanDescriptorPoolManager* GetDescriptorPoolManager() { return descriptorPoolManager;}
-
-    VulkanPipelineManager* GetPipelineManager() { return &VulkanPipelineManager::GetInstance(); }
 private:
     VkInstance instance{ VK_NULL_HANDLE };
-    VulkanSurface* surfaceTest{ nullptr };
     
     VulkanDescriptorPoolManager* descriptorPoolManager;
 

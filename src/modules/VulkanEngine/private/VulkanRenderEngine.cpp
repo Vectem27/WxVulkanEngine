@@ -15,7 +15,7 @@
 #include "Logger.h"
 
 
-bool VulkanRenderEngine::Init(void *windowHandle)
+bool VulkanRenderEngine::InitModule()
 {
     createInstance();
     VulkanDeviceManager::GetInstance().InitDeviceManager(instance);
@@ -29,7 +29,7 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     passesInfo.hdrFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
     VulkanRenderPassManager::GetInstance()->InitRenderPasses(
-        GetDeviceManager()->GetDeviceChecked(),
+        GetVulkanDeviceManager().GetDeviceChecked(),
         passesInfo
     );
 
@@ -55,7 +55,7 @@ bool VulkanRenderEngine::Init(void *windowHandle)
     return true;
 }
 
-void VulkanRenderEngine::Shutdown() 
+void VulkanRenderEngine::ShutdownModule() 
 {
     if (instance == VK_NULL_HANDLE) 
         return;

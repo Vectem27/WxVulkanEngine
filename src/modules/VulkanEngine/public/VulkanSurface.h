@@ -6,16 +6,18 @@
 class VulkanSurface 
 {
 public:
-    VulkanSurface(VkInstance instance, const VulkanDeviceManager* deviceManager, void* windowHandle);
+    VulkanSurface(VkInstance instance, void* windowHandle);
     ~VulkanSurface();
 
     VkSurfaceKHR GetSurface() const { return surface; }
+
+    // TODO: Mode queue management to device manager
     VkQueue GetPresentQueue() const { return presentQueue; }
     uint32_t GetPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }
 
 private:
     void CreateSurface(VkInstance instance, void* windowHandle);
-    void FindPresentQueue(const VulkanDeviceManager* deviceManager);
+    void FindPresentQueue();
 
     VkInstance instance;
 

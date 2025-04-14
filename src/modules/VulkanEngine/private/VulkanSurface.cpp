@@ -12,19 +12,13 @@
     #include <vulkan/vulkan_xcb.h> // Remplace par xlib ou wayland si nécessaire
 #endif
 
-VulkanSurface::VulkanSurface(VkInstance instance, const VulkanDeviceManager *deviceManager, void *windowHandle)
+VulkanSurface::VulkanSurface(VkInstance instance, void *windowHandle)
     : instance(instance)
 {
     if (instance == VK_NULL_HANDLE)
     {
         Log(Error, "Vulkan", "Failed to create surface, instance is null");
         throw std::invalid_argument("Failed to create vulkan surface, instance is null");
-    }
-
-    if (!deviceManager)
-    {
-        Log(Error, "Vulkan", "Failed to create surface, device manage is null");
-        throw std::invalid_argument("Failed to create vulkan surface, device manage is null");
     }
 
     if (!windowHandle)
@@ -34,7 +28,7 @@ VulkanSurface::VulkanSurface(VkInstance instance, const VulkanDeviceManager *dev
     }
 
     CreateSurface(instance, windowHandle);
-    FindPresentQueue(deviceManager);
+    FindPresentQueue();
 }
 
 VulkanSurface::~VulkanSurface()
@@ -73,9 +67,9 @@ void VulkanSurface::CreateSurface(VkInstance instance, void *windowHandle)
 #endif
 }
 
-void VulkanSurface::FindPresentQueue(const VulkanDeviceManager *deviceManager)
+void VulkanSurface::FindPresentQueue()
 {
-    VkPhysicalDevice physicalDevice = deviceManager->GetPhysicalDevice();
+    VkPhysicalDevice physicalDevice = GetVulkanDeviceManager().GetPhysicalDeviceChecked();
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
 

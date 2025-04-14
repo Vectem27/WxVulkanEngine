@@ -13,6 +13,8 @@
 
 #include "VulkanTexture.h"
 
+#include "VulkanPipelineManager.h"
+
 class CubeMesh : public Mesh
 {
 public:
@@ -108,7 +110,7 @@ public:
         if (material)
             material->Bind(commandBuffer, pass);
         
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanRenderEngine()->GetPipelineManager()->GetPipelineLayout(), 1, 1, &GetVulkanMeshDescriptorSet(), 0, nullptr);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanPipelineManager().GetPipelineLayout(), 1, 1, &GetVulkanMeshDescriptorSet(), 0, nullptr);
 
         VkDeviceSize offset = 0;
 
