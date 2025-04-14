@@ -18,6 +18,12 @@
 VulkanSwapchain::VulkanSwapchain(VulkanSurface* surface)
     : surface(surface)
 { 
+    if (!surface)
+    {
+        Log(Error, "Vulkan", "VulkanSurface is null");
+        throw std::runtime_error("VulkanSurface is null");
+    }
+
     VulkanDescriptorPoolBuilder poolBuilder;
     descriptorPool = poolBuilder.SetMaxSets(5).AddCombinedImageSampler(5).Build();
 
@@ -101,11 +107,6 @@ void VulkanSwapchain::StartPostprocessing(VkCommandBuffer commandBuffer)
         GetVulkanPipelineManager().GetPostprocessPipelineLayout(),
         0, 1, &GetPostprocessDescriptorSet(), 0, nullptr
     );
-}
-
-void VulkanSwapchain::Create(VkRenderPass renderPass)
-{
-    CreateSwapchain();
 }
 
 void VulkanSwapchain::Recreate()

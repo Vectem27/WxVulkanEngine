@@ -5,9 +5,6 @@
 #include "IVulkanLight.h"
 #include <vulkan/vulkan.h>
 
-class VulkanCamera;
-class VulkanRenderEngine;
-class VulkanShadowMapRenderTarget;
 class VulkanShadowMapCamera;
 class VulkanShadowMap;
 

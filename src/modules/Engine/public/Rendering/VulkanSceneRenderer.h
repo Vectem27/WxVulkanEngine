@@ -49,7 +49,7 @@ public:
             auto lightComponent = dynamic_cast<ILightComponent*>(object);
             if(lightComponent)
             {
-                auto light = static_cast<IVulkanLight*>(lightComponent->GetRenderLight(VULKAN_API));
+                auto light = static_cast<IVulkanLight*>(lightComponent->GetRenderLight(RenderAPI::Vulkan));
                 if(light)
                     sceneLights.Add(light);
             }
@@ -96,7 +96,7 @@ public:
             auto lightComponent = dynamic_cast<ILightComponent*>(object);
             if(lightComponent)
             {
-                auto light = static_cast<IVulkanLight*>(lightComponent->GetRenderLight(VULKAN_API));
+                auto light = static_cast<IVulkanLight*>(lightComponent->GetRenderLight(RenderAPI::Vulkan)); 
                 if(light)
                     sceneLights.Add(light);
             }

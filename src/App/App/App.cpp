@@ -14,6 +14,9 @@
 
 #include "VulkanSceneRenderer.h"
 
+#include "Engine.h"
+#include "SwapchainTarget.h"
+
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
     vulkanRenderEngine(new VulkanRenderEngine()),
@@ -86,14 +89,12 @@ void wxVulkanApp::InitVulkan()
         
         if (!frame->renderSurface->IsVulkanInitialized())
             throw std::runtime_error("Render surface not initialized");
-        swapchain = new VulkanSwapchain(frame->renderSurface->GetVulkanSurface());
-        swapchain->Create(
-            VulkanRenderPassManager::GetInstance()->GetGeometryPass()
-        );
+
+        swapchainTarget = new SwapchainTarget(frame->renderSurface->GetVulkanSurface());
 
         auto projLight2 = new SpotlightLightComponent();
         projLight = new SpotlightLightComponent();
-        camera->VulkanCamera::Init(swapchain);
+        camera->VulkanCamera::Init(static_cast<IVulkanRenderTarget*>(swapchainTarget->GetRenderTarget(RenderAPI::Vulkan)));
 
         cube = new Cube();
         cube->Init(vulkanRenderEngine);
@@ -178,7 +179,6 @@ void wxVulkanApp::RenderVulkan()
     yaw2 -= 0.5f;
     yaw += 0.1f;
     cubeActor->SetRelativeRotation(Rotator::FromEulerDegrees(pitch, roll, yaw));
-    //camera->SetRelativeRotation(Rotator::FromEulerDegrees(pitch, roll, yaw));
     tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,yaw2));        
     try
     {
@@ -186,7 +186,7 @@ void wxVulkanApp::RenderVulkan()
         if(frame->renderSurface->IsVulkanInitialized())
         {
             sceneRenderer->RenderWorld(world, camera);
-            swapchain->Present();
+            static_cast<VulkanSwapchain*>(swapchainTarget->GetRenderTarget(RenderAPI::Vulkan))->Present();
         }
         return;
         ++counter;
@@ -246,8 +246,9 @@ void wxVulkanApp::ShutdownVulkan()
     delete world;
     
     Log(Trace, LogDefault, "Destroy swapchain");
-    delete swapchain;
-
+    delete swapchainTarget;
+    swapchainTarget = nullptr;
+    
     Log(Trace, LogDefault, "Destroy render surface");
     if(frame && frame->renderSurface && frame->renderSurface->GetVulkanSurface())
         delete frame->renderSurface->GetVulkanSurface();

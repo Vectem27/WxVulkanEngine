@@ -32,7 +32,7 @@ public:
 
     virtual void* GetRenderLight(RenderAPI renderAPI) override
     {
-        if (renderAPI == VULKAN_API)
+        if (renderAPI == RenderAPI::Vulkan)
             return vulkanLight;
         return nullptr;
     }

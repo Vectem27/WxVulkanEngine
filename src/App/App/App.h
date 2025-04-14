@@ -36,11 +36,11 @@ private:
     class Cube* floor;
     class VulkanOpaqueMaterial* material;
 
-    class VulkanSwapchain* swapchain;
     class World* world;
     class SpotlightLightComponent* projLight;
 
     class VulkanSceneRenderer* sceneRenderer;
+    class SwapchainTarget* swapchainTarget;
 };
 
 #endif

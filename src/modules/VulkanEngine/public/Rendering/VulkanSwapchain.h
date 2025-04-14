@@ -37,7 +37,6 @@ public:
     virtual void StartLighting(VkCommandBuffer commandBuffer) override;
     virtual void StartPostprocessing(VkCommandBuffer commandBuffer) override;
 public:
-    void Create(VkRenderPass renderPass);
     void Recreate();
     void Present();
 
