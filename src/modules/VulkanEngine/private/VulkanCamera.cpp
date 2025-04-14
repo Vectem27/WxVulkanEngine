@@ -1,6 +1,5 @@
 #include "VulkanCamera.h"
 #include "IRenderable.h"
-#include "ICamera.h"
 #include "IRenderTarget.h"
 #include <array>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -36,7 +35,7 @@ void VulkanCamera::Init(IVulkanRenderTarget* renderTarget)
     UpdateProjectionMatrix();
 }
 
-bool VulkanCamera::Render(IRenderable* renderable, const VkCommandBuffer& commandBuffer)
+bool VulkanCamera::Render(const VkCommandBuffer& commandBuffer)
 {
 
     VkViewport viewport = {};

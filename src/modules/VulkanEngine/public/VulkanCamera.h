@@ -1,7 +1,6 @@
 #ifndef VULKANCAMERA_H
 #define VULKANCAMERA_H
 
-#include "ICamera.h"
 #include <vulkan/vulkan.h>
 #include "VulkanUniformBuffer.h"
 #include "EngineCore.hpp"
@@ -21,7 +20,7 @@ public:
 
 public: // ICamera Interface
     void Init(class IVulkanRenderTarget* renderTarget = nullptr);
-    virtual bool Render(class IRenderable* renderable, const VkCommandBuffer& commandBuffer);
+    virtual bool Render(const VkCommandBuffer& commandBuffer);
     void Cleanup();
     virtual class IVulkanRenderTarget* GetRenderTarget() const;
     virtual void SetRenderTarget(class IVulkanRenderTarget* renderTarget);

@@ -25,7 +25,7 @@ private: // Global variables
 
 /* VULKAN */
 public: //IVulkanMesh Interface
-    virtual void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine) override;
+    void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine);
 
 public: // Public vulkan functions
 

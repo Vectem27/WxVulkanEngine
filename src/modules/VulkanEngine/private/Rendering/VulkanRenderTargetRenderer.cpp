@@ -79,7 +79,7 @@ void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, Vulka
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
         // Render
-        camera->Render(nullptr, commandBuffer);
+        camera->Render(commandBuffer);
 
         for (size_t i = 0; i < meshNumber; i++)
         {

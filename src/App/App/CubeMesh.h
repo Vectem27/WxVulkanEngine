@@ -25,7 +25,7 @@ public:
         indexBuffer.Cleanup();
     }
 public:
-    virtual void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine) override
+     void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine)
     {
         Mesh::InitVulkanMesh(vulkanRenderEngine);
         
