@@ -8,7 +8,7 @@
 
 #include "logger.h"
 
-class VulkanCamera : public ICamera
+class VulkanCamera
 {
     struct ViewProj
     {
@@ -20,11 +20,11 @@ public:
     virtual ~VulkanCamera() { Cleanup(); }
 
 public: // ICamera Interface
-    void Init(class IRenderTarget* renderTarget = nullptr);
+    void Init(class IVulkanRenderTarget* renderTarget = nullptr);
     virtual bool Render(class IRenderable* renderable, const VkCommandBuffer& commandBuffer);
     void Cleanup();
-    virtual class IRenderTarget* GetRenderTarget() const override;
-    virtual void SetRenderTarget(class IRenderTarget* renderTarget) override;
+    virtual class IVulkanRenderTarget* GetRenderTarget() const;
+    virtual void SetRenderTarget(class IVulkanRenderTarget* renderTarget);
 
 public:
     VkBuffer GetViewDataBuffer() const { return viewBuffer.GetBuffer(); }
@@ -40,7 +40,7 @@ public:
 public:
     void SetCameraTransform(Transform transform);
 private: 
-    class IRenderTarget* renderTarget;
+    class IVulkanRenderTarget* renderTarget;
 
     VkDescriptorSet cameraDescriptorSet{VK_NULL_HANDLE};
     VkDescriptorPool cameraDescriptorPool{VK_NULL_HANDLE};

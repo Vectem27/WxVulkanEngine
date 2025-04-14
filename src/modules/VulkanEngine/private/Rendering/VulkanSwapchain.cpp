@@ -1,5 +1,4 @@
 #include "VulkanSwapchain.h"
-#include "VulkanRenderEngine.h"
 #include <algorithm>
 #include <array>
 
@@ -12,19 +11,23 @@
 #include "VulkanDescriptorUtils.h"
 #include "VulkanCommandUtils.h"
 
-VulkanSwapchain::VulkanSwapchain(VulkanRenderEngine *renderEngine, VulkanSurface* surface)
-    : renderEngine(renderEngine), surface(surface)
+#include "VulkanPipelineManager.h"
+#include "VulkanDeviceManager.h"
+#include "VulkanSurface.h"
+
+VulkanSwapchain::VulkanSwapchain(VulkanSurface* surface)
+    : surface(surface)
 { 
     VulkanDescriptorPoolBuilder poolBuilder;
     descriptorPool = poolBuilder.SetMaxSets(5).AddCombinedImageSampler(5).Build();
 
-    auto gBufferSetLayout = renderEngine->GetPipelineManager()->GetgBufferDescriptorSetLayout();
+    auto gBufferSetLayout = GetVulkanPipelineManager().GetgBufferDescriptorSetLayout();
     gBufferDescriptorSet = VulkanDescriptorUtils::AllocateSet(descriptorPool, gBufferSetLayout);
 
-    auto postprocessSetLayout = renderEngine->GetPipelineManager()->GetPostprocessDescriptorSetLayout();
+    auto postprocessSetLayout = GetVulkanPipelineManager().GetPostprocessDescriptorSetLayout();
     postprocessDescriptorSet = VulkanDescriptorUtils::AllocateSet(descriptorPool, postprocessSetLayout);
     
-    CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
+    CreateCommandPool(GetVulkanDeviceManager().GetGraphicsQueueFamilyIndex());
     CreateCommandBuffers();
     CreateSync();
     CreateSwapchain();
@@ -86,7 +89,7 @@ void VulkanSwapchain::StartLighting(VkCommandBuffer commandBuffer)
     UpdateGBufferDescriptorSet();
     vkCmdBindDescriptorSets(
         commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-        renderEngine->GetPipelineManager()->GetLightingPipelineLayout(),
+        GetVulkanPipelineManager().GetLightingPipelineLayout(),
         0, 1, &GetGBufferDescriptorSet(), 0, nullptr
     );
 }
@@ -95,7 +98,7 @@ void VulkanSwapchain::StartPostprocessing(VkCommandBuffer commandBuffer)
     UpdatePostprocessDescriptorSet();
     vkCmdBindDescriptorSets(
         commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
-        renderEngine->GetPipelineManager()->GetPostprocessPipelineLayout(),
+        GetVulkanPipelineManager().GetPostprocessPipelineLayout(),
         0, 1, &GetPostprocessDescriptorSet(), 0, nullptr
     );
 }
@@ -168,7 +171,7 @@ void VulkanSwapchain::CreateSwapchain()
 
     swapchainExtent = extent;
 
-    bool queuesAreDifferent = (renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex() != surface->GetPresentQueueFamilyIndex());
+    bool queuesAreDifferent = (GetVulkanDeviceManager().GetGraphicsQueueFamilyIndex() != surface->GetPresentQueueFamilyIndex());
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
@@ -186,7 +189,7 @@ void VulkanSwapchain::CreateSwapchain()
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
     if (queuesAreDifferent) 
     {
-        uint32_t queueFamilyIndices[] = {renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex(), surface->GetPresentQueueFamilyIndex()};
+        uint32_t queueFamilyIndices[] = {GetVulkanDeviceManager().GetGraphicsQueueFamilyIndex(), surface->GetPresentQueueFamilyIndex()};
         
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;  // Permet à plusieurs queues d'accéder aux images
         createInfo.queueFamilyIndexCount = 2;
@@ -254,21 +257,21 @@ void VulkanSwapchain::UpdateGBufferDescriptorSet()
 {
     // Préparez les informations d'image pour chaque attachement
     VkDescriptorImageInfo positionInfo = {
-        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .sampler = GetVulkanPipelineManager().GetGBufferSampler(),
         //.imageView = GetImagesData(BufferType::POSITION).imageViews[renderingImageIndex], // Vue de votre texture de position
         .imageView = renderTargets[renderingImageIndex].GetPositionImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo normalInfo = {
-        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .sampler = GetVulkanPipelineManager().GetGBufferSampler(),
         //.imageView = GetImagesData(BufferType::NORMAL).imageViews[renderingImageIndex], // Vue de votre texture de normales
         .imageView = renderTargets[renderingImageIndex].GetNormalImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo baseColorInfo = {
-        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .sampler = GetVulkanPipelineManager().GetGBufferSampler(),
         //.imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture d'albedo
         .imageView = renderTargets[renderingImageIndex].GetBaseColorImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
@@ -311,14 +314,14 @@ void VulkanSwapchain::UpdateGBufferDescriptorSet()
 void VulkanSwapchain::UpdatePostprocessDescriptorSet()
 {
     VkDescriptorImageInfo colorInfo = {
-        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .sampler = GetVulkanPipelineManager().GetGBufferSampler(),
         //.imageView = GetImagesData(BufferType::BASECOLOR).imageViews[renderingImageIndex], // Vue de votre texture de position
         .imageView = renderTargets[renderingImageIndex].GetBaseColorImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
     };
 
     VkDescriptorImageInfo lightingInfo = {
-        .sampler = renderEngine->GetPipelineManager()->GetGBufferSampler(),
+        .sampler = GetVulkanPipelineManager().GetGBufferSampler(),
         //.imageView = GetImagesData(BufferType::LIGHTING).imageViews[renderingImageIndex], // Vue de votre texture de position
         .imageView = renderTargets[renderingImageIndex].GetLightingImageView(), // Vue de votre texture de position
         .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL

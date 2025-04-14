@@ -17,10 +17,10 @@ struct SwapchainSupportDetails
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class VulkanSwapchain : public IRenderTarget, public IVulkanRenderTarget
+class VulkanSwapchain :  public IVulkanRenderTarget
 {
 public:
-    VulkanSwapchain(class VulkanRenderEngine* renderEngine, class VulkanSurface* surface);
+    VulkanSwapchain(class VulkanSurface* surface);
     ~VulkanSwapchain();
 
 public:

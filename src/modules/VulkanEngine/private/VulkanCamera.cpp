@@ -17,7 +17,9 @@
 #include "VulkanDeviceManager.h"
 #include "VulkanPipelineManager.h"
 
-void VulkanCamera::Init(class IRenderTarget* renderTarget)
+#include "IVulkanRenderTarget.h"
+
+void VulkanCamera::Init(IVulkanRenderTarget* renderTarget)
 {
 
     // Init RenderPass
@@ -73,7 +75,7 @@ void VulkanCamera::Cleanup()
     }
 }
 
-void VulkanCamera::SetRenderTarget(IRenderTarget *renderTarget)
+void VulkanCamera::SetRenderTarget(IVulkanRenderTarget *renderTarget)
 {
     this->renderTarget = renderTarget;
 }
@@ -129,7 +131,7 @@ void VulkanCamera::SetCameraTransform(Transform transform)
     UpdateViewMatrix();
 }
 
-IRenderTarget *VulkanCamera::GetRenderTarget() const { return renderTarget; }
+IVulkanRenderTarget *VulkanCamera::GetRenderTarget() const { return renderTarget; }
 
 void VulkanCamera::CreateDescriptorPool()
 {

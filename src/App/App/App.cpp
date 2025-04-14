@@ -86,7 +86,7 @@ void wxVulkanApp::InitVulkan()
         
         if (!frame->renderSurface->IsVulkanInitialized())
             throw std::runtime_error("Render surface not initialized");
-        swapchain = new VulkanSwapchain(vulkanRenderEngine, frame->renderSurface->GetVulkanSurface());
+        swapchain = new VulkanSwapchain(frame->renderSurface->GetVulkanSurface());
         swapchain->Create(
             VulkanRenderPassManager::GetInstance()->GetGeometryPass()
         );

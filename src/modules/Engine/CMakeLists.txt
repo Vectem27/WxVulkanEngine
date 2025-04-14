@@ -13,8 +13,11 @@ target_include_directories(Engine
     PUBLIC public/Rendering
     PRIVATE private/Rendering
 
-    PUBLIC public/PrimaryComponents
-    PRIVATE private/PrimaryComponents
+    PUBLIC public/PrimaryObjects
+    PRIVATE private/PrimaryObjects
+
+    PUBLIC public/Objects
+    PRIVATE private/Objects
 
     PUBLIC public/Components
     PRIVATE private/Components
