@@ -15,23 +15,36 @@
 
 #include "VulkanPipelineManager.h"
 
-class CubeMesh : public Mesh
+#include "VulkanMesh.h"
+
+class CubeMesh : public IVulkanMesh
 {
 public:
-    CubeMesh() = default;
-    CubeMesh(Transform transform) : Mesh(transform) {}
+    CubeMesh()
+        : mesh(new VulkanMesh())
+    {
+    }
+
+    CubeMesh(Transform transform) 
+        : mesh(new VulkanMesh())
+    {
+
+    }
 
     virtual ~CubeMesh()
     {
-        vertexBuffer.Cleanup();
-        indexBuffer.Cleanup();
+        if (mesh)
+            delete mesh;
     }
 public:
-     void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine)
+    void SetMeshTransform(Transform newTransform)
     {
-        Mesh::InitVulkanMesh(vulkanRenderEngine);
-        
-        // Les vertices du cube avec des couleurs différentes pour chaque coin
+        if (mesh)
+            mesh->SetTransform(newTransform);
+    }
+
+    void InitVulkanMesh(VulkanRenderEngine* vulkanRenderEngine)
+    {
         vertices = 
         {
             // Z+
@@ -71,7 +84,6 @@ public:
             {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.5f, 1.0f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},  // Vertex 24
         };
 
-        // Indices pour former les faces du cube avec deux triangles par face
         indices = 
         {
             0,  1,  2,  3,  2,  1,     // Z-
@@ -82,60 +94,29 @@ public:
             20, 21, 22, 23, 22, 21,    // Y-
         };
 
-
-        // Définir la taille des buffers
-        VkDeviceSize vertexBufferSize = sizeof(vertices[0]) * vertices.size();
-        VkDeviceSize indexBufferSize = sizeof(indices[0]) * indices.size();
-
-        VulkanStagingBuffer sBuffer;
-        sBuffer.Create(vertexBufferSize);
-        sBuffer.Update(vertices.data());
-
-        vertexBuffer.Create(vertexBufferSize);
-
-        GetVulkanTransferManager().CopyBuffer(sBuffer.GetBuffer(), vertexBuffer.GetBuffer(), sBuffer.GetBufferSize());
-
-        sBuffer.Cleanup();
-        
-        sBuffer.Create(indexBufferSize);
-        sBuffer.Update(indices.data());
-
-        indexBuffer.Create(indexBufferSize);
-
-        GetVulkanTransferManager().CopyBuffer(sBuffer.GetBuffer(), indexBuffer.GetBuffer(), sBuffer.GetBufferSize());
+        mesh->AddMeshPart(vertices.data(), static_cast<uint32_t>(vertices.size()), indices.data(), static_cast<uint32_t>(indices.size()), nullptr);
     }
     
     virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) override
     {
-        if (material)
-            material->Bind(commandBuffer, pass);
-        
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanPipelineManager().GetPipelineLayout(), 1, 1, &GetVulkanMeshDescriptorSet(), 0, nullptr);
-
-        VkDeviceSize offset = 0;
-
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer.GetBuffer(), &offset);
-        vkCmdBindIndexBuffer(commandBuffer, indexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+        mesh->DrawVulkanMesh(commandBuffer, pass);
     }
 
     virtual void DrawVulkanMeshForShadowMap(VkCommandBuffer commandBuffer) override
     {
-        DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
+        mesh->DrawVulkanMeshForShadowMap(commandBuffer);
     }
 
     void SetMaterial(IVulkanMaterial *material)
     {
-        this->material = material;
+        mesh->SetMaterial(material);
     }
 private:
-    VulkanVertexBuffer vertexBuffer;
-    VulkanIndexBuffer indexBuffer;
-
     std::vector<uint32_t> indices;
-    std::vector<class Vertex> vertices;
+    std::vector<Vertex> vertices;
 
-    IVulkanMaterial* material{ nullptr };
+
+    VulkanMesh* mesh{ nullptr };
 };
 
 #endif // CUBEMESH_H

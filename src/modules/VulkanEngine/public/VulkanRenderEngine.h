@@ -29,7 +29,7 @@ public:
     bool InitModule() ;
     void ShutdownModule() ;
 
-    VkInstance GetInstance() { return instance; }
+    VkInstance GetVulkanInstance() { return instance; }
 
     [[deprecated]]
     VulkanDescriptorPoolManager* GetDescriptorPoolManager() { return descriptorPoolManager;}

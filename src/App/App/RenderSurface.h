@@ -25,7 +25,7 @@ public:
 
         this->vulkanRenderEngine = vulkanRenderEngine;
 
-        surface = new VulkanSurface(vulkanRenderEngine->GetInstance(), reinterpret_cast<void *>(GetHandle()));
+        surface = new VulkanSurface(vulkanRenderEngine->GetVulkanInstance(), reinterpret_cast<void *>(GetHandle()));
 
         isVulkanInitialized = true;
     }
