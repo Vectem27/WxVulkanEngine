@@ -3,7 +3,6 @@
 #include "Pipeline/VulkanOpaqueMaterial.h"
 #include "VulkanSwapchain.h"
 #include "VulkanCamera.h"
-#include "VulkanShadowMapRenderTarget.h"
 #include "World.h"
 #include "Cube.h"
 #include "CameraComponent.h"

@@ -3,8 +3,6 @@
 
 #include <vulkan/vulkan.h>
 
-class VulkanShadowMapRenderTarget;
-class VulkanCamera;
 class IVulkanMesh;
 class VulkanShadowMapCamera;
 
@@ -25,7 +23,6 @@ public:
         return instance;
     }
 
-    void Render(VulkanShadowMapRenderTarget* shadowMap, VulkanCamera* lightViewCamera, IVulkanMesh** meshes, uint32_t meshNumber);
     void Render(VulkanShadowMapCamera* shadowMapCamera, IVulkanMesh** meshes, uint32_t meshNumber);
 
 private:
