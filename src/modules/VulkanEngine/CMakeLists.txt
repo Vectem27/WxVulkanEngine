@@ -38,6 +38,9 @@ target_include_directories(VulkanEngine
 
     PUBLIC public/Objects
     PRIVATE private/Objects
+
+    PUBLIC public/Objects/Camera
+    PRIVATE private/Objects/Camera
 )
 
 target_compile_features(VulkanEngine PRIVATE cxx_std_20)

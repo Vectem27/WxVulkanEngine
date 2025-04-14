@@ -35,7 +35,7 @@ private:
     bool isVulkanInitialized{false};
     VulkanRenderEngine* vulkanRenderEngine{nullptr};
 
-    VulkanSurface* surface;
+    VulkanSurface* surface{nullptr};
 };
 
 #endif // RENDERSURFACE_H

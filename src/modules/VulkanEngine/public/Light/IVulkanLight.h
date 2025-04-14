@@ -2,26 +2,16 @@
 #define IVULKANLIGHT_H
 
 #include <string>
+#include "Array.h"
 
-struct VulkanLightType
-{
-    std::string type;
-
-    bool operator==(const VulkanLightType& other) const
-    {
-        return type == other.type;
-    }
-
-    bool operator!=(const VulkanLightType& other) const
-    {
-        return type != other.type;
-    }
-};
+class VulkanShadowMapCamera;
 
 class IVulkanLight
 {
 public:
-    virtual VulkanLightType GetLightType() const = 0;
+    virtual ~IVulkanLight() = default;
+
+    virtual Array<VulkanShadowMapCamera*> GetShadowMapCameras() const = 0;
 };
 
 #endif // IVULKANLIGHT_H

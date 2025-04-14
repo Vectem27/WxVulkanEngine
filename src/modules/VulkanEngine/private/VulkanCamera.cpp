@@ -1,7 +1,6 @@
 #include "VulkanCamera.h"
 #include "IRenderable.h"
 #include "ICamera.h"
-#include "VulkanRenderEngine.h"
 #include "IRenderTarget.h"
 #include <array>
 #define GLM_ENABLE_EXPERIMENTAL
@@ -12,13 +11,14 @@
 
 #include "EngineCore.hpp"
 
-bool VulkanCamera::Init(IRenderEngine* renderEngine, class IRenderTarget* renderTarget)
+#include "VulkanDescriptorPoolBuilder.h"
+#include "VulkanDescriptorUtils.h"
+
+#include "VulkanDeviceManager.h"
+#include "VulkanPipelineManager.h"
+
+void VulkanCamera::Init(class IRenderTarget* renderTarget)
 {
-    this->renderEngine = dynamic_cast<VulkanRenderEngine*>(renderEngine);
-    if (!this->renderEngine)
-    {
-        return false;
-    }
 
     // Init RenderPass
     CreateDescriptorPool();
@@ -32,8 +32,6 @@ bool VulkanCamera::Init(IRenderEngine* renderEngine, class IRenderTarget* render
 
     SetCameraTransform(Transform());
     UpdateProjectionMatrix();
-
-    return true;
 }
 
 bool VulkanCamera::Render(IRenderable* renderable, const VkCommandBuffer& commandBuffer)
@@ -58,7 +56,7 @@ bool VulkanCamera::Render(IRenderable* renderable, const VkCommandBuffer& comman
 
     UpdateViewMatrix();
 
-    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderEngine->GetPipelineManager()->GetPipelineLayout(), 0, 1, GetDescriptorSet(), 0, nullptr);
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanPipelineManager().GetPipelineLayout(), 0, 1, GetDescriptorSet(), 0, nullptr);
 
     return true;
 }
@@ -153,15 +151,8 @@ void VulkanCamera::CreateDescriptorPool()
 
 void VulkanCamera::CreateDescriptors()
 {
-    VkDescriptorSetAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    allocInfo.descriptorSetCount = 1;
-    allocInfo.pSetLayouts = &renderEngine->GetPipelineManager()->GetCameraDescriptorSetLayout();
-    
-    if (!renderEngine->GetDescriptorPoolManager()->AllocateDescriptorSets(&renderEngine->GetPipelineManager()->GetCameraDescriptorSetLayout(), 1, &cameraDescriptorSet))
-    {
-        throw std::runtime_error("Échec de l'allocation du descriptor set !");
-    }
+    cameraDescriptorPool = VulkanDescriptorPoolBuilder().AddUniformBuffer(1).SetMaxSets(1).Build();
+    cameraDescriptorSet = VulkanDescriptorUtils::AllocateSet(cameraDescriptorPool, GetVulkanPipelineManager().GetCameraDescriptorSetLayout());
 }
 
 void VulkanCamera::UpdateViewMatrix()

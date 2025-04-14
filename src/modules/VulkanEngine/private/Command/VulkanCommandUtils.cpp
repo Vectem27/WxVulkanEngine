@@ -104,6 +104,12 @@ void VulkanCommandUtils::SubmitCommandBuffer(VkQueue queue, const VkCommandBuffe
         Log(Error, "Vulkan", "Failed to submit command buffer, result code : %d", result);
         throw std::runtime_error("Failed to submit command buffer");
     }
+
+    if(auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS)
+    {
+        Log(Error, "Vulkan", "Failed to wait idle queue on submit command buffer function. Result code : %d", result);
+        throw std::runtime_error("Failed to wait idle queue on submit command buffer fonction");
+    }
 }
 
 void VulkanCommandUtils::SubmitCommandBufferWithSync(VkQueue queue, const VkCommandBuffer commandBuffer, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence)
@@ -156,6 +162,12 @@ void VulkanCommandUtils::SubmitCommandBufferWithSync(VkQueue queue, const VkComm
     {
         Log(Error, "Vulkan", "Failed to submit command buffer with sync, result code : %d", result);
         throw std::runtime_error("Failed to submit command buffer with sync");
+    }
+
+    if(auto result = vkQueueWaitIdle(queue); result != VK_SUCCESS)
+    {
+        Log(Error, "Vulkan", "Failed to wait idle queue on submit command buffer sync function. Result code : %d", result);
+        throw std::runtime_error("Failed to wait idle queue on submit command buffer sync fonction");
     }
 }
 

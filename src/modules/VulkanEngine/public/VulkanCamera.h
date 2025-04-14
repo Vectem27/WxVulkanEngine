@@ -20,9 +20,9 @@ public:
     virtual ~VulkanCamera() { Cleanup(); }
 
 public: // ICamera Interface
-    virtual bool Init(class IRenderEngine* renderEngine, class IRenderTarget* renderTarget = nullptr) override;
+    void Init(class IRenderTarget* renderTarget = nullptr);
     virtual bool Render(class IRenderable* renderable, const VkCommandBuffer& commandBuffer);
-    virtual void Cleanup() override;
+    void Cleanup();
     virtual class IRenderTarget* GetRenderTarget() const override;
     virtual void SetRenderTarget(class IRenderTarget* renderTarget) override;
 
@@ -40,7 +40,6 @@ public:
 public:
     void SetCameraTransform(Transform transform);
 private: 
-    class VulkanRenderEngine* renderEngine;
     class IRenderTarget* renderTarget;
 
     VkDescriptorSet cameraDescriptorSet{VK_NULL_HANDLE};

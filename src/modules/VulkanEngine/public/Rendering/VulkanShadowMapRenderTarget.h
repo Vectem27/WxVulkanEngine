@@ -8,7 +8,7 @@
 class VulkanShadowMapRenderTarget : public IRenderTarget
 {
 public:
-    VulkanShadowMapRenderTarget(class VulkanRenderEngine* renderEngine, uint32_t width, uint32_t height, VkFormat format);
+    VulkanShadowMapRenderTarget(uint32_t resolution, VkFormat format);
     ~VulkanShadowMapRenderTarget();
 
     VkFramebuffer GetFramebuffer() const { return framebuffer; }
@@ -19,8 +19,10 @@ public:
 
     void CreateFramebuffer(VkRenderPass renderPass);
 
-    virtual uint32_t GetWidth() const override { return width; }
-    virtual uint32_t GetHeight() const override { return height; }
+    virtual uint32_t GetWidth() const override { return resolution; }
+    virtual uint32_t GetHeight() const override { return resolution; }
+
+    uint32_t GetResolution() const { return resolution; }
 
     //void CopyToCpuBuffer(void* dst, unsigned long size);
 private:
@@ -30,7 +32,7 @@ private:
 private:
     class VulkanRenderEngine* renderEngine;
     
-    uint32_t width, height;
+    uint32_t resolution;
     VkFormat format;
 
     VkFramebuffer framebuffer{VK_NULL_HANDLE};

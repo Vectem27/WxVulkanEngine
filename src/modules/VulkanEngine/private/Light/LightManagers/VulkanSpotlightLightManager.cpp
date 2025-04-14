@@ -53,7 +53,7 @@ VulkanSpotlightLightManager::~VulkanSpotlightLightManager()
 
 void VulkanSpotlightLightManager::AddLight(const IVulkanLight *light)
 {
-    if (light->GetLightType() != VulkanSpotlightLight::lightType)
+    if (typeid(*light) != typeid(VulkanSpotlightLight) && !typeid(VulkanSpotlightLight).before(typeid(*light)))
         return;
 
     auto spotlightLight = dynamic_cast<const VulkanSpotlightLight*>(light);
@@ -106,7 +106,7 @@ void VulkanSpotlightLightManager::Update()
     {
         imageInfo.push_back({
             .sampler = VulkanPipelineManager::GetInstance().GetShadowMapSampler(),
-            .imageView = lights[i]->GetSpotlightLightData().shadowMapView,
+            .imageView = lights[i]->GetLightShadowMapView(),
             .imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL,
         });
     }

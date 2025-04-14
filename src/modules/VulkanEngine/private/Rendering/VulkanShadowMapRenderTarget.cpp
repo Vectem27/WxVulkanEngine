@@ -4,16 +4,16 @@
 #include "VulkanRenderPassManager.h"
 #include "VulkanDeviceManager.h"
 
-VulkanShadowMapRenderTarget::VulkanShadowMapRenderTarget(VulkanRenderEngine *renderEngine, uint32_t width, uint32_t height, VkFormat format)
-    : renderEngine(renderEngine), width(width), height(height), format(format) 
+VulkanShadowMapRenderTarget::VulkanShadowMapRenderTarget(uint32_t resolution, VkFormat format)
+    : resolution(resolution), format(format) 
 {
     depthTexture.InitTexture(
-        width, height, format, 
+        GetResolution(), GetResolution(), format, 
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_DEPTH_BIT
     );
 
-    CreateCommandPool(renderEngine->GetDeviceManager()->GetGraphicsQueueFamilyIndex());
+    CreateCommandPool(GetVulkanDeviceManager().GetGraphicsQueueFamilyIndex());
     CreateCommandBuffer();
     //TransitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 }
@@ -32,8 +32,8 @@ void VulkanShadowMapRenderTarget::CreateFramebuffer(VkRenderPass renderPass)
     framebufferInfo.renderPass = GetVulkanRenderPassManager().GetShadowPass();
     framebufferInfo.attachmentCount = 1;
     framebufferInfo.pAttachments = &GetImageView();
-    framebufferInfo.width = width;
-    framebufferInfo.height = height;
+    framebufferInfo.width = GetResolution();
+    framebufferInfo.height = GetResolution();
     framebufferInfo.layers = 1;
 
     if (vkCreateFramebuffer(GetVulkanDeviceManager().GetDeviceChecked(), &framebufferInfo, nullptr, &framebuffer) != VK_SUCCESS) 
@@ -41,6 +41,7 @@ void VulkanShadowMapRenderTarget::CreateFramebuffer(VkRenderPass renderPass)
         throw std::runtime_error("Failed to create render target framebuffer.");
     }
 }
+
 /*
 void VulkanDepthRenderTarget::CopyToCpuBuffer(void* dst, unsigned long size) 
 {

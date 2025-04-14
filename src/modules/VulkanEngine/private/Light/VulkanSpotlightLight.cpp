@@ -3,51 +3,46 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "VulkanCamera.h"
-#include "VulkanRenderEngine.h"
-#include "VulkanShadowMapRenderTarget.h"
 #include "VulkanRenderPassManager.h"
 
-const VulkanLightType VulkanSpotlightLight::lightType{"SPOTLIGHT"};
+#include "VulkanShadowMapCamera.h"
+#include "VulkanShadowMap.h"
+
+VulkanSpotlightLight::VulkanSpotlightLight()
+{
+    shadowMap = new VulkanShadowMap(1024);
+
+    shadowMapCamera = new VulkanShadowMapCamera();
+    shadowMapCamera->SetShadowMap(shadowMap);
+    shadowMapCamera->SetNearPlan(0.1f);
+    UpdateCameraProperties();
+    SetShadowMap(shadowMap->GetImageView());
+}
 
 VulkanSpotlightLight::~VulkanSpotlightLight()
 {
-    delete camera;
-    delete renderTarget;
+    delete shadowMapCamera;
+    delete shadowMap;
 }
 
-void VulkanSpotlightLight::InitVulkanSpotlightLight(VulkanRenderEngine *renderEngine)
+Array<VulkanShadowMapCamera *> VulkanSpotlightLight::GetShadowMapCameras() const
 {
-    renderTarget = new VulkanShadowMapRenderTarget(renderEngine, 1024, 1024, VulkanRenderPassManager::GetInstance()->GetShadowMapFormat());
-    renderTarget->CreateFramebuffer(
-        VulkanRenderPassManager::GetInstance()->GetShadowPass()
-    );
-
-    camera = new VulkanCamera();
-    camera->Init(renderEngine, renderTarget);
-    camera->SetNearPlan(0.1f);
-    UpdateCameraProperties();
-    SetShadowMap(renderTarget->GetImageView());
-}
-
-ProjectorLightData VulkanSpotlightLight::GetSpotlightLightData() const
-{
-    return data;
+    return Array<VulkanShadowMapCamera *>({shadowMapCamera});
 }
 
 void VulkanSpotlightLight::SetTransform(Transform transform)
 {
-    if (!camera)
+    if (!shadowMapCamera)
         throw std::runtime_error("VulkanProjectorLight : camera is not initialized !");
-    camera->SetCameraTransform(transform);
+    shadowMapCamera->SetTransform(transform);
 
-    data.viewProj = camera->GetViewData().view * camera->GetViewData().proj;
-    data.position = transform.position;
-    data.direction = transform.rotation.Rotate({1.0f, 0.0f, 0.0f});
+    viewProj = shadowMapCamera->GetViewMatrix() * shadowMapCamera->GetProjMatrix();
+    position = transform.position;
+    direction = transform.rotation.Rotate({1.0f, 0.0f, 0.0f});
 }
 
 void VulkanSpotlightLight::UpdateCameraProperties()
 {
-    camera->SetFOV(ToDegree(data.angle + data.softAngle));
-    camera->SetFarPlan(data.length);
+    shadowMapCamera->SetFOV((GetLightAngle() + GetLightSoftAngle()));
+    shadowMapCamera->SetFarPlan(GetLightLength());
 }

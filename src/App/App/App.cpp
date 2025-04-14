@@ -18,8 +18,7 @@
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
     vulkanRenderEngine(new VulkanRenderEngine()),
-    camera(new CameraComponent()),
-    projLight(new ProjectorLightComponent())
+    camera(new CameraComponent())
 
 {
 }
@@ -93,10 +92,9 @@ void wxVulkanApp::InitVulkan()
             VulkanRenderPassManager::GetInstance()->GetGeometryPass()
         );
 
-        projLight->InitVulkanSpotlightLight(vulkanRenderEngine);
-        auto projLight2 = new ProjectorLightComponent();
-        projLight2->InitVulkanSpotlightLight(vulkanRenderEngine);
-        camera->VulkanCamera::Init(vulkanRenderEngine, swapchain);
+        auto projLight2 = new SpotlightLightComponent();
+        projLight = new SpotlightLightComponent();
+        camera->VulkanCamera::Init(swapchain);
 
         cube = new Cube();
         cube->Init(vulkanRenderEngine);
@@ -145,15 +143,17 @@ void wxVulkanApp::InitVulkan()
         Actor* li = world->SpawnActor<Actor>();
         Actor* li2 = world->SpawnActor<Actor>();
         li->AddChild(projLight);
-        projLight->SetLightSoftAngle(ToRadians(5.0f));
+        projLight->SetLightSoftAngle(5.0f);
         li2->AddChild(projLight2);
         projLight2->SetLightColor({0.2f, 0.8f, 0.5f});
-        projLight2->SetLightAngle(ToRadians(15.0f));
-        projLight2->SetLightSoftAngle(ToRadians(15.0f));
+        projLight2->SetLightAngle(15.0f);
+        projLight2->SetLightSoftAngle(15.0f);
 
         camera->SetRelativeTransform(Transform({-5,-2,2}, Rotator::FromEulerDegrees(-10,0,45), {1,1,1}));
         li->SetRelativeTransform(Transform({-6,6,4}, Rotator::FromEulerDegrees(-30,0,-45), {1,1,1}));
         li2->SetRelativeTransform(Transform({-3,3,8}, Rotator::FromEulerDegrees(-80,0,45), {1,1,1}));
+        camera->SetFOV(103.f / 2.0f);
+
 
         sceneRenderer = new VulkanSceneRenderer();
         sceneRenderer->Init();
@@ -250,7 +250,8 @@ void wxVulkanApp::ShutdownVulkan()
     delete swapchain;
 
     Log(Trace, LogDefault, "Destroy render surface");
-    delete frame->renderSurface->GetVulkanSurface();
+    if(frame && frame->renderSurface && frame->renderSurface->GetVulkanSurface())
+        delete frame->renderSurface->GetVulkanSurface();
 
     Log(Trace, LogDefault, "Shutdown vulkan render engine");
     if (vulkanRenderEngine)

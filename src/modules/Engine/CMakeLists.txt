@@ -10,8 +10,20 @@ target_include_directories(Engine
     PUBLIC public
     PRIVATE private
 
-    PUBLIC public/SceneRenderer
-    PRIVATE private/SceneRenderer
+    PUBLIC public/Rendering
+    PRIVATE private/Rendering
+
+    PUBLIC public/PrimaryComponents
+    PRIVATE private/PrimaryComponents
+
+    PUBLIC public/Components
+    PRIVATE private/Components
+
+    PUBLIC public/Actors
+    PRIVATE private/Actors
+
+    PUBLIC public/Engine
+    PRIVATE private/Engine
 )
 
 target_include_directories(Engine PUBLIC World VulkanEngine)

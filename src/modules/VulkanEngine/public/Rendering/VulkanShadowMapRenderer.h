@@ -6,6 +6,7 @@
 class VulkanShadowMapRenderTarget;
 class VulkanCamera;
 class IVulkanMesh;
+class VulkanShadowMapCamera;
 
 class VulkanShadowMapRenderer
 {
@@ -25,6 +26,7 @@ public:
     }
 
     void Render(VulkanShadowMapRenderTarget* shadowMap, VulkanCamera* lightViewCamera, IVulkanMesh** meshes, uint32_t meshNumber);
+    void Render(VulkanShadowMapCamera* shadowMapCamera, IVulkanMesh** meshes, uint32_t meshNumber);
 
 private:
     VkCommandBuffer commandBuffer{VK_NULL_HANDLE};

@@ -1,50 +1,53 @@
 #include "VulkanGlobalLightManager.h"
 #include "VulkanRenderEngine.h"
 
-bool VulkanGlobalLightManager::AddLightManager(VulkanLightType lightType, IVulkanLightManager *lightManager)
+#include "Logger.h"
+
+
+void VulkanGlobalLightManager::AddLightManager(std::type_index lightType, IVulkanLightManager *lightManager)
 {
-    if (GetManager(lightType))
-        return false;
-
-    managers.Add({lightType, lightManager});
-
-    return true;
-}
-
-IVulkanLightManager *VulkanGlobalLightManager::GetManager(VulkanLightType lightType) const
-{
-    for (const auto& manager : managers)
+    if (!lightManager)
     {
-        if (manager.lightType == lightType)
-            return manager.manager;
+        Log(Warning, "Vulkan", "Can not add sub light manager to global light manager, sub light manager is null");
+        return;
     }
 
-    return nullptr;
+    if (subManagers.contains(lightType))
+        Log(Warning, "Vulkan", "Replacing an existing sub light manager with another whene add light manager to global light manager");
+
+    subManagers.insert_or_assign(lightType, lightManager);
 }
 
 void VulkanGlobalLightManager::AddLight(const IVulkanLight *light)
 {
-    auto manager = GetManager(light->GetLightType());
-    if(!manager)
-        return;
+    auto it = subManagers.find(typeid(*light));
+    if (it == subManagers.end())
+    {
+        static uint8_t logLoopCount = 0;
+        if (logLoopCount < 5)
+            Log(Warning, "Vulkan", "Can't add light to global light manager, no suitable sub light manager. Light type id : %s", typeid(*light).name());
 
-    manager->AddLight(light);
+        ++logLoopCount;
+        return;
+    }
+
+    it->second->AddLight(light);
 }
 
 void VulkanGlobalLightManager::ClearLights()
 {
-    for (const auto& manager : managers)
-        manager.manager->ClearLights();
+    for(auto& pair : subManagers)
+        pair.second->ClearLights();
 }
 
 void VulkanGlobalLightManager::Update()
 {
-    for (const auto& manager : managers)
-        manager.manager->Update();
+    for(auto& pair : subManagers)
+        pair.second->Update();
 }
 
 void VulkanGlobalLightManager::Bind(VkCommandBuffer commandBuffer) const
 {
-    for (const auto& manager : managers)
-        manager.manager->Bind(commandBuffer);
+    for(auto& pair : subManagers)
+        pair.second->Bind(commandBuffer);
 }
