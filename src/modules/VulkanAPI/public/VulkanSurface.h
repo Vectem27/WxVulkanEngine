@@ -11,7 +11,6 @@ public:
 
     VkSurfaceKHR GetSurface() const { return surface; }
 
-    // TODO: Mode queue management to device manager
     VkQueue GetPresentQueue() const { return presentQueue; }
     uint32_t GetPresentQueueFamilyIndex() const { return presentQueueFamilyIndex; }
 

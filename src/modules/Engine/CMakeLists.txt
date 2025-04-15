@@ -29,5 +29,5 @@ target_include_directories(Engine
     PRIVATE private/Engine
 )
 
-target_include_directories(Engine PUBLIC World VulkanEngine)
-target_link_libraries(Engine PUBLIC World VulkanEngine)
+target_include_directories(Engine PUBLIC World VulkanAPI)
+target_link_libraries(Engine PUBLIC World VulkanAPI)
