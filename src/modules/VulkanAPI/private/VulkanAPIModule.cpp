@@ -94,7 +94,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
 
 void VulkanAPIModule::CreateInstance()
 {
-    VkApplicationInfo appInfo{};
+    VkApplicationInfo appInfo{}; 
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "Vulkan wxWidgets App";
     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -115,10 +115,11 @@ void VulkanAPIModule::CreateInstance()
         "VK_LAYER_KHRONOS_validation"
     };
 
-    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+    // Structure de debug messenger
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{}; 
     debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     debugCreateInfo.messageSeverity = 
-        //VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
+        // VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     debugCreateInfo.messageType = 
@@ -127,14 +128,22 @@ void VulkanAPIModule::CreateInstance()
         VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     debugCreateInfo.pfnUserCallback = debugCallback; // Fonction de callback
 
-    VkInstanceCreateInfo createInfo{};
+    VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{}; 
+    indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+    indexingFeatures.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+    indexingFeatures.runtimeDescriptorArray = VK_TRUE;
+
+    indexingFeatures.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+
+    VkInstanceCreateInfo createInfo{}; 
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
     createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
     createInfo.ppEnabledExtensionNames = extensions.data();
     createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
     createInfo.ppEnabledLayerNames = validationLayers.data();
-    createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+    createInfo.pNext = (VkPhysicalDeviceDescriptorIndexingFeatures*)&indexingFeatures;
 
     if (auto result = vkCreateInstance(&createInfo, nullptr, &vulkanInstance) != VK_SUCCESS)
     {
@@ -142,6 +151,7 @@ void VulkanAPIModule::CreateInstance()
         throw std::runtime_error("failed to create Vulkan instance");
     }
 
+    // Setup Debug Messenger
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
     vkGetInstanceProcAddr(vulkanInstance, "vkCreateDebugUtilsMessengerEXT");
     if (func != nullptr) 

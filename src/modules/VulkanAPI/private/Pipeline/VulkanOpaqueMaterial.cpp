@@ -161,7 +161,6 @@ void VulkanOpaqueMaterial::CreateShadowMapPipeline(VulkanPipelineInfo pipelineIn
 {
     auto shaderStages = VulkanPipelineUtils::CreateShaderStages(pipelineInfo);
 
-    
 
     // 2. Vertex Input (simplifié pour shadow mapping)
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -231,8 +230,7 @@ void VulkanOpaqueMaterial::CreateShadowMapPipeline(VulkanPipelineInfo pipelineIn
     // 9. États dynamiques
     VkDynamicState dynamicStates[] = {
         VK_DYNAMIC_STATE_VIEWPORT,
-        VK_DYNAMIC_STATE_SCISSOR,
-        VK_DYNAMIC_STATE_DEPTH_BIAS
+        VK_DYNAMIC_STATE_SCISSOR
     };
     
     VkPipelineDynamicStateCreateInfo dynamicState{};
