@@ -160,7 +160,7 @@ void VulkanPostprocessPipeline::InitPipeline(VkDevice device, VulkanPipelineMana
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicState,
         .layout = pipelineManager->GetPostprocessPipelineLayout(),
-        .renderPass = VulkanRenderPassManager::GetInstance()->GetPostprocessPass(),
+        .renderPass = GetVulkanRenderPassManager().GetPostprocessPass(),
         .subpass = 0, // N'oubliez pas de spécifier le subpass!
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1

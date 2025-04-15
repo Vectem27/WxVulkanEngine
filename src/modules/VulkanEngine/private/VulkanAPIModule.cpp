@@ -3,16 +3,24 @@
 #include "Logger.h"
 
 #include "VulkanRenderPassManager.h"
-#include "VulkanRenderImageManager.h"
 #include "VulkanTransferManager.h"
+#include "VulkanDeviceManager.h"
 
 #include "VulkanRenderTargetRenderer.h"
 #include "VulkanShadowMapRenderer.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#include <vulkan/vulkan_win32.h>
+#elif defined(__linux__)
+#include <vulkan/vulkan_xcb.h> // Remplace par xlib ou wayland si nécessaire
+#endif
+
 bool VulkanAPIModule::InitModule()
 {
     CreateInstance();
-    VulkanDeviceManager::GetInstance().InitDeviceManager(vulkanInstance);
+
+    GetVulkanDeviceManager().InitDeviceManager(vulkanInstance);
 
     PassesInfo passesInfo;
     passesInfo.colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
@@ -20,12 +28,11 @@ bool VulkanAPIModule::InitModule()
     passesInfo.shadowMapFormat = VK_FORMAT_D24_UNORM_S8_UINT;
     passesInfo.hdrFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
-    VulkanRenderPassManager::GetInstance()->InitRenderPasses(
+    GetVulkanRenderPassManager().InitRenderPasses(
         GetVulkanDeviceManager().GetDeviceChecked(),
         passesInfo
     );
 
-    VulkanRenderImageManager::GetInstance()->Init(GetVulkanDeviceManager().GetDeviceChecked(), GetVulkanDeviceManager().GetPhysicalDeviceChecked());
     GetVulkanTransferManager().InitTransfereManager();
 
     /* Init RenderTargetRenderer*/
@@ -58,7 +65,7 @@ void VulkanAPIModule::ShutdownModule()
     GetVulkanRenderTargetRenderer().Shutdown();
 
 
-    VulkanRenderPassManager::GetInstance()->Cleanup();
+    GetVulkanRenderPassManager().Cleanup();
     GetVulkanTransferManager().Shutdown();
 
     VulkanDeviceManager::GetInstance().Shutdown();

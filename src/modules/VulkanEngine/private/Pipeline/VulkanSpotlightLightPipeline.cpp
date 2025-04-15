@@ -159,8 +159,8 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
         .pDepthStencilState = &depthStencil,
         .pColorBlendState = &colorBlending,
         .pDynamicState = &dynamicState,
-        .layout = VulkanPipelineManager::GetInstance().GetLightingPipelineLayout(),
-        .renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass(),
+        .layout = GetVulkanPipelineManager().GetLightingPipelineLayout(),
+        .renderPass = GetVulkanRenderPassManager().GetLightingPass(),
         .subpass = 0,
         .basePipelineHandle = VK_NULL_HANDLE,
         .basePipelineIndex = -1

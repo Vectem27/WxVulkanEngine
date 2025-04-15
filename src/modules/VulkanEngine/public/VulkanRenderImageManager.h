@@ -7,27 +7,31 @@
 class VulkanRenderImageManager
 {
 private:
+    // Singleton pattern to ensure only one instance of VulkanRenderImageManager exists
     VulkanRenderImageManager() = default;
-public:
-    static VulkanRenderImageManager* GetInstance();
-    void Init(VkDevice device, VkPhysicalDevice physicalDevice);
+    VulkanRenderImageManager(const VulkanRenderImageManager&) = delete;
+    VulkanRenderImageManager& operator=(const VulkanRenderImageManager&) = delete;
+    VulkanRenderImageManager(VulkanRenderImageManager&&) = delete;
+    VulkanRenderImageManager& operator=(VulkanRenderImageManager&&) = delete;
+    virtual ~VulkanRenderImageManager() = default;
 
+public:
+    static VulkanRenderImageManager& GetInstance()
+    {
+        static VulkanRenderImageManager instance;
+        return instance;
+    }
+    
     void CreateImage(VkImage &image, VkDeviceMemory& imageMemory, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usageFlags) const;
     void CreateImageView(VkImageView &imageView, VkImage &image, VkFormat format, VkImageAspectFlags aspectFlags) const;
 
-    void CreateColorImage(VkImage &depthImage, VkDeviceMemory& depthImageMemory, uint32_t width, uint32_t height) const;
-    void CreateColorImageView(VkImageView &depthImageView, VkImage &depthImage) const;
-
-    void CreateDepthStencilImage(VkImage &depthImage, VkDeviceMemory& depthImageMemory, uint32_t width, uint32_t height) const;
-    void CreateDepthStencilImageView(VkImageView &depthImageView, VkImage &depthImage) const;
 private:
-    VkDevice device{VK_NULL_HANDLE};
-    VkPhysicalDevice physicalDevice{VK_NULL_HANDLE};
-    static VulkanRenderImageManager* instance;
-
     uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 };
 
-VulkanRenderImageManager& GetVulkanImageManager();
+inline VulkanRenderImageManager& GetVulkanImageManager()
+{
+    return VulkanRenderImageManager::GetInstance();
+}
 
 #endif // VULKANRENDERIMAGEMANAGER_H

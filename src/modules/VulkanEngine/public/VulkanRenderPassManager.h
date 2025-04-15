@@ -20,7 +20,11 @@ private:
     VulkanRenderPassManager() = default;
     
 public:
-    static VulkanRenderPassManager* GetInstance();
+    static VulkanRenderPassManager& GetInstance()
+    {
+        static VulkanRenderPassManager instance;
+        return instance;
+    }
 
     VkFormat GetColorFormat() const { return passesInfo.colorFormat; }
     VkFormat GetDepthStencilFormat() const { return passesInfo.depthStencilFormat; }
@@ -52,10 +56,12 @@ private:
 
     PassesInfo passesInfo;
     
-    static VulkanRenderPassManager* instance;
 };
 
-VulkanRenderPassManager& GetVulkanRenderPassManager();
+inline VulkanRenderPassManager& GetVulkanRenderPassManager()
+{
+    return VulkanRenderPassManager::GetInstance();
+}
 
 
 #endif // VULKANRENDERPASSMANAGER_H

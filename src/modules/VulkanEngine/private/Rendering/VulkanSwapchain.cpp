@@ -228,7 +228,7 @@ void VulkanSwapchain::CreateSwapchain()
         GetVulkanImageManager().CreateImageView(
             swapchainImageViews[i],
             swapchainImages[i],
-            VulkanRenderPassManager::GetInstance()->GetColorFormat(),
+            GetVulkanRenderPassManager().GetColorFormat(),
             VK_IMAGE_ASPECT_COLOR_BIT
         );
 

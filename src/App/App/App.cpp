@@ -10,6 +10,7 @@
 #include "ProjectorLightComponent.h"
 #include "LightManagers/VulkanSpotlightLightManager.h"
 
+#include "VulkanDeviceManager.h"
 #include "VulkanRenderPassManager.h"
 
 #include "VulkanSceneRenderer.h"
@@ -108,13 +109,13 @@ void wxVulkanApp::InitVulkan()
         matInfo.lightingVertexShader= "shaders/lighting.vert";
         material->CreatePipelines(
             GetVulkanDeviceManager().GetDeviceChecked(), 
-            VulkanRenderPassManager::GetInstance()->GetGeometryPass(), 
+            GetVulkanRenderPassManager().GetGeometryPass(), 
             matInfo
         );
 
         material->CreateShadowMapPipeline(
             GetVulkanDeviceManager().GetDeviceChecked(), 
-            VulkanRenderPassManager::GetInstance()->GetShadowPass(), 
+            GetVulkanRenderPassManager().GetShadowPass(), 
             matInfo
         );
 

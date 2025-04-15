@@ -148,7 +148,7 @@ void VulkanRenderTarget::CreateFrameBuffer()
 
     framebufferInfo={};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetLightingPass();
+    framebufferInfo.renderPass = GetVulkanRenderPassManager().GetLightingPass();
     framebufferInfo.attachmentCount = static_cast<uint32_t>(lightingAttachments.size());
     framebufferInfo.pAttachments = lightingAttachments.data();
     framebufferInfo.width = GetWidth();
@@ -173,7 +173,7 @@ void VulkanRenderTarget::CreateFrameBuffer()
 
     framebufferInfo={};
     framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = VulkanRenderPassManager::GetInstance()->GetPostprocessPass();
+    framebufferInfo.renderPass = GetVulkanRenderPassManager().GetPostprocessPass();
     framebufferInfo.attachmentCount = static_cast<uint32_t>(postprocessAttachments.size());
     framebufferInfo.pAttachments = postprocessAttachments.data();
     framebufferInfo.width = GetWidth();

@@ -1,25 +1,9 @@
 #ifndef VULKANAPIMODULE_H
 #define VULKANAPIMODULE_H
 
-#include "IRenderEngine.h"
-
-#ifdef _WIN32
-#include <windows.h>
-#endif
 #include <vulkan/vulkan.h>
-#include <vulkan/vulkan_win32.h>
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-
-#include "IRenderEngine.h"
-#include "VulkanDeviceManager.h"
-#include "VulkanSurface.h"
-
-#include "Pipeline/VulkanPipelineManager.h"
 
 //TODO: implement base module interface
-
 class VulkanAPIModule
 {
 private:

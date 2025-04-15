@@ -4,8 +4,6 @@
 #include <vector>
 #include <algorithm>
 
-VulkanRenderPassManager* VulkanRenderPassManager::instance{nullptr};
-
 void VulkanRenderPassManager::InitGeometryPass(VkDevice device)
 {
     
@@ -280,14 +278,6 @@ bool VulkanRenderPassManager::FormatContainStencil(VkFormat format)
     return std::find(stencilFormats.begin(), stencilFormats.end(), format) != stencilFormats.end();
 }
 
-VulkanRenderPassManager *VulkanRenderPassManager::GetInstance()
-{
-    if (!instance)
-        instance = new VulkanRenderPassManager();
-
-    return instance;
-}
-
 void VulkanRenderPassManager::Cleanup()
 {
     if (GetGeometryPass() != VK_NULL_HANDLE) 
@@ -295,8 +285,6 @@ void VulkanRenderPassManager::Cleanup()
         vkDestroyRenderPass(device, geometryPass, nullptr);
         geometryPass = VK_NULL_HANDLE;
     }
-
-
 }
 
 
@@ -312,9 +300,4 @@ void VulkanRenderPassManager::InitRenderPasses(VkDevice device, PassesInfo infos
     InitShadowPass(device);
     InitLightingPass(device);
     InitPostprocessPass(device);
-}
-
-VulkanRenderPassManager& GetVulkanRenderPassManager()
-{
-    return *VulkanRenderPassManager::GetInstance();
 }
