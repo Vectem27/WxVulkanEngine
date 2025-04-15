@@ -19,6 +19,7 @@ private:
     VulkanDeviceManager& operator=(VulkanDeviceManager&) = delete;
     VulkanDeviceManager(VulkanDeviceManager&&) = delete;
     VulkanDeviceManager& operator=(VulkanDeviceManager&&) = delete;
+    
 public:
     static VulkanDeviceManager& GetInstance() 
     {

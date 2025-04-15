@@ -8,7 +8,6 @@ add_library(VulkanAPI STATIC
 
 
 target_include_directories(VulkanAPI 
-    INTERFACE interface
     PUBLIC public
     PRIVATE private
 
@@ -18,8 +17,10 @@ target_include_directories(VulkanAPI
     PUBLIC public/Pipeline
     PRIVATE private/Pipeline
     
-    PRIVATE private/Descriptor
-    PRIVATE private/Command
+    PUBLIC public/Helper/Descriptor
+    PRIVATE private/Helper/Descriptor
+    PRIVATE private/Helper/Command
+    PRIVATE private/Helper/Image
 
     PUBLIC public/Buffer
     PRIVATE private/Buffer

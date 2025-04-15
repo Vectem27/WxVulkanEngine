@@ -19,8 +19,8 @@ void VulkanSpotlightLightPipeline::InitPipeline(VkDevice device, VulkanPipelineM
 
     VkShaderModule vertShaderModule;
     VkShaderModule fragShaderModule;
-    InitShaderModule(device, &vertShaderModule, vertShaderCode);
-    InitShaderModule(device, &fragShaderModule, fragShaderCode);
+    InitShaderModule(&vertShaderModule, vertShaderCode);
+    InitShaderModule(&fragShaderModule, fragShaderCode);
 
     // 2. Configuration des étapes de shader
     VkPipelineShaderStageCreateInfo shaderStages[] = {

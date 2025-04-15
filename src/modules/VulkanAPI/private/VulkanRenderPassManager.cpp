@@ -104,7 +104,7 @@ void VulkanRenderPassManager::InitGeometryPass(VkDevice device)
 void VulkanRenderPassManager::InitShadowPass(VkDevice device)
 {
     VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = GetShadowMapFormat();
+    depthAttachment.format = GetDepthNoStencilFormat();
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;

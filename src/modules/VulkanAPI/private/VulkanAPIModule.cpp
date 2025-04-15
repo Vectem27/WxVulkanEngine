@@ -25,7 +25,7 @@ void VulkanAPIModule::InitModule()
     PassesInfo passesInfo;
     passesInfo.colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
     passesInfo.depthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
-    passesInfo.shadowMapFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+    passesInfo.depthNoStencilFormat = VK_FORMAT_D32_SFLOAT;
     passesInfo.hdrFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
     GetVulkanRenderPassManager().InitRenderPasses(

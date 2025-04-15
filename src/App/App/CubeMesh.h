@@ -3,7 +3,7 @@
 
 #include "Mesh.h"
 #include <vector>
-#include "Pipeline/IVulkanMaterial.h"
+#include "IVulkanMaterial.h"
 #include "VulkanAPIModule.h"
 
 #include "VulkanVertexBuffer.h"

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <vulkan/vulkan.h>
+#include "VulkanDeviceManager.h"
 
 inline std::vector<char> ReadFile(const std::string &filename)
 {
@@ -37,13 +38,13 @@ inline std::vector<char> ReadFile(const std::string &filename)
     }
 }
 
-inline void InitShaderModule(VkDevice device, VkShaderModule *shaderModule, const std::vector<char>& code) {
+inline void InitShaderModule(VkShaderModule *shaderModule, const std::vector<char>& code) {
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size();
     createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
 
-    if (vkCreateShaderModule(device, &createInfo, nullptr, shaderModule) != VK_SUCCESS) 
+    if (vkCreateShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) 
     {
         throw std::runtime_error("Échec de la création du module shader !");
     }

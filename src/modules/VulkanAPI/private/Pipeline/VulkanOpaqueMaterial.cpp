@@ -6,9 +6,10 @@
 #include <array>
 #include "VulkanRenderPassManager.h"
 #include "PipelineUtils.h"
+#include "VulkanOpaqueMaterial.h"
 
 
-void VulkanOpaqueMaterial::CreatePipelines(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo)
+void VulkanOpaqueMaterial::CreatePipelines(VkRenderPass renderPass, MaterialInfo materialInfo)
 {
     // Charge les shaders (remplacez par votre propre système de chargement)
     auto vertShaderCode = ReadFile(materialInfo.vertexShader);
@@ -17,8 +18,8 @@ void VulkanOpaqueMaterial::CreatePipelines(VkDevice device, VkRenderPass renderP
     VkShaderModule vertShaderModule;
     VkShaderModule fragShaderModule;
 
-    InitShaderModule(device, &vertShaderModule, vertShaderCode);
-    InitShaderModule(device, &fragShaderModule, fragShaderCode);
+    InitShaderModule(&vertShaderModule, vertShaderCode);
+    InitShaderModule(&fragShaderModule, fragShaderCode);
 
     // Configuration des étapes de shader
     VkPipelineShaderStageCreateInfo shaderStages[2] = {};
@@ -171,24 +172,24 @@ void VulkanOpaqueMaterial::CreatePipelines(VkDevice device, VkRenderPass renderP
     pipelineInfo.pDepthStencilState = &depthStencil;
     pipelineInfo.renderPass = renderPass;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &basePipeline) != VK_SUCCESS)
+    if (vkCreateGraphicsPipelines(GetVulkanDeviceManager().GetDeviceChecked(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &basePipeline) != VK_SUCCESS)
     {
         throw std::runtime_error("Échec de la création du pipeline graphique !");
     }
 
     // Nettoie les modules shader (ils ne sont plus nécessaires après la création du pipeline)
-    vkDestroyShaderModule(device, vertShaderModule, nullptr);
-    vkDestroyShaderModule(device, fragShaderModule, nullptr);
+    vkDestroyShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), vertShaderModule, nullptr);
+    vkDestroyShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), fragShaderModule, nullptr);
 }
 
-void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo)
+void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkRenderPass renderPass, MaterialInfo materialInfo)
 {
     // Charge les shaders (remplacez par votre propre système de chargement)
     auto vertShaderCode = ReadFile(materialInfo.shadowMapVertexShader);
 
     VkShaderModule vertShaderModule;
 
-    InitShaderModule(device, &vertShaderModule, vertShaderCode);
+    InitShaderModule(&vertShaderModule, vertShaderCode);
 
     VkPipelineShaderStageCreateInfo shaderStages[1] = {};
     shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -290,11 +291,11 @@ void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkDevice device, VkRenderPass
     pipelineInfo.renderPass = renderPass;
     pipelineInfo.subpass = 0;
 
-    if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &shadowMapPipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(GetVulkanDeviceManager().GetDeviceChecked(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &shadowMapPipeline) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create shadow map pipeline!");
     }
 
-    vkDestroyShaderModule(device, vertShaderModule, nullptr);
+    vkDestroyShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), vertShaderModule, nullptr);
 }
 
 void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const
@@ -311,4 +312,13 @@ void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer, ERenderPassType p
         throw std::invalid_argument("Invalid Pass");
         break;
     }
+}
+
+void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer) const
+{
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBasePipeline());
+}
+void VulkanOpaqueMaterial::BindForShadowMap(VkCommandBuffer commandBuffer) const
+{
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetShadowMapPipeline());
 }

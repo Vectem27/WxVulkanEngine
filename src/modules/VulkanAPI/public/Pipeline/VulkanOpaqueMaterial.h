@@ -1,19 +1,21 @@
 #ifndef VULKANOPAQUEMATERIAL_H
 #define VULKANOPAQUEMATERIAL_H
 
-#include "IVulkanMaterial.h"
+#include "IVulkanSurfaceMaterial.h"
 
 class VulkanPipelineManager;
 
-class VulkanOpaqueMaterial : public IVulkanMaterial
+class VulkanOpaqueMaterial : public IVulkanSurfaceMaterial
 {
 public:
     VulkanOpaqueMaterial(VulkanPipelineManager* pipelineManager) : pipelineManager(pipelineManager) {}
-    virtual void CreatePipelines(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo) override;
-    void CreateShadowMapPipeline(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo);
+    void CreatePipelines(VkRenderPass renderPass, MaterialInfo materialInfo);
+    void CreateShadowMapPipeline(VkRenderPass renderPass, MaterialInfo materialInfo);
     virtual VkPipeline GetBasePipeline() const override { return basePipeline; }
     virtual VkPipeline GetShadowMapPipeline() const { return shadowMapPipeline; };
     virtual void Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const override;
+    virtual void Bind(VkCommandBuffer commandBuffer) const override;
+    virtual void BindForShadowMap(VkCommandBuffer commandBuffer) const override;
 
 private:
     VulkanPipelineManager* pipelineManager{nullptr};

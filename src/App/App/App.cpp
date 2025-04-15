@@ -86,11 +86,11 @@ void wxVulkanApp::InitVulkan()
         GetVulkanAPIModule().InitModule();
         
         frame->renderSurface->InitVulkanSurface();
-
         swapchainTarget = new SwapchainTarget(frame->renderSurface->GetVulkanSurface());
 
         auto projLight2 = new SpotlightLightComponent();
         projLight = new SpotlightLightComponent();
+
         camera->VulkanCamera::Init(static_cast<IVulkanRenderTarget*>(swapchainTarget->GetRenderTarget(RenderAPI::Vulkan)));
 
         cube = new Cube();
@@ -107,14 +107,12 @@ void wxVulkanApp::InitVulkan()
         matInfo.shadowMapVertexShader = "shaders/shadowMap.vert";
         matInfo.lightingFragmentShader = "shaders/lighting.vert";
         matInfo.lightingVertexShader= "shaders/lighting.vert";
-        material->CreatePipelines(
-            GetVulkanDeviceManager().GetDeviceChecked(), 
+        material->CreatePipelines( 
             GetVulkanRenderPassManager().GetGeometryPass(), 
             matInfo
         );
 
         material->CreateShadowMapPipeline(
-            GetVulkanDeviceManager().GetDeviceChecked(), 
             GetVulkanRenderPassManager().GetShadowPass(), 
             matInfo
         );

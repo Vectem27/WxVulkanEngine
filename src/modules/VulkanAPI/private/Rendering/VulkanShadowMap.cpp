@@ -7,14 +7,13 @@
 #include "VulkanRenderPassManager.h"
 #include "VulkanTexture.h"
 
-//TODO: Change shadow maps format with only depth format
-
 VulkanShadowMap::VulkanShadowMap(uint32_t resolution)
-    : resolution(resolution), format(GetVulkanRenderPassManager().GetDepthStencilFormat())
+    : resolution(resolution)
 {
     depthTexture = new VulkanTexture();
     depthTexture->InitTexture(
-        GetResolution(), GetResolution(), format, 
+        GetResolution(), GetResolution(), 
+        GetVulkanRenderPassManager().GetDepthNoStencilFormat(), 
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_IMAGE_ASPECT_DEPTH_BIT
     );

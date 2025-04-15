@@ -24,7 +24,6 @@ public:
 
 private:
     uint32_t resolution{128};
-    VkFormat format;
 
     VkFramebuffer frameBuffer{VK_NULL_HANDLE};
 

@@ -19,11 +19,13 @@ struct MaterialInfo
 class IVulkanMaterial
 {
 public:
-    virtual void CreatePipelines(VkDevice device, VkRenderPass renderPass, MaterialInfo materialInfo) = 0;
     virtual VkPipeline GetBasePipeline() const = 0;
     virtual VkPipeline GetShadowMapPipeline() const = 0;
 
     virtual void Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const = 0;
+
+    virtual void Bind(VkCommandBuffer commandBuffer) const = 0;
+
 };
 
 #endif // IVULKANMATERIAL_H

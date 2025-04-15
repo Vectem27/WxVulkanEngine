@@ -9,8 +9,7 @@ struct PassesInfo
 {
     VkFormat colorFormat{VK_FORMAT_R8G8B8A8_UNORM};
     VkFormat depthStencilFormat{VK_FORMAT_D24_UNORM_S8_UINT};
-
-    VkFormat shadowMapFormat{VK_FORMAT_D24_UNORM_S8_UINT};
+    VkFormat depthNoStencilFormat{VK_FORMAT_D32_SFLOAT};
     VkFormat hdrFormat{VK_FORMAT_R16G16B16A16_SFLOAT};
 };
 
@@ -28,8 +27,8 @@ public:
 
     VkFormat GetColorFormat() const { return passesInfo.colorFormat; }
     VkFormat GetDepthStencilFormat() const { return passesInfo.depthStencilFormat; }
-    VkFormat GetShadowMapFormat() const { return passesInfo.shadowMapFormat; }
     VkFormat GetHDRFormat() const { return passesInfo.hdrFormat; }
+    VkFormat GetDepthNoStencilFormat() const { return passesInfo.depthNoStencilFormat; }
 
     VkRenderPass GetGeometryPass() const { return geometryPass; }
     VkRenderPass GetShadowPass() const { return shadowPass; }
