@@ -80,7 +80,7 @@ void VulkanShadowMapRenderer::Render(VulkanShadowMapCamera *shadowMapCamera, IVu
     for (uint32_t i = 0; i < meshNumber; i++)
     {
         if (meshes[i])
-            meshes[i]->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
+            meshes[i]->DrawForShadowMap(commandBuffer);
     }
 
     vkCmdEndRenderPass(commandBuffer);

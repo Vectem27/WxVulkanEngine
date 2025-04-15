@@ -6,7 +6,6 @@
 
 #include <vulkan/vulkan.h>
 
-#include "IRenderTarget.h"
 #include "IVulkanRenderTarget.h"
 #include "VulkanRenderTarget.h"
 

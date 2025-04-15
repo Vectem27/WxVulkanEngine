@@ -20,20 +20,10 @@ public: // IRenderable Interface
         return true;
     }
 
-    virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return true; }
-
-    virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override
-    {
-        childs.Add(this);
-        SceneComponent::CollectAllRenderChilds(childs, pass);
-    }
-    virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
-
     virtual void* GetRenderMesh() const override { return mesh; }
-
-
+    
 public:
-    void SetMaterial(IVulkanMaterial* material)
+    void SetMaterial(IVulkanSurfaceMaterial* material)
     {
         mesh->SetMaterial(material);
     }

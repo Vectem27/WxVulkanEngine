@@ -4,7 +4,6 @@
 #include <vulkan/vulkan.h>
 #include <string>
 #include "EngineCore.hpp"
-#include "ERenderPassType.h"
 
 struct MaterialInfo
 {
@@ -22,10 +21,7 @@ public:
     virtual VkPipeline GetBasePipeline() const = 0;
     virtual VkPipeline GetShadowMapPipeline() const = 0;
 
-    virtual void Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const = 0;
-
     virtual void Bind(VkCommandBuffer commandBuffer) const = 0;
-
 };
 
 #endif // IVULKANMATERIAL_H

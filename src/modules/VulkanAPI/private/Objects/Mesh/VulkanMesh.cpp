@@ -7,7 +7,7 @@
 #include "VulkanTransferManager.h"
 #include "VulkanPipelineManager.h"
 
-#include "IVulkanMaterial.h"
+#include "IVulkanSurfaceMaterial.h"
 
 VulkanMesh::VulkanMesh()
 {
@@ -24,7 +24,7 @@ VulkanMesh::~VulkanMesh()
     material = nullptr;
 }
 
-void VulkanMesh::AddMeshPart(Vertex *vertices, uint32_t vertexCount, uint32_t *indices, uint32_t indexCount, IVulkanMaterial *material)
+void VulkanMesh::AddMeshPart(Vertex *vertices, uint32_t vertexCount, uint32_t *indices, uint32_t indexCount, IVulkanSurfaceMaterial *material)
 {
     this->material = material;
     numIndices = indexCount;
@@ -71,14 +71,14 @@ void VulkanMesh::SetTransform(const Transform &transform)
     vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), 1, &descriptorWrite, 0, nullptr);
 }
 
-void VulkanMesh::DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass)
+void VulkanMesh::Draw(VkCommandBuffer commandBuffer)
 {
     // TODO: Add a default engine material
     if (!material)
         return;
 
     // TODO: Separate material pass selection with differents functions
-    material->Bind(commandBuffer, pass);
+    material->Bind(commandBuffer);
     
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanPipelineManager().GetPipelineLayout(), 1, 1, &meshDescriptorSet, 0, nullptr);
 
@@ -89,7 +89,21 @@ void VulkanMesh::DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType p
     vkCmdDrawIndexed(commandBuffer, numIndices, 1, 0, 0, 0);
 }
 
-void VulkanMesh::DrawVulkanMeshForShadowMap(VkCommandBuffer commandBuffer)
+void VulkanMesh::DrawForShadowMap(VkCommandBuffer commandBuffer)
 {
-    DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP);
+
+    // TODO: Add a default engine material
+    if (!material)
+        return;
+
+    // TODO: Separate material pass selection with differents functions
+    material->BindForShadowMap(commandBuffer);
+    
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanPipelineManager().GetPipelineLayout(), 1, 1, &meshDescriptorSet, 0, nullptr);
+
+    VkDeviceSize offset = 0;
+
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer.GetBuffer(), &offset);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(commandBuffer, numIndices, 1, 0, 0, 0);
 }

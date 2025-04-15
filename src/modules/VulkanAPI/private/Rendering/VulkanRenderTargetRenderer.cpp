@@ -83,7 +83,7 @@ void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, Vulka
 
         for (size_t i = 0; i < meshNumber; i++)
         {
-            meshes[i]->DrawVulkanMesh(commandBuffer, ERenderPassType::RENDER_PASS_TYPE_DEFAULT);
+            meshes[i]->Draw(commandBuffer);
         }
         
         // Termine le render pass

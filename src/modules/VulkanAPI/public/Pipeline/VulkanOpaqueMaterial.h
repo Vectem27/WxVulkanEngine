@@ -13,7 +13,6 @@ public:
     void CreateShadowMapPipeline(VkRenderPass renderPass, MaterialInfo materialInfo);
     virtual VkPipeline GetBasePipeline() const override { return basePipeline; }
     virtual VkPipeline GetShadowMapPipeline() const { return shadowMapPipeline; };
-    virtual void Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const override;
     virtual void Bind(VkCommandBuffer commandBuffer) const override;
     virtual void BindForShadowMap(VkCommandBuffer commandBuffer) const override;
 

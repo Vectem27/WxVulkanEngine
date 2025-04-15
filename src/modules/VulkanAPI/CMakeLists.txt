@@ -48,4 +48,4 @@ target_compile_features(VulkanAPI PRIVATE cxx_std_20)
 target_compile_options(VulkanAPI PRIVATE -fmodules-ts)
 
 target_include_directories(VulkanAPI PUBLIC ${Vulkan_INCLUDE_DIRS})
-target_link_libraries(VulkanAPI PUBLIC ${Vulkan_LIBRARIES} RenderApi EngineCore)
+target_link_libraries(VulkanAPI PUBLIC ${Vulkan_LIBRARIES} EngineCore)

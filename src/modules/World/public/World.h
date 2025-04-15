@@ -4,9 +4,8 @@
 #include "SceneComponent.h"
 #include "Actor.h"
 #include "EngineCore.hpp"
-#include "IRenderable.h"
 
-class World : public IRenderable
+class World
 {
 public:
     ~World() 
@@ -33,19 +32,8 @@ public:
         return actor;
     }
 
-public:
-    // Presistent
-    virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return false; }
-
-    virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override
-    {
-        for (const auto& actor : GetActors())
-            actor->CollectAllRenderChilds(childs, pass);
-    }
-    virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
 private:
     Array<Actor*> actors;
-    class IRenderEngine* renderEngine;
 };
 
 #endif // WORLD_H

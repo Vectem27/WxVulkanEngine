@@ -97,17 +97,17 @@ public:
         mesh->AddMeshPart(vertices.data(), static_cast<uint32_t>(vertices.size()), indices.data(), static_cast<uint32_t>(indices.size()), nullptr);
     }
     
-    virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) override
+    virtual void Draw(VkCommandBuffer commandBuffer) override
     {
-        mesh->DrawVulkanMesh(commandBuffer, pass);
+        mesh->Draw(commandBuffer);
     }
 
-    virtual void DrawVulkanMeshForShadowMap(VkCommandBuffer commandBuffer) override
+    virtual void DrawForShadowMap(VkCommandBuffer commandBuffer) override
     {
-        mesh->DrawVulkanMeshForShadowMap(commandBuffer);
+        mesh->DrawForShadowMap(commandBuffer);
     }
 
-    void SetMaterial(IVulkanMaterial *material)
+    void SetMaterial(IVulkanSurfaceMaterial *material)
     {
         mesh->SetMaterial(material);
     }

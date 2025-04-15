@@ -11,4 +11,4 @@ target_include_directories(World
     PRIVATE private
 )
 
-target_link_libraries(World PUBLIC EngineCore RenderApi)
+target_link_libraries(World PUBLIC EngineCore)

@@ -7,7 +7,7 @@
 #include "VulkanIndexBuffer.h"
 #include "EngineCore.hpp"
 
-class IVulkanMaterial;
+class IVulkanSurfaceMaterial;
 
 class VulkanMesh : public IVulkanMesh 
 {
@@ -15,16 +15,16 @@ public:
     VulkanMesh();
     virtual ~VulkanMesh();
 
-    void AddMeshPart(Vertex* vertices, uint32_t vertexCount, uint32_t* indices, uint32_t indexCount, IVulkanMaterial* material);
+    void AddMeshPart(Vertex* vertices, uint32_t vertexCount, uint32_t* indices, uint32_t indexCount, IVulkanSurfaceMaterial* material);
 
     void SetTransform(const Transform& transform);
 
 public: // IVulkanMesh Interface
-    virtual void DrawVulkanMesh(VkCommandBuffer commandBuffer, ERenderPassType pass) override;
-    virtual void DrawVulkanMeshForShadowMap(VkCommandBuffer commandBuffer) override;
+    virtual void Draw(VkCommandBuffer commandBuffer) override;
+    virtual void DrawForShadowMap(VkCommandBuffer commandBuffer) override;
 
     // TODO: Remove this function
-    void SetMaterial(IVulkanMaterial* material) { this->material = material; }
+    void SetMaterial(IVulkanSurfaceMaterial* material) { this->material = material; }
  
 private:
     uint32_t numIndices{ 0 };
@@ -32,7 +32,7 @@ private:
     VulkanIndexBuffer indexBuffer;
     VulkanUniformBuffer meshTransformBuffer;
 
-    IVulkanMaterial* material{ nullptr };
+    IVulkanSurfaceMaterial* material{ nullptr };
 
     VkDescriptorSet meshDescriptorSet{ VK_NULL_HANDLE };
     VkDescriptorPool descriptorPool{ VK_NULL_HANDLE };

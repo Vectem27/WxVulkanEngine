@@ -298,22 +298,6 @@ void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkRenderPass renderPass, Mate
     vkDestroyShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), vertShaderModule, nullptr);
 }
 
-void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer, ERenderPassType pass) const
-{
-    switch (pass)
-    {
-    case ERenderPassType::RENDER_PASS_TYPE_DEFAULT:
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBasePipeline());
-        break;
-    case ERenderPassType::RENDER_PASS_TYPE_SHADOWMAP:
-        vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetShadowMapPipeline());
-        break;
-    default:
-        throw std::invalid_argument("Invalid Pass");
-        break;
-    }
-}
-
 void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer) const
 {
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetBasePipeline());

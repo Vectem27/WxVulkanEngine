@@ -10,7 +10,6 @@ public:
 
 public:
     virtual void BindForShadowMap(VkCommandBuffer commandBuffer) const = 0;
-
 };
 
 #endif // IVULKANSURFACEMATERIAL_H

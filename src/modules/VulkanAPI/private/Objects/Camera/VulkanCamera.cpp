@@ -1,6 +1,4 @@
 #include "VulkanCamera.h"
-#include "IRenderable.h"
-#include "IRenderTarget.h"
 #include <array>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>             // Base de GLM (vecteurs, matrices)

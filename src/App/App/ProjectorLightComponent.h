@@ -24,11 +24,6 @@ public:
         vulkanLight->SetTransform(GetWorldTransform());
     }
     
-    virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override
-    {
-        childs.Add(this);
-        SceneComponent::CollectAllRenderChilds(childs, pass);
-    }
 
     virtual void* GetRenderLight(RenderAPI renderAPI) override
     {

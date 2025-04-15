@@ -4,9 +4,8 @@
 #include <vector>
 #include "EngineCore.hpp"
 #include "IWorldContextObject.h"
-#include "IRenderable.h"
 
-class SceneComponent : public IWorldContextObject, public IRenderable
+class SceneComponent : public IWorldContextObject
 {
 public:
     virtual ~SceneComponent()
@@ -23,17 +22,7 @@ public: // IWorldContextObject Interface
         return GetParent()->GetWorld();
     }
     
-public: // IRenderable
-    virtual bool ShouldRenderInPass(ERenderPassType pass) const override { return false; }
-
-    virtual void CollectAllRenderChilds(Array<IRenderable*>& childs, ERenderPassType pass) override
-    {
-        if (ShouldRenderInPass(pass))
-            childs.Add(this);
-        for (const auto& child : GetChilds())
-            child->CollectAllRenderChilds(childs, pass);
-    }
-    virtual BoundingBox GetRenderBoundingBox() const override { return BoundingBox(); }
+public: 
 
     void CollectChilds(Array<SceneComponent*>& childs)
     {
@@ -41,6 +30,9 @@ public: // IRenderable
         for (const auto& child : GetChilds())
             child->CollectChilds(childs);
     }
+
+    // TODO: Change this with GetBillboard
+    virtual void* GetRenderMesh() const { return nullptr; }
 
 public: // ISceneNode Interface
     virtual void AddChild(SceneComponent* child);
