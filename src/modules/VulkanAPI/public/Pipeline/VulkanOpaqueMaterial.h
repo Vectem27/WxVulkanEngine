@@ -8,16 +8,14 @@ class VulkanPipelineManager;
 class VulkanOpaqueMaterial : public IVulkanSurfaceMaterial
 {
 public:
-    VulkanOpaqueMaterial(VulkanPipelineManager* pipelineManager) : pipelineManager(pipelineManager) {}
-    void CreatePipelines(VkRenderPass renderPass, MaterialInfo materialInfo);
-    void CreateShadowMapPipeline(VkRenderPass renderPass, MaterialInfo materialInfo);
+    void CreatePipelines(VulkanPipelineInfo pipelineInfo);
+    void CreateShadowMapPipeline(VulkanPipelineInfo pipelineInf);
     virtual VkPipeline GetBasePipeline() const override { return basePipeline; }
     virtual VkPipeline GetShadowMapPipeline() const { return shadowMapPipeline; };
     virtual void Bind(VkCommandBuffer commandBuffer) const override;
     virtual void BindForShadowMap(VkCommandBuffer commandBuffer) const override;
 
 private:
-    VulkanPipelineManager* pipelineManager{nullptr};
     VkPipeline basePipeline{VK_NULL_HANDLE};
     VkPipeline shadowMapPipeline{VK_NULL_HANDLE};
 };

@@ -1,43 +1,21 @@
-#include "Pipeline/VulkanOpaqueMaterial.h"
+#include "VulkanOpaqueMaterial.h"
 
-#include "Pipeline/VulkanPipelineManager.h"
+#include "VulkanPipelineManager.h"
 
 #include <stdexcept>
 #include <array>
 #include "VulkanRenderPassManager.h"
 #include "PipelineUtils.h"
-#include "VulkanOpaqueMaterial.h"
 
+#include "EngineCore.hpp"
 
-void VulkanOpaqueMaterial::CreatePipelines(VkRenderPass renderPass, MaterialInfo materialInfo)
+void VulkanOpaqueMaterial::CreatePipelines(VulkanPipelineInfo pipelineInfo)
 {
-    // Charge les shaders (remplacez par votre propre système de chargement)
-    auto vertShaderCode = ReadFile(materialInfo.vertexShader);
-    auto fragShaderCode = ReadFile(materialInfo.fragmentShader);
+    
+    auto shaderStages = VulkanPipelineUtils::CreateShaderStages(pipelineInfo);
 
-    VkShaderModule vertShaderModule;
-    VkShaderModule fragShaderModule;
-
-    InitShaderModule(&vertShaderModule, vertShaderCode);
-    InitShaderModule(&fragShaderModule, fragShaderCode);
-
-    // Configuration des étapes de shader
-    VkPipelineShaderStageCreateInfo shaderStages[2] = {};
-    shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    shaderStages[0].module = vertShaderModule;
-    shaderStages[0].pName = "main"; // Point d'entrée du shader
-
-    shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shaderStages[1].module = fragShaderModule;
-    shaderStages[1].pName = "main";
-
-    // Configuration des vertex input (description des données de vertex)
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-
-    // Description des attributs de vertex
 
     VkVertexInputBindingDescription bindingDescription{};
     bindingDescription.binding = 0;
@@ -104,7 +82,6 @@ void VulkanOpaqueMaterial::CreatePipelines(VkRenderPass renderPass, MaterialInfo
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    //rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -157,45 +134,34 @@ void VulkanOpaqueMaterial::CreatePipelines(VkRenderPass renderPass, MaterialInfo
     dynamicStateCreateInfo.pDynamicStates = dynamicStates;
  
     // Création du pipeline graphique
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 2;
-    pipelineInfo.pStages = shaderStages;
-    pipelineInfo.pVertexInputState = &vertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    pipelineInfo.pViewportState = &viewportState;
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.layout = pipelineManager->GetPipelineLayout();
-    pipelineInfo.pDynamicState = &dynamicStateCreateInfo;
-    pipelineInfo.pDepthStencilState = &depthStencil;
-    pipelineInfo.renderPass = renderPass;
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
+    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineCreateInfo.stageCount = shaderStages.shaderStageCount;
+    pipelineCreateInfo.pStages = shaderStages.shaderStageInfos;
+    pipelineCreateInfo.pVertexInputState = &vertexInputInfo;
+    pipelineCreateInfo.pInputAssemblyState = &inputAssembly;
+    pipelineCreateInfo.pViewportState = &viewportState;
+    pipelineCreateInfo.pRasterizationState = &rasterizer;
+    pipelineCreateInfo.pMultisampleState = &multisampling;
+    pipelineCreateInfo.pColorBlendState = &colorBlending;
+    pipelineCreateInfo.layout = GetVulkanPipelineManager().GetPipelineLayout();
+    pipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
+    pipelineCreateInfo.pDepthStencilState = &depthStencil;
+    pipelineCreateInfo.renderPass = GetVulkanRenderPassManager().GetGeometryPass(); // Remplacez par votre render pass
 
-    if (vkCreateGraphicsPipelines(GetVulkanDeviceManager().GetDeviceChecked(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &basePipeline) != VK_SUCCESS)
+    if (vkCreateGraphicsPipelines(GetVulkanDeviceManager().GetDeviceChecked(), VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &basePipeline) != VK_SUCCESS)
     {
         throw std::runtime_error("Échec de la création du pipeline graphique !");
     }
 
-    // Nettoie les modules shader (ils ne sont plus nécessaires après la création du pipeline)
-    vkDestroyShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), vertShaderModule, nullptr);
-    vkDestroyShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), fragShaderModule, nullptr);
+    VulkanPipelineUtils::DestroyShaderStages(shaderStages);
 }
 
-void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkRenderPass renderPass, MaterialInfo materialInfo)
+void VulkanOpaqueMaterial::CreateShadowMapPipeline(VulkanPipelineInfo pipelineInfo)
 {
-    // Charge les shaders (remplacez par votre propre système de chargement)
-    auto vertShaderCode = ReadFile(materialInfo.shadowMapVertexShader);
+    auto shaderStages = VulkanPipelineUtils::CreateShaderStages(pipelineInfo);
 
-    VkShaderModule vertShaderModule;
-
-    InitShaderModule(&vertShaderModule, vertShaderCode);
-
-    VkPipelineShaderStageCreateInfo shaderStages[1] = {};
-    shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    shaderStages[0].module = vertShaderModule;
-    shaderStages[0].pName = "main";
+    
 
     // 2. Vertex Input (simplifié pour shadow mapping)
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -237,9 +203,9 @@ void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkRenderPass renderPass, Mate
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT; // Front-face culling pour réduire l'acné d'ombre
+    rasterizer.cullMode = VK_CULL_MODE_FRONT_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    rasterizer.depthBiasEnable = VK_TRUE; // Active le depth bias pour combattre l'acné d'ombre
+    rasterizer.depthBiasEnable = VK_TRUE;
 
     // 6. Multisampling (désactivé)
     VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -275,27 +241,28 @@ void VulkanOpaqueMaterial::CreateShadowMapPipeline(VkRenderPass renderPass, Mate
     dynamicState.pDynamicStates = dynamicStates;
 
     // 10. Création du pipeline
-    VkGraphicsPipelineCreateInfo pipelineInfo{};
-    pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipelineInfo.stageCount = 1;
-    pipelineInfo.pStages = shaderStages;
-    pipelineInfo.pVertexInputState = &vertexInputInfo;
-    pipelineInfo.pInputAssemblyState = &inputAssembly;
-    pipelineInfo.pViewportState = &viewportState;
-    pipelineInfo.pRasterizationState = &rasterizer;
-    pipelineInfo.pMultisampleState = &multisampling;
-    pipelineInfo.pColorBlendState = &colorBlending;
-    pipelineInfo.pDepthStencilState = &depthStencil;
-    pipelineInfo.pDynamicState = &dynamicState;
-    pipelineInfo.layout = pipelineManager->GetPipelineLayout();
-    pipelineInfo.renderPass = renderPass;
-    pipelineInfo.subpass = 0;
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo{};
+    pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineCreateInfo.stageCount = shaderStages.shaderStageCount;
+    pipelineCreateInfo.pStages = shaderStages.shaderStageInfos;
+    pipelineCreateInfo.pVertexInputState = &vertexInputInfo;
+    pipelineCreateInfo.pInputAssemblyState = &inputAssembly;
+    pipelineCreateInfo.pViewportState = &viewportState;
+    pipelineCreateInfo.pRasterizationState = &rasterizer;
+    pipelineCreateInfo.pMultisampleState = &multisampling;
+    pipelineCreateInfo.pColorBlendState = &colorBlending;
+    pipelineCreateInfo.pDepthStencilState = &depthStencil;
+    pipelineCreateInfo.pDynamicState = &dynamicState;
+    pipelineCreateInfo.layout = GetVulkanPipelineManager().GetPipelineLayout();
+    pipelineCreateInfo.renderPass = GetVulkanRenderPassManager().GetShadowPass();
+    pipelineCreateInfo.subpass = 0;
 
-    if (vkCreateGraphicsPipelines(GetVulkanDeviceManager().GetDeviceChecked(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &shadowMapPipeline) != VK_SUCCESS) {
+    if (vkCreateGraphicsPipelines(GetVulkanDeviceManager().GetDeviceChecked(), VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &shadowMapPipeline) != VK_SUCCESS) 
+    {
         throw std::runtime_error("Failed to create shadow map pipeline!");
     }
 
-    vkDestroyShaderModule(GetVulkanDeviceManager().GetDeviceChecked(), vertShaderModule, nullptr);
+    VulkanPipelineUtils::DestroyShaderStages(shaderStages);
 }
 
 void VulkanOpaqueMaterial::Bind(VkCommandBuffer commandBuffer) const

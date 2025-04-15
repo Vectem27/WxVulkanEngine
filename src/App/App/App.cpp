@@ -18,6 +18,40 @@
 #include "Engine.h"
 #include "SwapchainTarget.h"
 
+#include <fstream>
+
+//TODO: Delete and move this function : 
+inline std::vector<char> ReadFile(const std::string &filename)
+{
+    try
+    {
+        std::ifstream file(filename, std::ios::binary | std::ios::ate);
+        if (!file)
+        {
+            std::cerr << "Erreur lors de l'ouverture du fichier : " << filename << std::endl;
+            return {};
+        }
+
+        std::streamsize size = file.tellg();
+        if (size <= 0)
+        {
+            std::cerr << "Fichier vide ou erreur de lecture : " << filename << std::endl;
+            return {};
+        }
+
+        std::vector<char> buffer(size);
+        file.seekg(0, std::ios::beg);
+        file.read(buffer.data(), size);
+
+        return buffer;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Exception : " << e.what() << '\n';
+        return {};
+    }
+}
+
 wxVulkanApp::wxVulkanApp()
     : frame(new wxVulkanFrame("Vulkan avec wxWidgets")), 
     camera(new CameraComponent())
@@ -100,22 +134,28 @@ void wxVulkanApp::InitVulkan()
         floor = new Cube();
         floor->Init();
         
-        material = new VulkanOpaqueMaterial(&GetVulkanPipelineManager());
-        MaterialInfo matInfo = {};
-        matInfo.fragmentShader = "shaders/shader.frag";
-        matInfo.vertexShader = "shaders/shader.vert";
-        matInfo.shadowMapVertexShader = "shaders/shadowMap.vert";
-        matInfo.lightingFragmentShader = "shaders/lighting.vert";
-        matInfo.lightingVertexShader= "shaders/lighting.vert";
-        material->CreatePipelines( 
-            GetVulkanRenderPassManager().GetGeometryPass(), 
-            matInfo
-        );
+        material = new VulkanOpaqueMaterial();
+        
+        {
+            auto vertShaderCode = ReadFile("shaders/shader.vert");
+            auto fragShaderCode = ReadFile("shaders/shader.frag");
 
-        material->CreateShadowMapPipeline(
-            GetVulkanRenderPassManager().GetShadowPass(), 
-            matInfo
-        );
+            VulkanPipelineInfo meshPipelineInfo = {};
+            meshPipelineInfo.vertexShaderInfo.shaderCode = vertShaderCode.data();
+            meshPipelineInfo.vertexShaderInfo.shaderCodeSize = vertShaderCode.size();
+            meshPipelineInfo.fragmentShaderInfo.shaderCode = fragShaderCode.data();
+            meshPipelineInfo.fragmentShaderInfo.shaderCodeSize = fragShaderCode.size();
+
+            material->CreatePipelines(meshPipelineInfo);
+
+            auto shadowMapVertShaderCode = ReadFile("shaders/shadowMap.vert");
+            VulkanPipelineInfo meshShadowMapPipelineInfo = {};
+            meshShadowMapPipelineInfo.vertexShaderInfo.shaderCode = shadowMapVertShaderCode.data();
+            meshShadowMapPipelineInfo.vertexShaderInfo.shaderCodeSize = shadowMapVertShaderCode.size();
+            
+
+            material->CreateShadowMapPipeline(meshShadowMapPipelineInfo);
+        }
 
         cube->SetMaterial(material);
         tinyCube->SetMaterial(material);
