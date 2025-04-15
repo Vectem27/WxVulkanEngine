@@ -7,6 +7,7 @@
 
 #include "logger.h"
 
+//TODO: Refactor this class
 class VulkanCamera
 {
     struct ViewProj

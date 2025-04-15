@@ -1,4 +1,4 @@
-#include "VulkanRenderImageManager.h"
+#include "VulkanImageUtils.h"
 
 #include <stdexcept>
 
@@ -6,10 +6,13 @@
 #include "VulkanDeviceManager.h"
 
 
-void VulkanRenderImageManager::CreateImage(VkImage &image, VkDeviceMemory &imageMemory, uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags flags) const
+void VulkanImageUtils::CreateImage(
+    VkImage &image, VkDeviceMemory &imageMemory, 
+    uint32_t width, uint32_t height, VkFormat format, 
+    VkImageUsageFlags flags)
 {
     auto device = GetVulkanDeviceManager().GetDeviceChecked();
-    // IMAGE
+
     VkImageCreateInfo colorImageInfo = {};
     colorImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     colorImageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -35,7 +38,7 @@ void VulkanRenderImageManager::CreateImage(VkImage &image, VkDeviceMemory &image
     VkMemoryAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = FindMemoryType(
+    allocInfo.memoryTypeIndex = GetVulkanDeviceManager().FindMemoryType(
         memRequirements.memoryTypeBits, 
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     );
@@ -46,7 +49,7 @@ void VulkanRenderImageManager::CreateImage(VkImage &image, VkDeviceMemory &image
     vkBindImageMemory(device, image, imageMemory, 0);
 }
 
-void VulkanRenderImageManager::CreateImageView(VkImageView &imageView, VkImage &image, VkFormat format, VkImageAspectFlags flags) const
+void VulkanImageUtils::CreateImageView(VkImageView &imageView, VkImage &image, VkFormat format, VkImageAspectFlags flags)
 {
     auto device = GetVulkanDeviceManager().GetDeviceChecked();
 
@@ -67,21 +70,4 @@ void VulkanRenderImageManager::CreateImageView(VkImageView &imageView, VkImage &
 
     if (vkCreateImageView(device, &createInfo, nullptr, &imageView) != VK_SUCCESS)
         throw std::runtime_error("Failed to create color image views!");
-}
-
-uint32_t VulkanRenderImageManager::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
-{
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(GetVulkanDeviceManager().GetPhysicalDeviceChecked(), &memProperties);
-
-    // Parcourir tous les types de mémoire pour trouver celui qui correspond aux critères
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) 
-    {
-        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) 
-        {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("failed to find suitable memory type!");
 }

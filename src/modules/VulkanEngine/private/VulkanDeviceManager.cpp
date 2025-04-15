@@ -3,7 +3,7 @@
 #include <vector>  
 #include "Logger.h"
 
-void VulkanDeviceManager::InitDeviceManager(VkInstance instance)
+void VulkanDeviceManager::Init(VkInstance instance)
 {
     if (instance == VK_NULL_HANDLE)
     {
@@ -15,7 +15,7 @@ void VulkanDeviceManager::InitDeviceManager(VkInstance instance)
     CreateLogicalDevice();
 }
 
-void VulkanDeviceManager::Shutdown()
+void VulkanDeviceManager::Cleanup()
 {
     if (device != VK_NULL_HANDLE) 
     {

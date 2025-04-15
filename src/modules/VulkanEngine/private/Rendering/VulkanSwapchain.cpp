@@ -5,7 +5,7 @@
 #include "Logger.h"
 
 #include "VulkanRenderPassManager.h"
-#include "VulkanRenderImageManager.h"
+#include "VulkanImageUtils.h"
 #include "VulkanDescriptorPoolBuilder.h"
 
 #include "VulkanDescriptorUtils.h"
@@ -225,7 +225,7 @@ void VulkanSwapchain::CreateSwapchain()
     {
         renderTargets[i].Init(GetWidth(), GetHeight());
 
-        GetVulkanImageManager().CreateImageView(
+        VulkanImageUtils::CreateImageView(
             swapchainImageViews[i],
             swapchainImages[i],
             GetVulkanRenderPassManager().GetColorFormat(),

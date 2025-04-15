@@ -2,7 +2,7 @@
 
 #include "Logger.h"
 #include "VulkanDeviceManager.h"
-#include "VulkanRenderImageManager.h"
+#include "VulkanImageUtils.h"
 
 void VulkanTexture::InitTexture(
     uint32_t width, uint32_t height, VkFormat format, 
@@ -14,7 +14,7 @@ void VulkanTexture::InitTexture(
 
     Cleanup();
 
-    GetVulkanImageManager().CreateImage(
+    VulkanImageUtils::CreateImage(
         image,
         imageMemory,
         width,
@@ -23,7 +23,7 @@ void VulkanTexture::InitTexture(
         usageFlags
     );
 
-    GetVulkanImageManager().CreateImageView(
+    VulkanImageUtils::CreateImageView(
         imageView,
         image,
         format,

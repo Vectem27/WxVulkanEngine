@@ -16,11 +16,11 @@
 #include <vulkan/vulkan_xcb.h> // Remplace par xlib ou wayland si nécessaire
 #endif
 
-bool VulkanAPIModule::InitModule()
+void VulkanAPIModule::InitModule()
 {
     CreateInstance();
 
-    GetVulkanDeviceManager().InitDeviceManager(vulkanInstance);
+    GetVulkanDeviceManager().Init(vulkanInstance);
 
     PassesInfo passesInfo;
     passesInfo.colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
@@ -50,8 +50,6 @@ bool VulkanAPIModule::InitModule()
         GetVulkanDeviceManager().GetGraphicsQueueFamilyIndex()
     );
     GetVulkanShadowMapRenderer().SetRenderPass(GetVulkanRenderPassManager().GetShadowPass());
-    
-    return true;
 }
 
 void VulkanAPIModule::ShutdownModule() 
@@ -68,7 +66,7 @@ void VulkanAPIModule::ShutdownModule()
     GetVulkanRenderPassManager().Cleanup();
     GetVulkanTransferManager().Shutdown();
 
-    VulkanDeviceManager::GetInstance().Shutdown();
+    VulkanDeviceManager::GetInstance().Cleanup();
 
     auto destroyFunc = (PFN_vkDestroyDebugUtilsMessengerEXT)
     vkGetInstanceProcAddr(vulkanInstance, "vkDestroyDebugUtilsMessengerEXT");

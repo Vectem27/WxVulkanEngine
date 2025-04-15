@@ -14,19 +14,40 @@ private:
     VulkanAPIModule(VulkanAPIModule&&) = delete;
     VulkanAPIModule& operator=(VulkanAPIModule&&) = delete;
     virtual ~VulkanAPIModule() { ShutdownModule(); }
+
 public:
+    
+    /**
+     * @brief Get the singleton instance of VulkanAPIModule
+     * @return Reference to the VulkanAPIModule instance
+     */
     static VulkanAPIModule& GetInstance()
     {
         static VulkanAPIModule instance;
         return instance;
     }
 
-    bool InitModule();
+    /**
+     * @brief Initialize the Vulkan API module
+     */
+    void InitModule();
+
+    /**
+     * @brief Shutdown the Vulkan API module
+     */
     void ShutdownModule();
 
+    /**
+     * @brief Get the Vulkan instance
+     * @return The Vulkan instance handle
+     */
     VkInstance GetVulkanInstance() { return vulkanInstance; }
 
 private:
+    /**
+     * @brief Create the Vulkan instance
+     * @throws std::runtime_error if instance creation fails
+     */
     void CreateInstance();
 
 private:
@@ -34,6 +55,10 @@ private:
     VkDebugUtilsMessengerEXT debugMessenger{ VK_NULL_HANDLE };
 };
 
+/**
+ * @brief Get the VulkanAPIModule instance
+ * @return Reference to the VulkanAPIModule instance
+ */
 inline VulkanAPIModule& GetVulkanAPIModule()
 {
     return VulkanAPIModule::GetInstance();
