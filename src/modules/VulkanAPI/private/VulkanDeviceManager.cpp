@@ -133,6 +133,7 @@ void VulkanDeviceManager::CreateLogicalDevice()
     std::vector<const char *> deviceExtensions
     {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+        VK_KHR_MAINTENANCE_3_EXTENSION_NAME,
         VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME,
         VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
     };
