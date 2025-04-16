@@ -88,7 +88,36 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
     void* pUserData) 
 {
-    Log(Debug, "Vulkan" "Validation layer : %s", pCallbackData->pMessage);
+    //TODO: Remove this line
+    // Temp deactivate debug callback
+    return VK_FALSE;
+
+    LogLevel level;
+    if(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) 
+        level = Debug;
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) 
+        level = Info;
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) 
+        level = Warning;
+    else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) 
+        level = Error;
+    else 
+        level = Trace;
+
+    std::string message;
+
+    if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) 
+        message = "General message : %s";
+    else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) 
+        message = "Validation message : %s";
+    else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) 
+        message = "Performance message : %s";
+    else if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT) 
+        message = "Device address binding message : %s";
+    else
+        message = "Unknown message : %s";      
+
+    Log(level, "VulkanDebugExtLog", message.c_str(), pCallbackData->pMessage);
     return VK_FALSE;
 }
 
@@ -120,7 +149,8 @@ void VulkanAPIModule::CreateInstance()
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{}; 
     debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     debugCreateInfo.messageSeverity = 
-        // VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | 
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT |
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | 
         VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
     debugCreateInfo.messageType = 
