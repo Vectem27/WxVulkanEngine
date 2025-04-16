@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <array>
 #include "VulkanRenderPassManager.h"
-#include "PipelineUtils.h"
+#include "VulkanPipelineUtils.h"
 
 #include "EngineCore.hpp"
 
