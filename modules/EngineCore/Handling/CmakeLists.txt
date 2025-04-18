@@ -1,0 +1,14 @@
+add_library(Handling STATIC
+    public/HandleManager.h
+    public/IHandleable.h
+)
+
+target_include_directories(Handling 
+    PUBLIC public
+    PRIVATE private
+)
+
+target_link_libraries(Handling
+    PRIVATE
+        Logger
+)

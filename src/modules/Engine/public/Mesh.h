@@ -5,10 +5,6 @@
 #include "VulkanUniformBuffer.h"
 #include "EngineCore.hpp"
 
-class VulkanAPIModule;
-
-//TODO: Remove IVulkanMesh interface, and use VulkanMesh directly
-
 class Mesh
 {
 

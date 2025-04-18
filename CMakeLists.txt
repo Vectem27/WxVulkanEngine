@@ -138,6 +138,7 @@ endmacro()
 set(GLOBAL_RUNTIME_OUTPUT_DIR ${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${GLOBAL_RUNTIME_OUTPUT_DIR})
 
+add_subdirectory(modules)
 add_subdirectory(src)
 
 
