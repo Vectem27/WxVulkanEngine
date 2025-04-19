@@ -39,6 +39,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 	${MINGW_EXTRA_LIBS} 
 	${Vulkan_LIBRARIES} 
 	Engine
+	Rendering
 )
 
 

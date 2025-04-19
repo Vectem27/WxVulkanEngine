@@ -20,6 +20,9 @@
 
 #include <fstream>
 
+#include "RenderMeshFactory.h"
+#include "SurfaceRenderMaterialFactory.h"
+
 //TODO: Delete and move this function : 
 inline std::vector<char> ReadFile(const std::string &filename)
 {
@@ -50,6 +53,66 @@ inline std::vector<char> ReadFile(const std::string &filename)
         std::cerr << "Exception : " << e.what() << '\n';
         return {};
     }
+}
+
+// TODO: Delete this function
+RHI::IRenderMesh* CreateRenderCubeTest()
+{
+    std::vector<Vertex> vertices = 
+    {
+        // Z+
+        {{-0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}},  // Vertex 1 (red)
+        {{-0.5f,  0.5f, -0.5f}, {0.5f, 1.0f, 0.5f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}},  // Vertex 3 (blue)
+        {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.5f, 0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}},  // Vertex 2 (green)
+        {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 0.5f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}},  // Vertex 4 (yellow)
+
+        // Z-
+        {{-0.5f, -0.5f,  0.5f}, {0.5f, 0.5f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},  // Vertex 5 (purple)
+        {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.5f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},  // Vertex 6 (cyan)
+        {{-0.5f,  0.5f,  0.5f}, {0.5f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},  // Vertex 7 (gray)
+        {{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},  // Vertex 8 (white)
+
+        // X-
+        {{-0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},  // Vertex 9
+        {{-0.5f, -0.5f,  0.5f}, {0.5f, 0.5f, 1.0f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // Vertex 10
+        {{-0.5f,  0.5f, -0.5f}, {0.5f, 1.0f, 0.5f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},  // Vertex 11
+        {{-0.5f,  0.5f,  0.5f}, {0.5f, 1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},  // Vertex 12
+
+        // X+
+        {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.5f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},  // Vertex 13
+        {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}},  // Vertex 15
+        {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.5f, 1.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},  // Vertex 14
+        {{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}},  // Vertex 16
+
+        // Y+
+        {{-0.5f,  0.5f, -0.5f}, {0.5f, 1.0f, 0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},  // Vertex 17
+        {{-0.5f,  0.5f,  0.5f}, {0.5f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}},  // Vertex 19
+        {{ 0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},  // Vertex 18
+        {{ 0.5f,  0.5f,  0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}},  // Vertex 20
+
+        // Y-
+        {{-0.5f, -0.5f, -0.5f}, {0.5f, 0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},  // Vertex 21
+        {{ 0.5f, -0.5f, -0.5f}, {1.0f, 0.5f, 0.5f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},  // Vertex 22
+        {{-0.5f, -0.5f,  0.5f}, {0.5f, 0.5f, 1.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},  // Vertex 23
+        {{ 0.5f, -0.5f,  0.5f}, {1.0f, 0.5f, 1.0f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},  // Vertex 24
+    };
+
+    std::vector<uint32_t> indices = 
+    {
+        0,  1,  2,  3,  2,  1,     // Z-
+        4,  5,  6,  7,  6,  5,     // Z+
+        8,  9,  10, 11, 10, 9,     // X-
+        12, 13, 14, 15, 14, 13,    // X+
+        16, 17, 18, 19, 18, 17,    // Y+
+        20, 21, 22, 23, 22, 21,    // Y-
+    };
+
+    Rendering::RenderMeshFactory::MeshPart meshPart = {};
+    meshPart.indicies = indices.data();
+    meshPart.indexCount = indices.size();
+
+    return Rendering::RenderMeshFactory::CreateRenderMesh(
+        vertices.data(), vertices.size(), &meshPart, 1);
 }
 
 wxVulkanApp::wxVulkanApp()
@@ -113,8 +176,14 @@ int wxVulkanApp::OnExit()
     return wxApp::OnExit();
 }
 
+static RHI::IRenderMesh* testRenderMesh = nullptr;
+static RHI::IRenderMaterial* testRenderMaterial = nullptr;
+
 void wxVulkanApp::InitVulkan()
 {
+    Rendering::RenderMeshFactory::SetRenderAPI("Vulkan");
+    Rendering::SurfaceRenderMaterialFactory::SetRenderAPI("Vulkan");
+
     try
     {
         GetVulkanAPIModule().InitModule();
@@ -155,7 +224,27 @@ void wxVulkanApp::InitVulkan()
             
 
             material->CreateShadowMapPipeline(meshShadowMapPipelineInfo);
+
+            Rendering::SurfaceRenderMaterialFactory::PipelineInfo pipelineInfo = {};
+            pipelineInfo.vertexShaderInfo.shaderCode = vertShaderCode.data();
+            pipelineInfo.vertexShaderInfo.shaderCodeSize = vertShaderCode.size();
+            pipelineInfo.fragmentShaderInfo.shaderCode = fragShaderCode.data();
+            pipelineInfo.fragmentShaderInfo.shaderCodeSize = fragShaderCode.size();
+
+            Rendering::SurfaceRenderMaterialFactory::PipelineInfo shadowMapPipelineInfo = {};
+            shadowMapPipelineInfo.vertexShaderInfo.shaderCode = shadowMapVertShaderCode.data();
+            shadowMapPipelineInfo.vertexShaderInfo.shaderCodeSize = shadowMapVertShaderCode.size();
+            
+            testRenderMaterial = Rendering::SurfaceRenderMaterialFactory::CreateSurfaceRenderMaterial(
+                pipelineInfo,
+                shadowMapPipelineInfo
+            );
         }
+
+        testRenderMesh = CreateRenderCubeTest();
+        testRenderMesh->AddInstance({{0,0,0}, Rotation::FromEulerDegrees(0,0,0), {1,1,1}});
+        testRenderMesh->SetMaterial(0, testRenderMaterial);
+
 
         cube->SetMaterial(material);
         tinyCube->SetMaterial(material);
