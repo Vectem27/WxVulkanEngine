@@ -8,8 +8,10 @@ namespace Vulkan
     class SurfaceRenderMaterial : public VulkanRenderMaterial
     {
     public:
-        SurfaceRenderMaterial();
-        virtual ~SurfaceRenderMaterial();
+        SurfaceRenderMaterial() = default; // TODO: Implement constructor
+        virtual ~SurfaceRenderMaterial() = default; // TODO: Implement destructor
+
+        virtual void InitRenderPipeline(const VulkanPipelineInfo& pipelineInfo) override;
     };
 } // namespace Vulkan
 

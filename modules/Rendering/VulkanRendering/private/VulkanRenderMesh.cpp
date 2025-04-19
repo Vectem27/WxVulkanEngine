@@ -46,9 +46,10 @@ void Vulkan::RenderMesh::Render(const void *renderInfo) const
         return;
     }
 
-
-    
-    // TODO: Render the mesh with the given render info
+    for(int i = 0; i < indexBuffers.GetSize(); ++i)
+    {
+        RenderMeshPart(vulkanRenderInfo->commandBuffer, i);
+    }   
 }
 
 uint32_t Vulkan::RenderMesh::AddInstance(const Transform &transform)
@@ -142,6 +143,32 @@ void Vulkan::RenderMesh::AddMeshPart(uint32_t *indices, uint32_t indexCount)
     stagingBuffer.Cleanup();
 
     indexBuffers.Add(std::move(indexBuffer));
+}
+
+void Vulkan::RenderMesh::RenderMeshPart(VkCommandBuffer commandBuffer, uint32_t meshPart) const
+{
+    if (meshPart >= indexBuffers.GetSize())
+    {
+        Log(Warning, "Vulkan", "Failed to render mesh part : mesh part index out of range");
+        return;
+    }
+
+    if (meshPart >= materials.GetSize()) return;
+
+    const auto& indexBuffer = indexBuffers[meshPart];
+    const auto& material = materials[meshPart];
+
+    if (!material) return; // TODO: Render a default material instead
+
+    material->BindRenderMaterial(commandBuffer);
+
+    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, GetVulkanPipelineManager().GetPipelineLayout(), 1, 1, &instanceDescriptorSet, 0, nullptr);
+
+    VkDeviceSize offset = 0;
+    auto vBuffer = vertexBuffer.GetBuffer();
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vBuffer, &offset);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(commandBuffer, indexBuffer.GetBufferSize() / sizeof(uint32_t), instances.size(), 0, 0, 0);
 }
 
 void Vulkan::RenderMesh::UpdateInstanceDataBuffer()

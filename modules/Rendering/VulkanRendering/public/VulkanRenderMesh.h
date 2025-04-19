@@ -48,6 +48,7 @@ namespace Vulkan
         void AddMeshPart(uint32_t* indices, uint32_t indexCount);
 
     protected:
+        void RenderMeshPart(VkCommandBuffer commandBuffer, uint32_t meshPart) const;
         void UpdateInstanceDataBuffer();
     private:
     
