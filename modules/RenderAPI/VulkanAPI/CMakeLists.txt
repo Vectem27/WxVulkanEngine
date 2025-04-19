@@ -19,8 +19,11 @@ target_include_directories(VulkanAPI
     
     PUBLIC public/Helper/Descriptor
     PRIVATE private/Helper/Descriptor
+    PUBLIC public/Helper/Command
     PRIVATE private/Helper/Command
+    PUBLIC public/Helper/Image
     PRIVATE private/Helper/Image
+    PUBLIC public/Helper/Pipeline
     PRIVATE private/Helper/Pipeline
 
     PUBLIC public/Buffer

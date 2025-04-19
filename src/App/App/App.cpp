@@ -75,7 +75,7 @@ bool wxVulkanApp::OnInit()
         if (cameraActor)
         {
             auto rot = cameraActor->GetRelativeTransform().rotation.ToEulerDegrees();
-            cameraActor->SetRelativeRotation(Rotator::FromEulerDegrees(rot.x, rot.y, static_cast<float>(yaw)));
+            cameraActor->SetRelativeRotation(Rotation::FromEulerDegrees(rot.x, rot.y, static_cast<float>(yaw)));
         }
     });
 
@@ -83,7 +83,7 @@ bool wxVulkanApp::OnInit()
         if (cameraActor)
         {
             auto rot = cameraActor->GetRelativeTransform().rotation.ToEulerDegrees();
-            cameraActor->SetRelativeRotation(Rotator::FromEulerDegrees(static_cast<float>(pitch), rot.y, rot.z));
+            cameraActor->SetRelativeRotation(Rotation::FromEulerDegrees(static_cast<float>(pitch), rot.y, rot.z));
         }
     });
 
@@ -160,7 +160,7 @@ void wxVulkanApp::InitVulkan()
         cube->SetMaterial(material);
         tinyCube->SetMaterial(material);
         tinyCube->SetRelativePosition({1.0f,1.0f,1.0f});
-        tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,45.0f));
+        tinyCube->SetRelativeRotation(Rotation::FromEulerDegrees(0,0,45.0f));
         tinyCube->SetRelativeScale({.5f,.5f,.5f});
 
         floor->SetMaterial(material);
@@ -184,9 +184,9 @@ void wxVulkanApp::InitVulkan()
         projLight2->SetLightAngle(15.0f);
         projLight2->SetLightSoftAngle(15.0f);
 
-        camera->SetRelativeTransform(Transform({-5,-2,2}, Rotator::FromEulerDegrees(-10,0,45), {1,1,1}));
-        li->SetRelativeTransform(Transform({-6,6,4}, Rotator::FromEulerDegrees(-30,0,-45), {1,1,1}));
-        li2->SetRelativeTransform(Transform({-3,3,8}, Rotator::FromEulerDegrees(-80,0,45), {1,1,1}));
+        camera->SetRelativeTransform(Transform({-5,-2,2}, Rotation::FromEulerDegrees(-10,0,45), {1,1,1}));
+        li->SetRelativeTransform(Transform({-6,6,4}, Rotation::FromEulerDegrees(-30,0,-45), {1,1,1}));
+        li2->SetRelativeTransform(Transform({-3,3,8}, Rotation::FromEulerDegrees(-80,0,45), {1,1,1}));
         camera->SetFOV(103.f / 2.0f);
 
 
@@ -213,8 +213,8 @@ void wxVulkanApp::RenderVulkan()
     static float yaw2{0.0f};
     yaw2 -= 0.5f;
     yaw += 0.1f;
-    cubeActor->SetRelativeRotation(Rotator::FromEulerDegrees(pitch, roll, yaw));
-    tinyCube->SetRelativeRotation(Rotator::FromEulerDegrees(0,0,yaw2));        
+    cubeActor->SetRelativeRotation(Rotation::FromEulerDegrees(pitch, roll, yaw));
+    tinyCube->SetRelativeRotation(Rotation::FromEulerDegrees(0,0,yaw2));        
     try
     {
         sceneRenderer->RenderWorld(world, camera);

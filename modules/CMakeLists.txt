@@ -8,3 +8,4 @@
 
 add_subdirectory(EngineCore)
 add_subdirectory(RenderAPI/VulkanAPI)
+add_subdirectory(Rendering)

@@ -37,7 +37,7 @@ void SceneComponent::SetRelativePosition(const Vector3f &pos)
     UpdateWorldTransform();
 }
 
-void SceneComponent::SetRelativeRotation(const Rotator &rot)
+void SceneComponent::SetRelativeRotation(const Rotation &rot)
 {
     relativeTransform.rotation = rot;
     UpdateWorldTransform();

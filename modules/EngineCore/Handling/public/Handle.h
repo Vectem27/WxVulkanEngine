@@ -10,11 +10,18 @@ template<class T>
 struct Handle 
 {
 private:
+    /**
+     * @brief Constructor for Handle. This constructor is private and is supposed to be used only by the HandleManager class.
+     * @param handleID The ID of the handle to be created.
+     */
     explicit Handle(HandleType handleID) : handleID(handleID) {}
     friend class HandleManager;
 
 public:
-    Handle() = delete;
+    /**
+     * @brief Construct a new invalid Handle object
+     */
+    Handle() : handleID(0) {}
 
     Handle(const Handle&) = default;
     Handle& operator=(const Handle&) = default;
@@ -34,7 +41,7 @@ public:
         return handleID != other.handleID;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Handle& h) 
+    friend std::ostream& operator<<(std::ostream& os, const Handle& h)
     {
         os << h.handleID;
         return os;
@@ -46,7 +53,7 @@ public:
     }
     
 private:
-    HandleType handleID;
+    const HandleType handleID;
 };
 
 #endif // HANDLE_H

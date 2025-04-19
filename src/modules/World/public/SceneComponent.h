@@ -47,7 +47,7 @@ public: // ISceneNode Interface
 
     virtual void SetRelativeTransform(const Transform& transform);
     virtual void SetRelativePosition(const Vector3f& pos);
-    virtual void SetRelativeRotation(const Rotator& rot);
+    virtual void SetRelativeRotation(const Rotation& rot);
     virtual void SetRelativeScale(const Vector3f& scale);
     virtual Transform GetRelativeTransform() const { return relativeTransform; }
     virtual Transform GetWorldTransform() const { return worldTransform; }

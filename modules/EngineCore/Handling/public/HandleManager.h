@@ -26,9 +26,20 @@ public:
     HandleManager(HandleManager&&) = delete;
     HandleManager& operator=(HandleManager&&) = delete;
 
-public: // Handle Instanciation
+public: 
+
+    /**
+     * @brief Create and assign a handle to an object. If the object already has a handle, this function will do nothing.
+     * 
+     * @param object The object to assign a handle to.
+     * @return The handle assigned to the object.
+     * @note This function is thread-safe and will generate a unique handle for the object.
+     */
     Handle<T> AssignUniqueHandle(std::shared_ptr<IHandleable<T>>& object)
     {
+        if (object == nullptr || !object->GetHandle().IsValid())
+            return Handle<T>(HandleType(0)); // Return an invalid handle if the object is null
+        
         // Lock the handle map to prevent concurrent access on map modifications
         std::lock_guard<std::mutex> lock(handleMapMutex); 
         
@@ -38,8 +49,25 @@ public: // Handle Instanciation
         object.SetHandle(handle);
     }
 
-private: // Handle Instanciation
+    /**
+     * @brief Get an object from its handle.
+     * 
+     * @param handle The handle of the object to retrieve.
+     * @return An optional containing the object if it exists, or an empty optional if it doesn't.
+     * @note This function is thread-safe and will return a nullptr if the object has been destroyed or doesnt exist.
+     */
+    std::shared_ptr<IHandleable<T>> GetObjectFromHandle(Handle<T> handle) const
+    {
+        std::lock_guard<std::mutex> lock(handleMapMutex); 
 
+        auto it = registredHandles.find(handle);
+        if (it != registredHandles.end())
+            return it->second.lock();
+
+        return nullptr;
+    }
+
+private: // Handle Instanciation
     HandleType GenerateHandleID()
     {
         std::lock_guard<std::mutex> lock(handleCreationMutex);

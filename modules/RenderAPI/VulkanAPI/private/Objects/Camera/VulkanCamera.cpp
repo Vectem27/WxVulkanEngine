@@ -104,7 +104,7 @@ void VulkanCamera::SetFarPlan(float farPlan)
 void VulkanCamera::SetCameraTransform(Transform transform)
 {
     auto r = transform.rotation.ToEuler(ERS_ZYX);
-    transform.rotation = Rotator::FromEuler(-r.x, -r.y, -r.z, ERS_XYZ);
+    transform.rotation = Rotation::FromEuler(-r.x, -r.y, -r.z, ERS_XYZ);
 
     union Mat
     {

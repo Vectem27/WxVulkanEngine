@@ -87,7 +87,7 @@ void VulkanShadowMapCamera::Bind(VkCommandBuffer commandBuffer) const
 void VulkanShadowMapCamera::UpdateViewMatrix()
 {
     auto r = transform.rotation.ToEuler(ERS_ZYX);
-    auto rotation = Rotator::FromEuler(-r.x, -r.y, -r.z, ERS_XYZ);
+    auto rotation = Rotation::FromEuler(-r.x, -r.y, -r.z, ERS_XYZ);
 
     union Mat
     {

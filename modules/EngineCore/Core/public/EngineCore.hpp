@@ -6,25 +6,39 @@
 #include "BoundingBox.h"
 #include "Logger.h"
 
-typedef Quaternion<float> Rotator;
+using CoordinateType = float;
+
+using Position = Vector3<CoordinateType>;
+using Rotation = Quaternion<CoordinateType>;
+using Scale = Vector3<CoordinateType>;
+
+using TransformMatrix = Matrix4<CoordinateType>;
+
+using Vector2D = Vector2<CoordinateType>;
+using Vector3D = Vector3<CoordinateType>;
+using Vector4D = Vector4<CoordinateType>;
+
+using Matrix4D = Matrix4<CoordinateType>;
+
+using LinearColor = Vector4D;
 
 struct Transform
 {
-    Vector3f position{0.0, 0.0, 0.0};
-    Rotator rotation{0.0, 0.0, 0.0, 1.0};
-    Vector3f scale{1.0, 1.0, 1.0};
+    Position position{0.0, 0.0, 0.0};
+    Rotation rotation{0.0, 0.0, 0.0, 1.0};
+    Scale scale{1.0, 1.0, 1.0};
 
-    Matrix4f GetTransformMatrix(bool ignoreScale = false) const;
+    TransformMatrix GetTransformMatrix(bool ignoreScale = false) const;
 
     Transform RelativeTo(Transform base);
 };
 
 struct Vertex 
 {
-    Vector3f pos {0.0f, 0.0f, 0.0f}; // Position en 2D
-    Vector3f color {0.0f, 0.0f, 0.0f}; // Couleur
-    Vector3f normal {0.0f, 0.0f, 0.0f}; // Normal
-    Vector2f uv {0.0f, 0.0f}; // uv
+    Vector3D pos {0.0f, 0.0f, 0.0f}; // Position en 2D
+    Vector3D color {0.0f, 0.0f, 0.0f}; // Couleur
+    Vector3D normal {0.0f, 0.0f, 0.0f}; // Normal
+    Vector2D uv {0.0f, 0.0f}; // uv
 };
 
 #endif // ENGINECORE_HPP
