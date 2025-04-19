@@ -9,8 +9,10 @@ add_library(VulkanRendering STATIC
 target_include_directories(VulkanRendering 
     PUBLIC
         public
+        public/RenderMaterials
     PRIVATE
         private
+        private/RenderMaterials
 )
 
 target_link_libraries(VulkanRendering 
