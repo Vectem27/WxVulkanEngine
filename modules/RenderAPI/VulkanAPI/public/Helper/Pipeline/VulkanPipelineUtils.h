@@ -3,7 +3,7 @@
 
 #include <vulkan/vulkan.h>
 
-#include "IVulkanMaterial.h"
+#include "VulkanPipelineInfo.h"
 
 // TODO: Remove these includes after deleting the deprecated functions
 #include <vector>
