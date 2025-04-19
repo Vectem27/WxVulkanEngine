@@ -10,6 +10,8 @@
 
 namespace RHI
 {
+    class IRenderMaterial;
+    
     class IRenderMesh : public IRenderable
     {
     public:
@@ -18,6 +20,8 @@ namespace RHI
         virtual uint32_t AddInstance(const Transform& transform) = 0;
         virtual void RemoveInstance(uint32_t instanceId) = 0;
         virtual void SetInstanceTransform(uint32_t instanceId, const Transform& transform) = 0;
+
+        virtual void SetMaterial(uint32_t index, const IRenderMaterial* material) = 0;
     };
 }
 
