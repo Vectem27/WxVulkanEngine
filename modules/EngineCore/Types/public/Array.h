@@ -144,6 +144,12 @@ public:
         data[GetSize() - 1] = value;
     }
 
+    void Add(T&& value)
+    {
+        Resize(GetSize() + 1);
+        data[GetSize() - 1] = std::move(value);
+    }
+
     void RemoveIndex(const unsigned long& index)
     {
         if (index >= GetSize())
@@ -211,12 +217,12 @@ private:
         if (n < 2) n = 2;
         unsigned long newSize = std::min(n, GetSize());
 
-        T* newDatas = new T[n];
+        T* newDatas = (T*)malloc(n * sizeof(T));
 
         for (unsigned long i = 0; i < newSize; ++i)
-            newDatas[i] = data[i]; // utilise l'opérateur =
+            newDatas[i] = std::move(data[i]); // utilise l'opérateur =
 
-        delete[] data;
+        free(data);
 
         data = newDatas;
         size = newSize;
