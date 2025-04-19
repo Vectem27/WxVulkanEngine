@@ -46,7 +46,7 @@ public:
 
     ~Array()
     {
-        delete[] data;
+        free(data);
     }
 
     class iterator
@@ -73,7 +73,7 @@ public:
         throw std::out_of_range("Index out of range");
     }
 
-    inline T operator[](unsigned long index) const
+    inline const T& operator[](unsigned long index) const
     {
         if (index < GetSize())
             return data[index];
