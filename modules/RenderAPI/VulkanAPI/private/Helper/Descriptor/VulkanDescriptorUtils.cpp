@@ -4,6 +4,7 @@
 
 #include "Logger.h"
 #include "VulkanDeviceManager.h"
+#include "VulkanBuffer.h"
 
 VkDescriptorSet VulkanDescriptorUtils::AllocateSet(VkDescriptorPool pool, VkDescriptorSetLayout setLayouts)
 {
@@ -35,6 +36,35 @@ VkDescriptorSet VulkanDescriptorUtils::AllocateSet(VkDescriptorPool pool, VkDesc
     }
 
     return descSet;
+}
+
+void VulkanDescriptorUtils::UpdateSet(VkDescriptorSet descriptorSet, const VulkanBuffer& buffer, VkDescriptorType type, uint32_t binding) noexcept
+{
+    if (descriptorSet == VK_NULL_HANDLE)
+    {
+        Log(Warning, "Vulkan", "Failed to update descriptor set, descriptor set is null");
+    }
+
+    if (buffer.GetBuffer() == VK_NULL_HANDLE)
+    {
+        Log(Warning, "Vulkan", "Failed to update descriptor set, buffer is null");
+    }
+
+    VkDescriptorBufferInfo bufferInfo{};
+    bufferInfo.buffer = buffer.GetBuffer();
+    bufferInfo.offset = 0;
+    bufferInfo.range = buffer.GetBufferSize();
+
+    VkWriteDescriptorSet descriptorWrite{};
+    descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrite.dstSet = descriptorSet;
+    descriptorWrite.dstBinding = binding;
+    descriptorWrite.dstArrayElement = 0;
+    descriptorWrite.descriptorType = type;
+    descriptorWrite.descriptorCount = 1;
+    descriptorWrite.pBufferInfo = &bufferInfo;
+
+    vkUpdateDescriptorSets(GetVulkanDeviceManager().GetDeviceChecked(), 1, &descriptorWrite, 0, nullptr);
 }
 
 void VulkanDescriptorUtils::FreeDescriptorSet(VkDescriptorPool descriptorPool, VkDescriptorSet &descriptorSet) noexcept

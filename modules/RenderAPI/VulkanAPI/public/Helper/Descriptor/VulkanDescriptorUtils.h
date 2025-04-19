@@ -3,6 +3,8 @@
 
 #include <vulkan/vulkan.h>
 
+class VulkanBuffer;
+
 /**
  * @namespace VulkanDescriptorUtils
  * @brief Contain vulkan descriptor set/pool utility functions
@@ -21,6 +23,20 @@ namespace VulkanDescriptorUtils
         VkDescriptorSetLayout setLayouts
     );
 
+    /**
+     * @brief Update a descriptor set with a buffer 
+     * 
+     * @param descriptorSet The descriptor set to update
+     * @param buffer The buffer to bind to the descriptor set
+     * @param type The type of the descriptor set (uniform buffer, storage buffer, etc.)
+     * @param binding The binding index of the descriptor set
+     */
+    void UpdateSet(
+        VkDescriptorSet descriptorSet, const VulkanBuffer& buffer, 
+        VkDescriptorType type, uint32_t binding
+    ) noexcept;
+
+    //TODO: Add UpdateSetDynamic for dynamic buffers
 
     /**
      * @brief Free a descriptor set
