@@ -21,16 +21,17 @@ layout(set = 0, binding = 0) uniform CameraBuffer
     mat4 proj;
 } camera;
 
-layout(set = 1, binding = 0) uniform ObjectBuffer
+layout(set = 1, binding = 0) buffer ObjectBuffer
 {
-    mat4 model;
+    mat4 model[];
 } object;
 
 layout(location = 0) out FragInfo fragInfo; 
 
 void main() 
 {
-    vec4 worldPosition = object.model * vec4(inPosition, 1.0);
+    mat4 modelMatrix = object.model[gl_InstanceIndex]; // Récupère la matrice modèle de l'objet
+    vec4 worldPosition = modelMatrix * vec4(inPosition, 1.0);
     vec4 pos = camera.proj * camera.view * worldPosition; // Position en 2D
     gl_Position = pos;
     fragInfo.uv = inUV;
@@ -38,6 +39,6 @@ void main()
     fragInfo.color = inColor; // Passe la couleur au fragment shader
     fragInfo.worldPosition = vec3(worldPosition);
 
-    mat3 normalMatrix = transpose(inverse(mat3(object.model)));  // Inverse transposée de la matrice modèle
+    mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));  // Inverse transposée de la matrice modèle
     fragInfo.worldNormal = normalize(normalMatrix * inNormal);    // Transformation de la normale en espace monde
 }

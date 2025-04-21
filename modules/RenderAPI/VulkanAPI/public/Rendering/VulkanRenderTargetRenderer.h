@@ -2,6 +2,7 @@
 #define VULKANRENDERTARGETRENDERER_H
 
 #include <vulkan/vulkan.h>
+#include <functional>
 
 class IVulkanRenderTarget;
 class VulkanCamera;
@@ -34,7 +35,7 @@ public:
         return instance;
     }
 
-    void Render(IVulkanRenderTarget* renderTarget, VulkanCamera *lightViewCamera, IVulkanMesh **meshes, uint32_t meshNumber, const IVulkanLightManager& lightManager);
+    void Render(IVulkanRenderTarget* renderTarget, VulkanCamera *lightViewCamera, IVulkanMesh **meshes, uint32_t meshNumber, const IVulkanLightManager& lightManager, std::function<void(VkCommandBuffer)> renderCallback = nullptr) const;
 
 private:
     VkCommandBuffer commandBuffer{VK_NULL_HANDLE};

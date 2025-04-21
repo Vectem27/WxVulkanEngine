@@ -30,4 +30,4 @@ target_include_directories(Engine
 )
 
 target_include_directories(Engine PUBLIC World VulkanAPI)
-target_link_libraries(Engine PUBLIC World VulkanAPI Rendering)
+target_link_libraries(Engine PUBLIC World VulkanAPI Rendering VulkanRendering)

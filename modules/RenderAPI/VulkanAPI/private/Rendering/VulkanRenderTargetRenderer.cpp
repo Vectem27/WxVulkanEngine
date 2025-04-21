@@ -50,7 +50,7 @@ void VulkanRenderTargetRenderer::Shutdown() noexcept
     VulkanCommandUtils::DestroyCommandPool(commandPool);
 }
 
-void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, VulkanCamera *camera, IVulkanMesh **meshes, uint32_t meshNumber, const IVulkanLightManager& lightManager)
+void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, VulkanCamera *camera, IVulkanMesh **meshes, uint32_t meshNumber, const IVulkanLightManager& lightManager, std::function<void(VkCommandBuffer)> renderCallback) const
 {
     //TODO: Assert function arguments
 
@@ -80,6 +80,9 @@ void VulkanRenderTargetRenderer::Render(IVulkanRenderTarget *renderTarget, Vulka
 
         // Render
         camera->Render(commandBuffer);
+
+        if (renderCallback)
+            renderCallback(commandBuffer);
 
         for (size_t i = 0; i < meshNumber; i++)
         {

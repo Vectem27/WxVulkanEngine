@@ -15,6 +15,8 @@
 #include "VulkanRenderInfo.h"
 #include "VulkanSurfaceRenderMaterial.h"
 
+#include <thread>
+
 
 Vulkan::RenderMesh::RenderMesh()
 {
@@ -57,38 +59,48 @@ uint32_t Vulkan::RenderMesh::AddInstance(const Transform &transform)
     // Increment at each call to AddInstance and avoid collision with existing ids
     static uint32_t instanceId{0};
 
+    std::lock_guard<std::mutex> lock(instanceMutex);
     MeshInstanceData instanceData;
-    instanceData.transformMatrix = transform.GetTransformMatrix(true);
+    instanceData.transformMatrix = transform.GetTransformMatrix();
 
     instances.insert({instanceId, instanceData});
-    UpdateInstanceDataBuffer();
+
     return instanceId++; // Return the id of the instance
 }
 
 void Vulkan::RenderMesh::RemoveInstance(uint32_t instanceId)
 {
     if (auto it = instances.find(instanceId); it != instances.end())
-    {
         instances.erase(it);
-        UpdateInstanceDataBuffer();
-    }
     else
-    {
         Log(Warning, "Vulkan", "Failed to remove instance : instance not found");
-    }
 }
 
 void Vulkan::RenderMesh::SetInstanceTransform(uint32_t instanceId, const Transform &transform)
 {
+    std::lock_guard<std::mutex> lock(instanceMutex);
     if (auto it = instances.find(instanceId); it != instances.end())
+        it->second.transformMatrix = transform.GetTransformMatrix();
+    else
+        Log(Warning, "Vulkan", "Failed to set instance transform : instance not found");
+}
+
+void Vulkan::RenderMesh::UpdateRenderedInstances(bool updateAsync)
+{
+    if(updateAsync)
     {
-        it->second.transformMatrix = transform.GetTransformMatrix(true);
-        UpdateInstanceDataBuffer();
+        std::thread([this]() {
+            this->UpdateInstanceDataBuffer();
+        }).detach();
     }
     else
-    {
-        Log(Warning, "Vulkan", "Failed to set instance transform : instance not found");
-    }
+        UpdateInstanceDataBuffer();
+}
+
+void Vulkan::RenderMesh::ClearInstances()
+{
+    std::lock_guard<std::mutex> lock(instanceMutex);
+    instances.clear();
 }
 
 void Vulkan::RenderMesh::SetMaterial(uint32_t index, const RHI::IRenderMaterial *material)
@@ -173,18 +185,30 @@ void Vulkan::RenderMesh::RenderMeshPart(VkCommandBuffer commandBuffer, uint32_t 
 
 void Vulkan::RenderMesh::UpdateInstanceDataBuffer()
 {
+    std::lock_guard<std::mutex> lock(instanceMutex);
+
     Array<MeshInstanceData> instancesDataArray;
     for (auto& instance : instances)
         instancesDataArray.Add(instance.second);
 
     instanceDataBuffer.Cleanup();
     instanceDataBuffer.Create(instancesDataArray.GetSize() * sizeof(MeshInstanceData));
-    instanceDataBuffer.Update(instancesDataArray.GetData());
+
+    VulkanStagingBuffer stagingBuffer;
+    stagingBuffer.Create(instanceDataBuffer.GetBufferSize());
+    stagingBuffer.Update(instancesDataArray.GetData());
+    GetVulkanTransferManager().CopyBuffer(
+        stagingBuffer.GetBuffer(), 
+        instanceDataBuffer.GetBuffer(), 
+        instanceDataBuffer.GetBufferSize()
+    );
+    stagingBuffer.Cleanup();
+
 
     VulkanDescriptorUtils::UpdateSet(
         instanceDescriptorSet, 
         instanceDataBuffer,
-        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
         0 // binding
     );
 }

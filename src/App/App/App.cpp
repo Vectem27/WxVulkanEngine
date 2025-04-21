@@ -19,6 +19,7 @@
 #include "SwapchainTarget.h"
 
 #include <fstream>
+#include <thread>
 
 #include "RenderMeshFactory.h"
 #include "SurfaceRenderMaterialFactory.h"
@@ -242,9 +243,27 @@ void wxVulkanApp::InitVulkan()
         }
 
         testRenderMesh = CreateRenderCubeTest();
-        testRenderMesh->AddInstance({{0,0,0}, Rotation::FromEulerDegrees(0,0,0), {1,1,1}});
         testRenderMesh->SetMaterial(0, testRenderMaterial);
+        Transform tr;
 
+        testRenderMesh->AddInstance({{0,0,-1}, Rotation::FromEulerDegrees(0,0,0), {20,20,1}});
+
+        std::thread([&](){
+            uint32_t instanceId = 0;
+            for (int i = 0; i <= 9; ++i)
+            {
+                for (int j = 0; j <= i; j++)
+                {
+                    for (int k = 0; k <= i; k++)
+                    {
+                        ++instanceId;
+                        testRenderMesh->AddInstance({{(float)i,(float)j,(float)k}, Rotation::FromEulerDegrees(0,0,0), {1,1,1}});
+                    }
+                }
+            }
+            Log(Info, "LogTest", "Cube instance count : %d", instanceId);
+            testRenderMesh->UpdateRenderedInstances(true);
+        }).detach();
 
         cube->SetMaterial(material);
         tinyCube->SetMaterial(material);
@@ -306,7 +325,12 @@ void wxVulkanApp::RenderVulkan()
     tinyCube->SetRelativeRotation(Rotation::FromEulerDegrees(0,0,yaw2));        
     try
     {
-        sceneRenderer->RenderWorld(world, camera);
+        sceneRenderer->RenderWorld(
+            world, camera,
+            [](Vulkan::RenderInfo* renderInfo){
+                testRenderMesh->Render(renderInfo);
+            }
+        );
         static_cast<VulkanSwapchain*>(swapchainTarget->GetRenderTarget(RenderAPI::Vulkan))->Present();
         
         

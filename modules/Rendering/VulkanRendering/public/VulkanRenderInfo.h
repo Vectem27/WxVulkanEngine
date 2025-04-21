@@ -3,6 +3,7 @@
 
 // Libraries
 #include <vulkan/vulkan.h>
+// TODO: Set this file to private
 
 namespace Vulkan
 {

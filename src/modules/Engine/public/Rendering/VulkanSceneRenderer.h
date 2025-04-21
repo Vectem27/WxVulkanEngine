@@ -3,6 +3,7 @@
 
 // Standard
 #include <vector>
+#include <functional>
 
 // Scene
 #include "SceneComponent.h"
@@ -19,7 +20,9 @@
 #include "VulkanGlobalLightManager.h"
 #include "LightManagers/VulkanSpotlightLightManager.h"
 
-
+// New Test Rendering Module
+#include "IRenderable.h"
+#include "VulkanRenderInfo.h"
 
 class VulkanSceneRenderer
 {
@@ -77,7 +80,7 @@ public:
         GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), lightManager);
     }
 
-    void RenderWorld(World* world, VulkanCamera* camera)
+    void RenderWorld(World* world, VulkanCamera* camera, std::function<void(Vulkan::RenderInfo*)> renderCallback = nullptr)
     {
 
         Array<SceneComponent*> sceneArray;
@@ -111,7 +114,18 @@ public:
             lightManager.AddLight(light);
             auto cams = light->GetShadowMapCameras();
             for (auto& cam : cams)
-                GetVulkanShadowMapRenderer().Render(cam, meshes.data(), meshes.size());
+            {
+                GetVulkanShadowMapRenderer().Render(
+                    cam, meshes.data(), /*meshes.size()*/0,
+                    [&](VkCommandBuffer cmd){
+                        Vulkan::RenderInfo renderInfo;
+                        renderInfo.commandBuffer = cmd;
+
+                        if (renderCallback)
+                            renderCallback(&renderInfo);
+                    }    
+                );   
+            }
         }
 
         static bool doOnce{true};
@@ -121,7 +135,17 @@ public:
             doOnce = false;
         }
 
-        GetVulkanRenderTargetRenderer().Render(dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), camera, meshes.data(), meshes.size(), lightManager);
+        GetVulkanRenderTargetRenderer().Render(
+            dynamic_cast<IVulkanRenderTarget*>(camera->GetRenderTarget()), 
+            camera, meshes.data(), /*meshes.size()*/ 0, lightManager,
+            [&](VkCommandBuffer cmd){
+                Vulkan::RenderInfo renderInfo;
+                renderInfo.commandBuffer = cmd;
+
+                if (renderCallback)
+                    renderCallback(&renderInfo);
+            }
+        );
     }
 
 

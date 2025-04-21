@@ -2,6 +2,7 @@
 #define VULKANSHADOWMAPRENDERER_H
 
 #include <vulkan/vulkan.h>
+#include <functional>
 
 class IVulkanMesh;
 class VulkanShadowMapCamera;
@@ -23,7 +24,7 @@ public:
         return instance;
     }
 
-    void Render(VulkanShadowMapCamera* shadowMapCamera, IVulkanMesh** meshes, uint32_t meshNumber);
+    void Render(VulkanShadowMapCamera* shadowMapCamera, IVulkanMesh** meshes, uint32_t meshNumber, std::function<void(VkCommandBuffer)> renderCallback = nullptr);
 
 private:
     VkCommandBuffer commandBuffer{VK_NULL_HANDLE};

@@ -1,6 +1,7 @@
 #include "VulkanShadowMapRenderer.h"
 
 #include <stdexcept>
+#include <functional>
 
 #include "Logger.h"
 #include "IVulkanMesh.h"
@@ -40,7 +41,7 @@ void VulkanShadowMapRenderer::Shutdown() noexcept
     VulkanCommandUtils::DestroyCommandPool(commandPool);
 }
 
-void VulkanShadowMapRenderer::Render(VulkanShadowMapCamera *shadowMapCamera, IVulkanMesh **meshes, uint32_t meshNumber)
+void VulkanShadowMapRenderer::Render(VulkanShadowMapCamera *shadowMapCamera, IVulkanMesh **meshes, uint32_t meshNumber, std::function<void(VkCommandBuffer)> renderCallback)
 {
     if (GetGraphicsQueue() == VK_NULL_HANDLE)
     {
@@ -82,6 +83,9 @@ void VulkanShadowMapRenderer::Render(VulkanShadowMapCamera *shadowMapCamera, IVu
         if (meshes[i])
             meshes[i]->DrawForShadowMap(commandBuffer);
     }
+
+    if (renderCallback)
+        renderCallback(commandBuffer);
 
     vkCmdEndRenderPass(commandBuffer);
 

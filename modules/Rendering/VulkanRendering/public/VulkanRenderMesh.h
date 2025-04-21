@@ -3,6 +3,7 @@
 
 // Standard
 #include <unordered_map>
+#include <mutex>
 
 // Libraries
 #include <vulkan/vulkan.h>
@@ -16,7 +17,7 @@
 // VulkanAPI
 #include "VulkanIndexBuffer.h"
 #include "VulkanVertexBuffer.h"
-#include "VulkanUniformBuffer.h"
+#include "VulkanStorageBuffer.h"
 
 
 namespace Vulkan 
@@ -41,6 +42,8 @@ namespace Vulkan
         virtual uint32_t AddInstance(const Transform& transform) override;
         virtual void RemoveInstance(uint32_t instanceId) override;
         virtual void SetInstanceTransform(uint32_t instanceId, const Transform& transform) override;
+        virtual void UpdateRenderedInstances(bool updateAsync = false) override;
+        virtual void ClearInstances() override;
 
         virtual void SetMaterial(uint32_t index, const RHI::IRenderMaterial* material) override;
     public:
@@ -59,10 +62,12 @@ namespace Vulkan
         Array<const SurfaceRenderMaterial*> materials;
 
         std::unordered_map<uint32_t, MeshInstanceData> instances;
-        VulkanUniformBuffer instanceDataBuffer; // TODO: Change it to a storage buffer
+        VulkanStorageBuffer instanceDataBuffer;
 
         VkDescriptorSet instanceDescriptorSet{VK_NULL_HANDLE};
         VkDescriptorPool instanceDescriptorPool{VK_NULL_HANDLE};
+
+        std::mutex instanceMutex;
     };
 
 } // namespace Vulkan

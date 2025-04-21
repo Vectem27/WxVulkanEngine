@@ -20,6 +20,8 @@ namespace RHI
         virtual uint32_t AddInstance(const Transform& transform) = 0;
         virtual void RemoveInstance(uint32_t instanceId) = 0;
         virtual void SetInstanceTransform(uint32_t instanceId, const Transform& transform) = 0;
+        virtual void UpdateRenderedInstances(bool updateAsync = false) = 0;
+        virtual void ClearInstances() = 0;
 
         virtual void SetMaterial(uint32_t index, const IRenderMaterial* material) = 0;
     };

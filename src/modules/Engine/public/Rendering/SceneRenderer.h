@@ -7,6 +7,8 @@
 #include "SceneComponent.h"
 #include "World.h"
 
+#include "IRenderable.h"
+
 class SceneRenderer 
 {
 public:
@@ -32,14 +34,20 @@ public:
         }
     }
 
-    void Render(World* world, ICameraComponent* camera)
+    void Render(World* world, ICameraComponent* camera, const RHI::IRenderable* testRenderable = nullptr)
     {
         switch (GetEngine().GetRenderAPI())
         {
         case RenderAPI::Vulkan:
             if (vulkanSceneRenderer)
             {
-                vulkanSceneRenderer->RenderScene(world, static_cast<VulkanCamera*>(camera->GetRenderCamera(VULKAN_API)));
+                vulkanSceneRenderer->RenderScene(
+                    world, static_cast<VulkanCamera*>(camera->GetRenderCamera(VULKAN_API))
+                    [](Vulkan::RenderInfo renderInfo){
+                        if(testRenderable)
+                            testRenderable->Render(renderInfo);
+                    }
+                );
             }
             break;
         default:
